@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# FORCE CACHE BUST - CHANGE THIS LINE TO BUST CACHE
-RUN echo "Build time: Wed May 14 21:25:00 GMT 2025" > /build_info
+# FORCE CACHE BUST
+RUN echo "Build time: Wed May 14 22:20:00 GMT 2025" > /build_info
 
 WORKDIR /app
 
@@ -20,19 +20,13 @@ COPY . .
 # Build the project
 RUN npm run build
 
-# ИСПРАВЛЕНИЕ: НЕ удаляем dev dependencies, так как vite нужна для сервера
-# RUN npm prune --production
-
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodeuser -u 1001
 RUN chown -R nodeuser:nodejs /app
 USER nodeuser
 
-# Expose port
-EXPOSE 5000
-
-# Health check
-
+# Expose port 80 instead of 5000
+EXPOSE 80
 
 # Start the application
 CMD ["npm", "start"]
