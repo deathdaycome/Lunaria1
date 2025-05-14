@@ -5,13 +5,8 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
-import { fileURLToPath } from 'url';
 
 const viteLogger = createLogger();
-
-// Для Node.js ES modules - получаем __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -49,13 +44,8 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      // Исправлено: используем __dirname вместо import.meta.dirname
-      const clientTemplate = path.resolve(
-        __dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      // Используем абсолютный путь от корня проекта
+      const clientTemplate = path.resolve(process.cwd(), "client", "index.html");
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
@@ -72,12 +62,27 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // Исправлено: используем __dirname вместо import.meta.dirname
-  const distPath = path.resolve(__dirname, "..", "dist", "public");
+  console.log('=== DEBUG serveStatic ===');
+  console.log('process.cwd():', process.cwd());
+  
+  // Используем абсолютный путь от корня проекта
+  const distPath = path.resolve(process.cwd(), "dist", "public");
+  console.log('distPath:', distPath);
+  console.log('distPath exists:', fs.existsSync(distPath));
 
   if (!fs.existsSync(distPath)) {
+    // Попробуем альтернативные пути
+    const altPath1 = path.resolve(process.cwd(), "dist");
+    const altPath2 = path.resolve(process.cwd(), "public");
+    const altPath3 = path.resolve(process.cwd(), "client", "dist");
+    
+    console.log('Alternative paths:');
+    console.log('- dist:', fs.existsSync(altPath1));
+    console.log('- public:', fs.existsSync(altPath2)); 
+    console.log('- client/dist:', fs.existsSync(altPath3));
+    
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
 
