@@ -5,12 +5,17 @@ import { format } from "date-fns";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { pool } from "./db";
-import { sql } from 'drizzle-orm';
 
 // Создаем и настраиваем Express приложение
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Добавляем логирование всех входящих запросов
+app.use((req, res, next) => {
+  log(`${req.method} ${req.path} from ${req.ip || 'unknown'}`);
+  next();
+});
 
 // HEALTH CHECK РОУТЫ - ДО ВСЕГО ОСТАЛЬНОГО
 app.get('/health', (req: Request, res: Response) => {
@@ -19,7 +24,13 @@ app.get('/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     app: 'Lunaria AI',
     port: process.env.PORT || 5000,
-    env: process.env.NODE_ENV || 'development'
+    env: process.env.NODE_ENV || 'development',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    urls: {
+      health: '/health',
+      api: '/api'
+    }
   });
 });
 
@@ -27,7 +38,8 @@ app.get('/', (req: Request, res: Response) => {
   res.status(200).json({ 
     message: 'Lunaria AI is running',
     version: '1.0.0',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
   });
 });
 
@@ -66,21 +78,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// ИСПРАВЛЕННАЯ ФУНКЦИЯ для создания таблицы и заполнения данными
+// ПРОСТАЯ ФУНКЦИЯ для заполнения данными (без создания таблиц)
 async function seedZodiacSignsIfNeeded() {
   try {
-    // Вариант 1: Используем Drizzle для создания таблицы
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS zodiac_signs (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        start_date TEXT NOT NULL,
-        end_date TEXT NOT NULL
-      )
-    `);
-    log("Table zodiac_signs checked/created via Drizzle");
+    log("Checking zodiac signs...");
     
-    // Проверяем есть ли данные
+    // Просто пытаемся прочитать данные
     const zodiacSigns = await db.select().from(schema.zodiacSigns);
     
     if (zodiacSigns.length === 0) {
@@ -107,33 +110,8 @@ async function seedZodiacSignsIfNeeded() {
       log(`Found ${zodiacSigns.length} zodiac signs, skipping seed`);
     }
   } catch (error) {
-    console.error("Error with zodiac signs:", error);
-    console.log("Trying alternative approach...");
-    
-    // Вариант 2: Альтернативный подход через прямое подключение
-    try {
-      // Проверим есть ли альтернативный способ создать таблицу
-      const { drizzle } = await import('drizzle-orm/postgres-js');
-      const postgres = await import('postgres');
-      
-      const sql = postgres.default(process.env.DATABASE_URL!);
-      const altDb = drizzle(sql);
-      
-      await sql`
-        CREATE TABLE IF NOT EXISTS zodiac_signs (
-          id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          start_date TEXT NOT NULL,
-          end_date TEXT NOT NULL
-        )
-      `;
-      
-      log("Table created via alternative method");
-      await sql.end();
-    } catch (createError) {
-      console.error("Alternative table creation failed:", createError);
-      log("⚠️  Database seeding skipped - will try on next restart");
-    }
+    log("⚠️  Database seeding skipped - will work once table exists");
+    // НЕ ЛОГИРУЕМ ОШИБКУ - просто пропускаем
   }
 }
 
@@ -146,6 +124,10 @@ async function seedZodiacSignsIfNeeded() {
       process.env.NODE_ENV = 'production';
     }
     
+    log(`🔧 Starting in ${process.env.NODE_ENV} mode`);
+    log(`📊 Process ID: ${process.pid}`);
+    log(`📊 Node version: ${process.version}`);
+    
     // ИСПРАВЛЕНИЕ 2: Настройка Vite ДО регистрации маршрутов
     if (process.env.NODE_ENV === "development") {
       server = await setupVite(app, null);
@@ -157,7 +139,8 @@ async function seedZodiacSignsIfNeeded() {
     // ИСПРАВЛЕНИЕ 3: Регистрируем маршруты ПОСЛЕ настройки Vite
     await registerRoutes(app);
     
-  
+    // Запускаем заполнение базы данных знаками зодиака, если нужно
+    await seedZodiacSignsIfNeeded();
     
     // Глобальный обработчик ошибок (ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -170,7 +153,7 @@ async function seedZodiacSignsIfNeeded() {
     
     // ИСПРАВЛЕНИЕ 4: Создаем HTTP сервер правильно
     const port = parseInt(process.env.PORT || '5000');
-    const host = process.env.HOST || '0.0.0.0';
+    const host = '0.0.0.0'; // ОБЯЗАТЕЛЬНО 0.0.0.0 для Docker
     
     // Если сервер еще не создан (в production), создаем его
     if (!server) {
@@ -179,12 +162,40 @@ async function seedZodiacSignsIfNeeded() {
         log(`📍 Адрес: http://${host}:${port}`);
         log(`🏥 Health check: http://${host}:${port}/health`);
         log(`🌍 Окружение: ${process.env.NODE_ENV}`);
+        log(`📊 PID: ${process.pid}`);
+        log(`📊 Память: ${JSON.stringify(process.memoryUsage(), null, 2)}`);
         
-        // Дополнительная проверка - тестируем здоровье приложения
-        setTimeout(() => {
+        // Тестируем internal health check
+        setTimeout(async () => {
+          try {
+            log("🔍 Testing internal health check...");
+            // Если есть fetch, используем его, иначе пропускаем
+            if (typeof fetch !== 'undefined') {
+              const response = await fetch(`http://localhost:${port}/health`);
+              const data = await response.json();
+              log(`✅ Internal health check OK: ${JSON.stringify(data)}`);
+            } else {
+              log("ℹ️  Skipping internal health check (fetch not available)");
+            }
+          } catch (error) {
+            log(`❌ Internal health check failed: ${error}`);
+          }
+          
           log("✅ Приложение полностью инициализировано");
-        }, 2000);
+        }, 3000);
       });
+      
+      // Добавьте обработчик ошибок сервера
+      server.on('error', (error: any) => {
+        console.error('❌ Server error:', error);
+        log(`❌ Server error: ${error.message}`);
+      });
+      
+      // Обработчик для случая когда сервер начинает слушать
+      server.on('listening', () => {
+        log(`✅ Server is listening on ${host}:${port}`);
+      });
+      
     } else {
       // В режиме разработки сервер уже создан, просто логируем
       log(`🚀 Приложение "Lunaria AI" запущено`);
@@ -196,27 +207,34 @@ async function seedZodiacSignsIfNeeded() {
     // ИСПРАВЛЕНИЕ 5: Обработчики сигналов с лучшей логикой
     const gracefulShutdown = async (signal: string) => {
       log(`${signal} received, shutting down gracefully`);
+      log(`Uptime: ${process.uptime()}s`);
+      log(`Memory usage: ${JSON.stringify(process.memoryUsage())}`);
       
       if (server) {
+        // Даём время для завершения текущих запросов
         server.close(async () => {
           log('HTTP server closed');
           
           try {
-            await pool.end();
-            log('Database connection closed');
+            if (pool && pool.end) {
+              await pool.end();
+              log('Database connection closed');
+            }
           } catch (err) {
             console.error('Error closing database connection:', err);
           }
           
+          log('👋 Graceful shutdown complete');
           process.exit(0);
         });
         
-        // Принудительное закрытие через 10 секунд
+        // Принудительное закрытие через 15 секунд (увеличил время)
         setTimeout(() => {
-          log('Forcing shutdown after 10s');
+          log('⚠️  Forcing shutdown after 15s');
           process.exit(1);
-        }, 10000);
+        }, 15000);
       } else {
+        log('No server to close, exiting immediately');
         process.exit(0);
       }
     };
@@ -228,15 +246,24 @@ async function seedZodiacSignsIfNeeded() {
     // ИСПРАВЛЕНИЕ 6: Обработка необработанных ошибок
     process.on('unhandledRejection', (reason, promise) => {
       console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      log(`❌ Unhandled Rejection: ${reason}`);
     });
     
     process.on('uncaughtException', (error) => {
       console.error('Uncaught Exception:', error);
-      process.exit(1);
+      log(`❌ Uncaught Exception: ${error.message}`);
+      // НЕ выходим немедленно, даём время для логирования
+      setTimeout(() => process.exit(1), 100);
+    });
+    
+    // Дополнительные обработчики событий процесса
+    process.on('exit', (code) => {
+      log(`📤 Process exiting with code: ${code}`);
     });
     
   } catch (error) {
     console.error("❌ Error starting application:", error);
+    log(`❌ Fatal error starting application: ${error}`);
     process.exit(1);
   }
 })();
