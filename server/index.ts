@@ -82,6 +82,25 @@ async function seedZodiacSignsIfNeeded() {
     // Инициализируем маршруты и создаем HTTP сервер
     const server = await registerRoutes(app);
     
+    // Health check endpoint для CapRover
+    app.get('/health', (req: Request, res: Response) => {
+      res.status(200).json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        app: 'Lunaria AI',
+        port: process.env.PORT || 5000
+      });
+    });
+
+    // Корневой роут
+    app.get('/', (req: Request, res: Response) => {
+      res.status(200).json({ 
+        message: 'Lunaria AI is running',
+        version: '1.0.0',
+        timestamp: new Date().toISOString()
+      });
+    });
+    
     // Запускаем заполнение базы данных знаками зодиака, если нужно
     await seedZodiacSignsIfNeeded();
     
@@ -109,6 +128,7 @@ async function seedZodiacSignsIfNeeded() {
       reusePort: true,
     }, () => {
       log(`Приложение "Lunaria AI" запущено на порту ${port}`);
+      log(`Health check доступен на http://0.0.0.0:${port}/health`);
     });
     
     // Очистка ресурсов при остановке приложения
