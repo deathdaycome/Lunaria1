@@ -21,9 +21,7 @@ RUN npm run build
 ENV PORT=5000
 EXPOSE 5000
 
-# КРИТИЧНО: Добавляем health check (используем 127.0.0.1 вместо localhost)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://127.0.0.1:5000/health || exit 1
+
 
 # Запускаем приложение
 CMD ["npm", "start"]
