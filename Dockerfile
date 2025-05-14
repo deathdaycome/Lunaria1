@@ -5,10 +5,13 @@ WORKDIR /app
 # Устанавливаем curl для health check
 RUN apk add --no-cache curl
 
+# ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ КЭША - ИЗМЕНИТЬ ЭТУ СТРОКУ
+RUN echo "BUILD_TIMESTAMP=$(date)" > /tmp/build_info
+
 # Копируем package files
 COPY package*.json ./
 
-# Простое решение - просто используем npm install
+# Используем npm install вместо npm ci
 RUN npm install
 
 # Копируем исходный код
@@ -17,7 +20,7 @@ COPY . .
 # Собираем проект
 RUN npm run build
 
-# Удаляем dev dependencies (оставляем только production)
+# Удаляем dev dependencies
 RUN npm prune --production
 
 # Создаем non-root пользователя
