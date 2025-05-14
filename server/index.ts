@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { pool } from "./db";
+import { sql } from 'drizzle-orm';
 
 // Создаем и настраиваем Express приложение
 const app = express();
@@ -68,16 +69,16 @@ app.use((req, res, next) => {
 // ИСПРАВЛЕННАЯ ФУНКЦИЯ для создания таблицы и заполнения данными
 async function seedZodiacSignsIfNeeded() {
   try {
-    // Сначала создаем таблицу если её нет
-    await pool.sql`
+    // Вариант 1: Используем Drizzle для создания таблицы
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS zodiac_signs (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         start_date TEXT NOT NULL,
         end_date TEXT NOT NULL
       )
-    `;
-    log("Table zodiac_signs checked/created");
+    `);
+    log("Table zodiac_signs checked/created via Drizzle");
     
     // Проверяем есть ли данные
     const zodiacSigns = await db.select().from(schema.zodiacSigns);
@@ -107,11 +108,18 @@ async function seedZodiacSignsIfNeeded() {
     }
   } catch (error) {
     console.error("Error with zodiac signs:", error);
-    console.log("Trying to create table manually...");
+    console.log("Trying alternative approach...");
     
-    // Если не получилось через Drizzle, создаем напрямую
+    // Вариант 2: Альтернативный подход через прямое подключение
     try {
-      await pool.sql`
+      // Проверим есть ли альтернативный способ создать таблицу
+      const { drizzle } = await import('drizzle-orm/postgres-js');
+      const postgres = await import('postgres');
+      
+      const sql = postgres.default(process.env.DATABASE_URL!);
+      const altDb = drizzle(sql);
+      
+      await sql`
         CREATE TABLE IF NOT EXISTS zodiac_signs (
           id SERIAL PRIMARY KEY,
           name TEXT NOT NULL,
@@ -119,9 +127,12 @@ async function seedZodiacSignsIfNeeded() {
           end_date TEXT NOT NULL
         )
       `;
-      log("Table created manually");
+      
+      log("Table created via alternative method");
+      await sql.end();
     } catch (createError) {
-      console.error("Manual table creation failed:", createError);
+      console.error("Alternative table creation failed:", createError);
+      log("⚠️  Database seeding skipped - will try on next restart");
     }
   }
 }
