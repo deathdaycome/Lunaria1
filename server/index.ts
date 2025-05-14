@@ -65,9 +65,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Заполняем базу данных знаками зодиака, если она пуста
+// ИСПРАВЛЕННАЯ ФУНКЦИЯ для создания таблицы и заполнения данными
 async function seedZodiacSignsIfNeeded() {
   try {
+    // Сначала создаем таблицу если её нет
+    await pool.sql`
+      CREATE TABLE IF NOT EXISTS zodiac_signs (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL
+      )
+    `;
+    log("Table zodiac_signs checked/created");
+    
+    // Проверяем есть ли данные
     const zodiacSigns = await db.select().from(schema.zodiacSigns);
     
     if (zodiacSigns.length === 0) {
@@ -90,9 +102,27 @@ async function seedZodiacSignsIfNeeded() {
       
       await db.insert(schema.zodiacSigns).values(signs);
       log("Zodiac signs seeded successfully!");
+    } else {
+      log(`Found ${zodiacSigns.length} zodiac signs, skipping seed`);
     }
   } catch (error) {
-    console.error("Error seeding zodiac signs:", error);
+    console.error("Error with zodiac signs:", error);
+    console.log("Trying to create table manually...");
+    
+    // Если не получилось через Drizzle, создаем напрямую
+    try {
+      await pool.sql`
+        CREATE TABLE IF NOT EXISTS zodiac_signs (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          start_date TEXT NOT NULL,
+          end_date TEXT NOT NULL
+        )
+      `;
+      log("Table created manually");
+    } catch (createError) {
+      console.error("Manual table creation failed:", createError);
+    }
   }
 }
 

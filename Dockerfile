@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
 # FORCE CACHE BUST - CHANGE THIS LINE TO BUST CACHE
-RUN echo "Build time: Wed May 14 18:15:00 GMT 2025" > /build_info
+RUN echo "Build time: Wed May 14 21:25:00 GMT 2025" > /build_info
 
 WORKDIR /app
 
