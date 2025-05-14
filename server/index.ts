@@ -157,8 +157,7 @@ async function seedZodiacSignsIfNeeded() {
     // ИСПРАВЛЕНИЕ 3: Регистрируем маршруты ПОСЛЕ настройки Vite
     await registerRoutes(app);
     
-    // Запускаем заполнение базы данных знаками зодиака, если нужно
-    await seedZodiacSignsIfNeeded();
+  
     
     // Глобальный обработчик ошибок (ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
