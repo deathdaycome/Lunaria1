@@ -1,0 +1,1510 @@
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/connie');
+@import url('./styles/z-index-fixes.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Собственные стили для кастомного скролла */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+:root {
+  /* Переменные темной темы по умолчанию - они будут переопределены css-селекторами ниже */
+  --background-secondary: #252240;
+  --background-tertiary: #32304d;
+  --foreground: #ffffff;
+  --foreground-secondary: #e2e2f0;
+  --foreground-muted: rgba(255, 255, 255, 0.7);
+  --border: rgba(99, 102, 241, 0.3);
+  --border-active: rgba(99, 102, 241, 0.5);
+  --card-background: rgba(37, 34, 64, 0.8);
+  --primary: #6366f1;
+  --primary-hover: #7879f1;
+  --accent: #9089FC;
+  --accent-hover: #a5a0fd;
+  --accent-glow: rgba(99, 102, 241, 0.3);
+  --text-gold: linear-gradient(to bottom, #FFD700 0%, #FFA500 100%);
+  --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.3);
+}
+
+/* Тёмная тема (по умолчанию) */
+[data-theme="dark"] {
+  --background-secondary: #252240;
+  --background-tertiary: #32304d;
+  --foreground: #ffffff;
+  --foreground-secondary: #e2e2f0;
+  --foreground-muted: rgba(255, 255, 255, 0.7);
+  --border: rgba(99, 102, 241, 0.3);
+  --border-active: rgba(99, 102, 241, 0.5);
+  --card-background: rgba(37, 34, 64, 0.8);
+  --primary: #6366f1;
+  --primary-hover: #7879f1;
+  --accent: #9089FC;
+  --accent-hover: #a5a0fd;
+  --accent-glow: rgba(99, 102, 241, 0.3);
+  --text-gold: linear-gradient(to bottom, #FFD700 0%, #FFA500 100%);
+  --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.3);
+}
+
+/* Светлая тема (адаптированная для темного фона) */
+[data-theme="light"] {
+  --background-secondary: rgba(255, 255, 255, 0.15);
+  --background-tertiary: rgba(255, 255, 255, 0.2);
+  --foreground: #ffffff;
+  --foreground-secondary: #f8f9ff;
+  --foreground-muted: rgba(255, 255, 255, 0.8);
+  --border: rgba(255, 255, 255, 0.3);
+  --border-active: rgba(255, 255, 255, 0.5);
+  --card-background: rgba(255, 255, 255, 0.15);
+  --primary: #f0abfc;
+  --primary-hover: #e879f9;
+  --accent: #c084fc;
+  --accent-hover: #d8b4fe;
+  --accent-glow: rgba(224, 176, 255, 0.3);
+  --text-gold: linear-gradient(to bottom, #FFD700 0%, #FFA500 100%);
+  --shadow-glow: 0 0 15px rgba(224, 176, 255, 0.3);
+}
+
+:root {
+  /* Base colors from the design */
+  --deep-purple: #3F207A;
+  --indigo: #5428B0;
+  --dark-blue: #1F1D42;
+  --light-purple: #B197FC;
+  --dark-blue-top: #1A1A2E;
+  --dark-blue-bottom: #16213E;
+  --gold: #FFD700;
+  --purple-accent: #9B59B6;
+  --purple-gradient-start: #9B59B6;
+  --purple-gradient-end: #8E44AD;
+  --pink-gradient-start: #FF4081;
+  --pink-gradient-end: #D81B60;
+  --blue-gradient-start: #3498DB;
+  --blue-gradient-end: #2980B9;
+  
+  /* shadcn-ui variables */
+  --background: 240 64% 10%;
+  --foreground: 0 0% 100%;
+  --card: 251 43% 25%;
+  --card-foreground: 0 0% 100%;
+  --popover: 251 43% 25%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 260 71% 42%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 252 100% 89%;
+  --secondary-foreground: 240 10% 3.9%;
+  --muted: 240 3.7% 35%;
+  --muted-foreground: 240 5% 84.9%;
+  --accent: 252 100% 86%;
+  --accent-foreground: 240 10% 3.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 270 50% 75%;
+  --input: 240 3.7% 35.9%;
+  --ring: 260 71% 42%;
+  --radius: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply antialiased;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    color: var(--foreground);
+    background: linear-gradient(to bottom, #1a1a2e, #16213E);
+    background-attachment: fixed;
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: color 0.5s ease;
+  }
+  
+  /* Улучшенное звездное небо с более яркими и детальными звездами */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      /* Более яркие звезды */
+      radial-gradient(1.5px 1.5px at 15% 5%, rgba(255, 255, 255, 0.95) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 35% 15%, rgba(255, 255, 255, 0.9) 0%, transparent 100%),
+      radial-gradient(2px 2px at 55% 8%, rgba(255, 215, 0, 0.8) 0%, transparent 100%),
+      radial-gradient(2.5px 2.5px at 75% 12%, rgba(177, 151, 252, 0.85) 0%, transparent 100%),
+      /* Средние звезды */
+      radial-gradient(1.2px 1.2px at 22% 25%, rgba(255, 255, 255, 0.8) 0%, transparent 100%),
+      radial-gradient(1.2px 1.2px at 45% 30%, rgba(255, 255, 255, 0.7) 0%, transparent 100%),
+      radial-gradient(1.8px 1.8px at 65% 35%, rgba(255, 215, 0, 0.7) 0%, transparent 100%),
+      radial-gradient(2px 2px at 85% 40%, rgba(255, 64, 129, 0.75) 0%, transparent 100%),
+      /* Мелкие звезды */
+      radial-gradient(0.8px 0.8px at 18% 55%, rgba(255, 255, 255, 0.7) 0%, transparent 100%),
+      radial-gradient(0.8px 0.8px at 38% 60%, rgba(255, 255, 255, 0.65) 0%, transparent 100%),
+      radial-gradient(1px 1px at 58% 65%, rgba(177, 151, 252, 0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 78% 70%, rgba(255, 215, 0, 0.65) 0%, transparent 100%),
+      /* Самые мелкие звезды */
+      radial-gradient(0.6px 0.6px at 10% 80%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
+      radial-gradient(0.6px 0.6px at 30% 85%, rgba(177, 151, 252, 0.5) 0%, transparent 100%),
+      radial-gradient(0.7px 0.7px at 50% 90%, rgba(255, 255, 255, 0.55) 0%, transparent 100%),
+      radial-gradient(0.7px 0.7px at 70% 95%, rgba(255, 64, 129, 0.6) 0%, transparent 100%);
+    background-repeat: repeat;
+    background-size: 350px 350px;
+    opacity: 0.85;
+    z-index: -10;
+    animation: twinkleBackground 10s ease-in-out infinite alternate;
+  }
+  
+  /* Улучшенные созвездия с эффектом дымки/туманности */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      /* Туманности разных оттенков */
+      radial-gradient(circle at 25% 25%, rgba(155, 89, 182, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 75% 75%, rgba(52, 152, 219, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 15% 65%, rgba(255, 64, 129, 0.1) 0%, transparent 30%),
+      radial-gradient(circle at 85% 15%, rgba(241, 196, 15, 0.1) 0%, transparent 30%),
+      /* Созвездия */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500' viewBox='0 0 500 500'%3E%3C!-- Созвездие 1 --%3E%3Cpath d='M100,100 L150,120 L200,90 L220,140 L180,180' stroke='rgba(255,215,0,0.3)' fill='none' stroke-width='0.7' stroke-dasharray='2,2'/%3E%3Ccircle cx='100' cy='100' r='2' fill='%23FFD700' opacity='0.8'/%3E%3Ccircle cx='150' cy='120' r='2' fill='%23B197FC' opacity='0.8'/%3E%3Ccircle cx='200' cy='90' r='2' fill='%23FF4081' opacity='0.8'/%3E%3Ccircle cx='220' cy='140' r='2' fill='white' opacity='0.8'/%3E%3Ccircle cx='180' cy='180' r='2' fill='%23B197FC' opacity='0.8'/%3E%3C!-- Созвездие 2 --%3E%3Cpath d='M250,200 L300,230 L330,190 L370,240' stroke='rgba(177,151,252,0.25)' fill='none' stroke-width='0.7' stroke-dasharray='2,2'/%3E%3Ccircle cx='250' cy='200' r='1.5' fill='%23FFD700' opacity='0.8'/%3E%3Ccircle cx='300' cy='230' r='1.5' fill='%23FF4081' opacity='0.8'/%3E%3Ccircle cx='330' cy='190' r='1.5' fill='%23B197FC' opacity='0.8'/%3E%3Ccircle cx='370' cy='240' r='1.5' fill='white' opacity='0.8'/%3E%3C!-- Созвездие 3 --%3E%3Cpath d='M120,320 L180,350 L220,290 L260,330' stroke='rgba(255,215,0,0.2)' fill='none' stroke-width='0.6' stroke-dasharray='2,2'/%3E%3Ccircle cx='120' cy='320' r='1.5' fill='white' opacity='0.7'/%3E%3Ccircle cx='180' cy='350' r='1.5' fill='%23B197FC' opacity='0.7'/%3E%3Ccircle cx='220' cy='290' r='1.5' fill='%23FFD700' opacity='0.7'/%3E%3Ccircle cx='260' cy='330' r='1.5' fill='%23FF4081' opacity='0.7'/%3E%3C!-- Созвездие 4 --%3E%3Cpath d='M350,100 L380,150 L420,130 L390,180 L430,190' stroke='rgba(177,151,252,0.2)' fill='none' stroke-width='0.6' stroke-dasharray='2,2'/%3E%3Ccircle cx='350' cy='100' r='1.5' fill='%23FFD700' opacity='0.7'/%3E%3Ccircle cx='380' cy='150' r='1.5' fill='white' opacity='0.7'/%3E%3Ccircle cx='420' cy='130' r='1.5' fill='%23B197FC' opacity='0.7'/%3E%3Ccircle cx='390' cy='180' r='1.5' fill='%23FF4081' opacity='0.7'/%3E%3Ccircle cx='430' cy='190' r='1.5' fill='white' opacity='0.7'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 500px 500px;
+    opacity: 0.6;
+    z-index: -9;
+    animation: constellationMovement 60s linear infinite alternate;
+  }
+  
+  /* Добавляем падающие звезды */
+  @keyframes fallingStar {
+    0% {
+      transform: translate(0, 0) rotate(-45deg) scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: translate(-200px, 200px) rotate(-45deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-400px, 400px) rotate(-45deg) scale(0.5);
+      opacity: 0;
+    }
+  }
+  
+  .falling-star {
+    position: fixed;
+    width: 3px;
+    height: 3px;
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+    border-radius: 50%;
+    z-index: -8;
+    box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.5),
+                0 0 20px 5px rgba(255, 215, 0, 0.3);
+    opacity: 0;
+  }
+  
+  .falling-star::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.8), transparent);
+    transform-origin: left center;
+    transform: rotate(0deg);
+  }
+  
+  .falling-star:nth-child(1) {
+    top: 10%;
+    right: 10%;
+    animation: fallingStar 5s linear infinite;
+    animation-delay: 1s;
+  }
+  
+  .falling-star:nth-child(2) {
+    top: 30%;
+    right: 20%;
+    animation: fallingStar 7s linear infinite;
+    animation-delay: 3s;
+  }
+  
+  .falling-star:nth-child(3) {
+    top: 50%;
+    right: 15%;
+    animation: fallingStar 6s linear infinite;
+    animation-delay: 5s;
+  }
+  
+  /* Магические частицы для фона */
+  @keyframes floatingParticles {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(10px, -10px); }
+    50% { transform: translate(0, -15px); }
+    75% { transform: translate(-10px, -5px); }
+  }
+  
+  .magic-particles::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(1px 1px at calc(10% + var(--x, 0) * 1%) calc(10% + var(--y, 0) * 1%), rgba(177, 151, 252, 0.5) 0%, transparent 100%),
+                     radial-gradient(1px 1px at calc(30% + var(--x, 0) * -1%) calc(30% + var(--y, 0) * 1%), rgba(255, 215, 0, 0.5) 0%, transparent 100%),
+                     radial-gradient(1px 1px at calc(50% + var(--x, 0) * 1%) calc(70% + var(--y, 0) * -1%), rgba(255, 64, 129, 0.5) 0%, transparent 100%),
+                     radial-gradient(1px 1px at calc(70% + var(--x, 0) * -1%) calc(90% + var(--y, 0) * -1%), rgba(52, 152, 219, 0.5) 0%, transparent 100%);
+    background-size: 150% 150%;
+    background-position: var(--x, 0) var(--y, 0);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: -8;
+    animation: floatingParticles 15s ease-in-out infinite;
+  }
+  
+  @keyframes constellationMovement {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 100px 50px;
+    }
+  }
+  
+  /* Улучшенные анимации фона */
+  @keyframes twinkleBackground {
+    0%, 100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 0.9;
+    }
+  }
+  
+  /* Анимация падающих звёзд */
+  @keyframes shootingStar {
+    0% {
+      transform: translateX(0) translateY(0) rotate(0deg);
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+    }
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(200px) translateY(200px) rotate(45deg);
+      opacity: 0;
+    }
+  }
+  
+  /* Анимация для эффекта вспышки света */
+  @keyframes lightFlash {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    25% {
+      opacity: 0.8;
+      transform: scale(1.2);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(0.8);
+    }
+    75% {
+      opacity: 0.6;
+      transform: scale(1.1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+  }
+
+  /* Улучшенные стили для заголовков */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Connie', sans-serif;
+    font-weight: 700;
+    position: relative;
+    background: linear-gradient(to bottom, #FFD700 0%, #FFA500 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+    letter-spacing: 0.02em;
+  }
+  
+  h1::before, h2::before {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='1.5'%3E%3Cpath d='M12 3a1 1 0 0 0-1 1v2a1 1 0 0 0 2 0V4a1 1 0 0 0-1-1zm4.24 2.34l1.41-1.41a1 1 0 0 0-1.41-1.41l-1.41 1.41a1 1 0 0 0 1.41 1.41zM21 11h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0-2zm-9 7a1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-2a1 1 0 0 0-1-1zM6.34 6.34a1 1 0 0 0 1.41-1.41l-1.41-1.41a1 1 0 0 0-1.41 1.41l1.41 1.41zM4 11H2a1 1 0 0 0 0 2h2a1 1 0 0 0 0-2zm3.07 10.07a1 1 0 0 0 1.41 0l1.41-1.41a1 1 0 0 0-1.41-1.41l-1.41 1.41a1 1 0 0 0 0 1.41zM17.66 19.66l1.41 1.41a1 1 0 0 0 1.41-1.41l-1.41-1.41a1 1 0 0 0-1.41 1.41z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.4));
+    opacity: 0.8;
+  }
+  
+  h1::after, h2::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='1.5'%3E%3Cpath d='M12 17.9L9.2 20.7c-.4.4-.9.4-1.3 0-.4-.4-.4-.9 0-1.3l2.1-2.1C6.4 16.7 4 13.8 4 10.5c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5c0 3.3-2.3 6.2-5.8 7.2l2.1 2.1c.4.4.4.9 0 1.3-.4.4-.9.4-1.3 0L12 17.9z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.4));
+    opacity: 0.8;
+  }
+  
+  input, textarea, select {
+    font-family: 'Cormorant Garamond', serif;
+  }
+  
+  /* Улучшенные стили для кнопок */
+  button {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1;
+  }
+  
+  /* Тонкое свечение в состоянии покоя */
+  button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, 
+                rgba(155, 89, 182, 0.3) 0%, 
+                transparent 70%);
+    opacity: 0.5;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: -1;
+    filter: blur(5px);
+  }
+  
+  /* Эффект при наведении - усиление яркости */
+  button:hover::before {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+  
+  /* Эффект при нажатии */
+  button:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Эффект вспышки при нажатии */
+  button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 50%);
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    z-index: -1;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+  }
+  
+  button:active::after {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0.3;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  }
+}
+
+@layer components {
+  /* Progress bar с золотым градиентом для теста совместимости */
+  .progress-golden {
+    @apply overflow-hidden;
+  }
+  
+  .progress-golden > div {
+    @apply h-full;
+    background: linear-gradient(90deg, #f7d358 0%, #FFD700 50%, #f7d358 100%);
+  }
+  
+  /* Фикс для предотвращения прыжков диалога */
+  .dialog-fixed {
+    position: relative !important;
+    width: 32rem !important;
+    max-width: 90vw !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+  
+  .star {
+    @apply absolute w-[2px] h-[2px] bg-white rounded-full opacity-50;
+    z-index: -1;
+  }
+  
+  .page-heading {
+    @apply text-xl font-medium ml-6 pl-6 relative;
+    text-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+  }
+  
+  .text-shadow-glow {
+    text-shadow: 0 0 15px var(--primary), 0 0 25px rgba(99, 102, 241, 0.3);
+  }
+  
+  @keyframes twinkle {
+    0% { opacity: 0.2; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.2; }
+  }
+  
+  @keyframes move {
+    0% { transform: translateY(0) translateX(0); }
+    50% { transform: translateY(-10px) translateX(5px); }
+    100% { transform: translateY(0) translateX(0); }
+  }
+  
+  @keyframes shooting {
+    0% { 
+      transform: translateX(0) translateY(0);
+      opacity: 1;
+    }
+    70% { 
+      opacity: 1;
+    }
+    100% { 
+      transform: translateX(300px) translateY(300px);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes floatRotate {
+    0% { 
+      transform: rotate(0deg) translateY(0px); 
+    }
+    25% { 
+      transform: rotate(5deg) translateY(-5px);
+    }
+    50% { 
+      transform: rotate(0deg) translateY(0px);
+    }
+    75% { 
+      transform: rotate(-5deg) translateY(5px);
+    }
+    100% { 
+      transform: rotate(0deg) translateY(0px);
+    }
+  }
+  
+  @keyframes pulseGlow {
+    0% { 
+      filter: drop-shadow(0 0 2px currentColor); 
+    }
+    50% { 
+      filter: drop-shadow(0 0 10px currentColor); 
+    }
+    100% { 
+      filter: drop-shadow(0 0 2px currentColor); 
+    }
+  }
+  
+  .zodiac-symbol {
+    animation: floatRotate 6s ease-in-out infinite, pulseGlow 4s ease-in-out infinite;
+    will-change: transform, filter;
+  }
+  
+  .zodiac-creature {
+    filter: drop-shadow(0 0 10px rgba(177, 151, 252, 0.6));
+    will-change: transform;
+  }
+  
+  .star-container {
+    @apply fixed inset-0 overflow-hidden pointer-events-none;
+    z-index: -1;
+  }
+  
+  .filter-drop-shadow-glow {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+  
+  .glow {
+    @apply shadow-[0_0_15px_rgba(177,151,252,0.6)];
+  }
+  
+  /* Улучшенная карточка с эффектом glassmorphism */
+  .card {
+    background: rgba(47, 30, 94, 0.2); /* Полупрозрачный фон (15-25% прозрачности) */
+    backdrop-filter: blur(12px); /* Усиленное размытие фона */
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid;
+    border-image: linear-gradient(
+      135deg, 
+      rgba(155, 89, 182, 0.5), 
+      rgba(52, 152, 219, 0.5)
+    ) 1;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(155, 89, 182, 0.3),
+                inset 0 0 15px rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .card:hover {
+    transform: translateY(-7px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6),
+                0 0 30px rgba(155, 89, 182, 0.4),
+                0 0 10px rgba(155, 89, 182, 0.2),
+                inset 0 0 15px rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Градиентная обводка верхнего края */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+                transparent, 
+                rgba(155, 89, 182, 0.3), 
+                rgba(255, 215, 0, 0.5), 
+                rgba(155, 89, 182, 0.3), 
+                transparent);
+    animation: shineGradient 3s linear infinite;
+  }
+  
+  /* Эффект стеклянного блика */
+  .card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg, 
+      rgba(255, 255, 255, 0.15) 0%, 
+      transparent 40%, 
+      transparent 60%, 
+      rgba(255, 255, 255, 0.1) 100%
+    );
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    transition: opacity 0.4s ease;
+  }
+  
+  .card:hover::after {
+    opacity: 0.8;
+  }
+  
+  /* Анимация для градиентов */
+  @keyframes shineGradient {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+  }
+  
+  .tab-active {
+    @apply border-b-2;
+    border-image: linear-gradient(90deg, transparent, var(--gold), transparent) 1;
+  }
+  
+  /* Улучшенные стили для категорий в виде кристаллов */
+  .crystal-tab {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 12px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: linear-gradient(135deg, rgba(47, 30, 94, 0.4) 0%, rgba(47, 30, 94, 0.2) 100%);
+    border: 1px solid rgba(177, 151, 252, 0.3);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
+                0 0 10px rgba(155, 89, 182, 0.2),
+                inset 0 0 8px rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Верхняя грань кристалла - эффект преломления света */
+  .crystal-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
+    z-index: 1;
+    opacity: 0.6;
+    border-radius: 10px 10px 0 0;
+    transform: rotateX(5deg);
+    transition: all 0.3s ease;
+  }
+  
+  /* Блики на кристалле */
+  .crystal-tab::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.3) 0%, 
+                transparent 30%, 
+                transparent 70%, 
+                rgba(255, 255, 255, 0.15) 100%);
+    z-index: 0;
+    opacity: 0.2;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    border-radius: inherit;
+    transform: translateZ(10px);
+  }
+  
+  /* Эффекты при наведении */
+  .crystal-tab:hover {
+    transform: translateY(-3px) translateZ(5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4),
+                0 0 15px rgba(155, 89, 182, 0.3),
+                inset 0 0 12px rgba(255, 255, 255, 0.08);
+  }
+  
+  .crystal-tab:hover::before {
+    opacity: 0.8;
+    transform: rotateX(10deg);
+  }
+  
+  .crystal-tab:hover::after,
+  .crystal-tab[data-state="active"]::after {
+    opacity: 0.5;
+    transform: translateZ(15px);
+  }
+  
+  /* Категории с разными цветами */
+  .crystal-tab[data-category="general"] {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.3) 0%, rgba(155, 89, 182, 0.2) 100%);
+  }
+  
+  .crystal-tab[data-category="love"] {
+    background: linear-gradient(135deg, rgba(255, 121, 198, 0.3) 0%, rgba(255, 82, 82, 0.2) 100%);
+  }
+  
+  .crystal-tab[data-category="career"] {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.3) 0%, rgba(0, 210, 255, 0.2) 100%);
+  }
+  
+  .crystal-tab[data-category="health"] {
+    background: linear-gradient(135deg, rgba(40, 215, 191, 0.3) 0%, rgba(130, 226, 136, 0.2) 100%);
+  }
+  
+  .crystal-tab[data-category="finance"] {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 152, 0, 0.2) 100%);
+  }
+  
+  /* Активное состояние */
+  .crystal-tab[data-state="active"] {
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.5) 0%, rgba(155, 89, 182, 0.3) 100%);
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 25px rgba(155, 89, 182, 0.5),
+                0 8px 15px rgba(0, 0, 0, 0.3),
+                inset 0 0 15px rgba(255, 215, 0, 0.15);
+    transform: translateY(-4px) scale(1.05);
+  }
+  
+  /* Активные категории с разными цветами */
+  .crystal-tab[data-state="active"][data-category="general"] {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.6) 0%, rgba(155, 89, 182, 0.4) 100%);
+    box-shadow: 0 0 25px rgba(52, 152, 219, 0.5),
+                0 8px 15px rgba(0, 0, 0, 0.3),
+                inset 0 0 15px rgba(255, 255, 255, 0.15);
+  }
+  
+  .crystal-tab[data-state="active"][data-category="love"] {
+    background: linear-gradient(135deg, rgba(255, 121, 198, 0.6) 0%, rgba(255, 82, 82, 0.4) 100%);
+    box-shadow: 0 0 25px rgba(255, 82, 82, 0.5),
+                0 8px 15px rgba(0, 0, 0, 0.3),
+                inset 0 0 15px rgba(255, 255, 255, 0.15);
+  }
+  
+  .crystal-tab[data-state="active"][data-category="career"] {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.6) 0%, rgba(0, 210, 255, 0.4) 100%);
+    box-shadow: 0 0 25px rgba(0, 210, 255, 0.5),
+                0 8px 15px rgba(0, 0, 0, 0.3),
+                inset 0 0 15px rgba(255, 255, 255, 0.15);
+  }
+  
+  .crystal-tab[data-state="active"][data-category="health"] {
+    background: linear-gradient(135deg, rgba(40, 215, 191, 0.6) 0%, rgba(130, 226, 136, 0.4) 100%);
+    box-shadow: 0 0 25px rgba(40, 215, 191, 0.5),
+                0 8px 15px rgba(0, 0, 0, 0.3),
+                inset 0 0 15px rgba(255, 255, 255, 0.15);
+  }
+  
+  .crystal-tab[data-state="active"][data-category="finance"] {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.6) 0%, rgba(255, 152, 0, 0.4) 100%);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.5),
+                0 8px 15px rgba(0, 0, 0, 0.3),
+                inset 0 0 15px rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Эффект нажатия */
+  .crystal-tab:active {
+    transform: translateY(-1px) scale(0.98);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4),
+                0 0 5px rgba(155, 89, 182, 0.3),
+                inset 0 0 5px rgba(255, 255, 255, 0.05);
+    transition: all 0.1s ease;
+  }
+  
+  /* Улучшенные стили для контейнера счастливых чисел */
+  .lucky-numbers-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, rgba(47, 30, 94, 0.3), rgba(84, 40, 176, 0.2));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(177, 151, 252, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
+                inset 0 0 15px rgba(177, 151, 252, 0.1);
+    z-index: 1;
+  }
+  
+  /* Световые эффекты для контейнера счастливых чисел */
+  .lucky-numbers-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(
+      transparent,
+      rgba(155, 89, 182, 0.05),
+      rgba(255, 215, 0, 0.1),
+      rgba(255, 215, 0, 0.05),
+      transparent
+    );
+    animation: rotate 10s linear infinite;
+    opacity: 0.3;
+    z-index: -1;
+  }
+  
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Объемные магические кристаллы для счастливых чисел */
+  .lucky-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    overflow: visible;
+    transform-style: preserve-3d;
+    perspective: 600px;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: linear-gradient(135deg, 
+                rgba(155, 89, 182, 0.5) 0%, 
+                rgba(84, 40, 176, 0.3) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+                0 0 15px rgba(155, 89, 182, 0.3),
+                inset 0 0 6px rgba(255, 255, 255, 0.2);
+    z-index: 1;
+  }
+  
+  /* Внутренне свечение кристалла */
+  .lucky-number::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.4) 0%, 
+                transparent 60%);
+    z-index: 1;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+  }
+  
+  /* Эффект свечения */
+  .lucky-number::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, 
+                rgba(255, 215, 0, 0.5) 0%, 
+                rgba(255, 215, 0, 0.2) 30%, 
+                transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: -1;
+    filter: blur(4px);
+  }
+  
+  /* Разные цвета для счастливых чисел */
+  .lucky-number:nth-child(5n+1) {
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.6), rgba(84, 40, 176, 0.4));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+                0 0 15px rgba(155, 89, 182, 0.3);
+  }
+  
+  .lucky-number:nth-child(5n+2) {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.6), rgba(41, 128, 185, 0.4));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+                0 0 15px rgba(52, 152, 219, 0.3);
+  }
+  
+  .lucky-number:nth-child(5n+3) {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.6), rgba(243, 156, 18, 0.4));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+                0 0 15px rgba(255, 215, 0, 0.3);
+  }
+  
+  .lucky-number:nth-child(5n+4) {
+    background: linear-gradient(135deg, rgba(255, 64, 129, 0.6), rgba(216, 27, 96, 0.4));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+                0 0 15px rgba(255, 64, 129, 0.3);
+  }
+  
+  .lucky-number:nth-child(5n+5) {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.6), rgba(39, 174, 96, 0.4));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+                0 0 15px rgba(46, 204, 113, 0.3);
+  }
+  
+  /* Эффект парения при наведении */
+  .lucky-number:hover {
+    transform: translateY(-6px) scale(1.1) rotate(5deg);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5),
+                0 0 25px rgba(255, 215, 0, 0.4),
+                inset 0 0 10px rgba(255, 255, 255, 0.3);
+    z-index: 5;
+  }
+  
+  /* Усиление свечения при наведении */
+  .lucky-number:hover::after {
+    opacity: 1;
+    animation: crystalGlow 2s ease infinite;
+  }
+  
+  /* Лучи света из счастливых чисел */
+  @keyframes crystalGlow {
+    0%, 100% { 
+      opacity: 0.5; 
+      transform: scale(1);
+    }
+    50% { 
+      opacity: 1; 
+      transform: scale(1.2);
+    }
+  }
+  
+  /* Улучшенная нижняя навигация */
+  .bottom-nav {
+    background: rgba(26, 26, 46, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(155, 89, 182, 0.3);
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.4),
+                0 0 15px rgba(155, 89, 182, 0.2);
+    z-index: 100;
+  }
+  
+  .nav-item {
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .nav-item .icon {
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+  }
+  
+  .nav-item.active .icon {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 8px rgba(155, 89, 182, 0.6));
+  }
+  
+  .nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(to right,
+      transparent,
+      rgba(155, 89, 182, 0.6),
+      rgba(255, 215, 0, 0.6),
+      rgba(155, 89, 182, 0.6),
+      transparent
+    );
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-item.active::after {
+    width: 80%;
+    opacity: 1;
+  }
+  
+  /* Добавление эффекта вспышки при переключении */
+  @keyframes navFlash {
+    0% { 
+      box-shadow: 0 0 0 0 rgba(155, 89, 182, 0); 
+    }
+    25% { 
+      box-shadow: 0 0 10px 5px rgba(155, 89, 182, 0.6); 
+    }
+    100% { 
+      box-shadow: 0 0 0 0 rgba(155, 89, 182, 0); 
+    }
+  }
+  
+  .nav-item.animate {
+    animation: navFlash 0.5s ease-out forwards;
+  }
+  
+  /* Стили для заголовков разделов */
+  .section-title {
+    @apply font-cormorant text-base relative inline-block pb-1 mb-2;
+    position: relative;
+  }
+  
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+  
+  .glass-effect {
+    @apply bg-[rgba(84,40,176,0.2)] backdrop-blur-sm border border-[rgba(255,255,255,0.1)];
+  }
+
+  .ios-picker {
+    @apply relative overflow-hidden;
+    height: 180px;
+  }
+  
+  .ios-picker .wheel {
+    @apply overflow-y-auto snap-y snap-mandatory absolute inset-0;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .ios-picker .wheel::-webkit-scrollbar {
+    @apply hidden;
+  }
+  
+  .ios-picker .option {
+    @apply snap-center h-[40px] flex items-center justify-center text-lg;
+    opacity: 0.3;
+    transition: all 0.2s ease;
+  }
+  
+  .ios-picker .option.selected {
+    @apply text-white font-medium;
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  
+  .ios-picker .selection-indicator {
+    @apply absolute left-0 right-0 pointer-events-none;
+    height: 40px;
+    top: calc(50% - 20px);
+    border-top: 1px solid rgba(177, 151, 252, 0.3);
+    border-bottom: 1px solid rgba(177, 151, 252, 0.3);
+    z-index: 1;
+  }
+  
+  .ios-picker .gradient-top {
+    @apply absolute top-0 left-0 right-0 pointer-events-none;
+    height: 70px;
+    background: linear-gradient(to bottom, rgba(47, 30, 94, 0.9) 0%, rgba(47, 30, 94, 0.6) 40%, transparent 100%);
+    z-index: 2;
+  }
+  
+  .ios-picker .gradient-bottom {
+    @apply absolute bottom-0 left-0 right-0 pointer-events-none;
+    height: 70px;
+    background: linear-gradient(to top, rgba(47, 30, 94, 0.9) 0%, rgba(47, 30, 94, 0.6) 40%, transparent 100%);
+    z-index: 2;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    @apply hidden;
+  }
+  
+  /* Скрытие полос прокрутки для iOS Time Picker */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Стили для календаря и выбора даты на мобильных устройствах */
+  .cosmic-calendar .rdp-months {
+    background-color: #1a1a2e !important;
+  }
+  
+  .cosmic-calendar .rdp-day {
+    color: #e5e7eb !important;
+  }
+
+  .cosmic-calendar .rdp-day:hover:not([disabled]),
+  .cosmic-calendar .rdp-day:focus:not([disabled]) {
+    background-color: #32304d !important;
+  }
+  
+  .cosmic-calendar .rdp-day_selected {
+    background-color: #6366f1 !important;
+    color: white !important;
+  }
+  
+  .cosmic-calendar .rdp-button:hover:not([disabled]),
+  .cosmic-calendar .rdp-button:focus-visible:not([disabled]) {
+    background-color: #32304d !important;
+    color: white !important;
+  }
+  
+  .cosmic-calendar .rdp-nav_button:hover,
+  .cosmic-calendar .rdp-nav_button:focus-visible {
+    background-color: #32304d !important;
+  }
+  
+  /* Адаптация для тёмного фона приложения */
+  .rdp-caption_label,
+  .rdp-head_cell {
+    color: white !important;
+  }
+  
+  /* Стили для iOS стиля выбора времени */
+  .ios-time-picker .wheel {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: y mandatory;
+  }
+  
+  .ios-time-picker .wheel::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Обеспечение контрастного текста в полях ввода */
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  input, select, textarea {
+    color: white !important;
+    background-color: rgba(30, 30, 50, 0.6) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+  }
+  
+  /* Стили для мистического текста */
+  .font-mystical {
+    font-family: 'Ruslan Display', serif;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    letter-spacing: 0.05em;
+  }
+  
+  .font-old-standard {
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 0.03em;
+    font-weight: 700;
+  }
+  
+  .font-gilroy {
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 0.01em;
+  }
+  
+  .font-elegant {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  
+  .font-cormorant {
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 0.01em;
+    font-weight: 400;
+  }
+
+  .font-cinzel {
+    font-family: 'Connie', sans-serif;
+    letter-spacing: 0.02em;
+    font-weight: 700;
+  }
+
+  .font-playfair {
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+  }
+  
+  .font-connie {
+    font-family: 'Connie', sans-serif;
+    letter-spacing: 0.02em;
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+    
+    /* Добавляем позолоченный вид к тексту */
+    background: linear-gradient(to bottom, #FFD700 0%, #FFA500 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Улучшенный золотистый градиент для текста */
+  .text-gold-gradient {
+    background: linear-gradient(to bottom, #FFF0A0 10%, #FFD700 40%, #c7a550 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+    position: relative;
+    letter-spacing: 0.02em;
+    z-index: 1;
+  }
+  
+  /* Блик на тексте */
+  .text-gold-gradient::before {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent 45%, rgba(255, 255, 255, 0.5) 50%, transparent 55%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    z-index: 2;
+    animation: goldShimmer 4s linear infinite;
+  }
+  
+  @keyframes goldShimmer {
+    0% { background-position: -100% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  /* Улучшенная анимация мерцания для заголовков - более сдержанная */
+  @keyframes titleGlow {
+    0%, 100% { 
+      text-shadow: 0 0 2px rgba(255, 215, 0, 0.3),
+                  0 0 4px rgba(255, 215, 0, 0.2),
+                  0 0 1px rgba(255, 250, 240, 0.1);
+    }
+    25% {
+      text-shadow: 0 0 3px rgba(255, 215, 0, 0.4),
+                  0 0 6px rgba(255, 215, 0, 0.3),
+                  0 0 2px rgba(255, 250, 240, 0.2);
+    }
+    50% { 
+      text-shadow: 0 0 5px rgba(255, 215, 0, 0.5),
+                  0 0 10px rgba(255, 215, 0, 0.3),
+                  0 0 3px rgba(255, 250, 240, 0.2);
+    }
+    75% {
+      text-shadow: 0 0 4px rgba(255, 215, 0, 0.4),
+                  0 0 7px rgba(255, 215, 0, 0.3),
+                  0 0 2px rgba(255, 250, 240, 0.2);
+    }
+  }
+  
+  .title-glow {
+    animation: titleGlow 5s ease-in-out infinite;
+    position: relative;
+  }
+  
+  .text-shadow-gold {
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.7),
+                 0 0 12px rgba(255, 215, 0, 0.4);
+  }
+  
+  /* Эффект легкого "сияния" вокруг текста */
+  .title-glow::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.15) 0%, transparent 60%);
+    filter: blur(6px);
+    z-index: -1;
+    opacity: 0.6;
+    animation: pulseGlow 3s ease-in-out infinite alternate;
+  }
+  
+  @keyframes pulseGlow {
+    0% { 
+      opacity: 0.4; 
+      transform: translate(-50%, -50%) scale(0.95);
+    }
+    100% { 
+      opacity: 0.6; 
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+  }
+  
+  /* Анимация для декоративных символов */
+  @keyframes rotateSymbol {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Стили для декоративных элементов */
+  .decorative-symbol {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    opacity: 0.5;
+    pointer-events: none;
+    transition: all 0.5s ease;
+  }
+  
+  .decorative-symbol.top-left {
+    top: 10px;
+    left: 10px;
+    animation: rotateSymbol 30s linear infinite;
+  }
+  
+  .decorative-symbol.top-right {
+    top: 10px;
+    right: 10px;
+    animation: rotateSymbol 35s linear infinite reverse;
+  }
+  
+  .decorative-symbol.bottom-left {
+    bottom: 10px;
+    left: 10px;
+    animation: rotateSymbol 40s linear infinite reverse;
+  }
+  
+  .decorative-symbol.bottom-right {
+    bottom: 10px;
+    right: 10px;
+    animation: rotateSymbol 45s linear infinite;
+  }
+  
+  /* Стили для эффекта появления */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+  
+  .delay-100 { animation-delay: 0.1s; }
+  .delay-200 { animation-delay: 0.2s; }
+  .delay-300 { animation-delay: 0.3s; }
+  .delay-400 { animation-delay: 0.4s; }
+  .delay-500 { animation-delay: 0.5s; }
+  
+  /* Стили для индикатора планет */
+  .planets-indicator {
+    @apply flex items-center justify-around p-3 mb-4 rounded-lg;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(47, 30, 94, 0.7));
+    border: 1px solid rgba(177, 151, 252, 0.3);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4),
+                inset 0 0 15px rgba(177, 151, 252, 0.1);
+  }
+  
+  .planet {
+    @apply relative flex flex-col items-center;
+    transition: transform 0.3s ease;
+  }
+  
+  .planet:hover {
+    transform: translateY(-3px);
+  }
+  
+  .planet-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 15px currentColor;
+  }
+  
+  .planet-icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5) 0%, transparent 60%);
+    z-index: 1;
+  }
+  
+  .planet-icon::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    background: conic-gradient(transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: rotateSymbol 15s linear infinite;
+    z-index: 0;
+  }
+  
+  .planet-name {
+    @apply text-xs mt-2 font-medium;
+    font-family: 'Cinzel', serif;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 5px rgba(255,255,255,0.3);
+  }
+  
+  /* Декоративный скролл */
+  .scroll-container {
+    position: relative;
+    background: linear-gradient(to right, 
+                rgba(155, 89, 182, 0.1), 
+                rgba(155, 89, 182, 0.2), 
+                rgba(155, 89, 182, 0.1));
+    border-radius: 4px;
+    padding: 8px;
+    margin: 16px 0;
+    box-shadow: inset 0 0 20px rgba(155, 89, 182, 0.15),
+                0 5px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(155, 89, 182, 0.3);
+    overflow: hidden;
+  }
+  
+  .scroll-container::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 40px;
+    top: 0;
+    left: 0;
+    background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.08), 
+                transparent);
+    border-radius: 4px 4px 0 0;
+  }
+  
+  .scroll-container::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M20,20 L80,20 L80,80 L20,80 Z' stroke='rgba(255,215,0,0.1)' fill='none' stroke-width='1' stroke-dasharray='2,2'/%3E%3Ccircle cx='20' cy='20' r='2' fill='%23FFD700' opacity='0.2'/%3E%3Ccircle cx='80' cy='20' r='2' fill='%23FFD700' opacity='0.2'/%3E%3Ccircle cx='20' cy='80' r='2' fill='%23FFD700' opacity='0.2'/%3E%3Ccircle cx='80' cy='80' r='2' fill='%23FFD700' opacity='0.2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+  }
+  
+  /* Анимации для мистических эффектов */
+  @keyframes cosmicPulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.4;
+    }
+    50% {
+      transform: scale(1.02);
+      opacity: 0.6;
+    }
+  }
+  
+  @keyframes mysticalShimmer {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  .cosmic-pulse {
+    animation: cosmicPulse 4s ease-in-out infinite;
+  }
+  
+  .mystical-shimmer {
+    background: linear-gradient(90deg, 
+                rgba(155, 89, 182, 0.1), 
+                rgba(255, 215, 0, 0.2), 
+                rgba(155, 89, 182, 0.1));
+    background-size: 200% 200%;
+    animation: mysticalShimmer 5s ease infinite;
+  }
+}

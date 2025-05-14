@@ -1,0 +1,11 @@
+:root {
+  --primary-opacity: rgba(99, 102, 241, 0.5);
+}
+
+[data-theme="dark"] {
+  --primary-opacity: rgba(99, 102, 241, 0.5);
+}
+
+[data-theme="light"] {
+  --primary-opacity: rgba(240, 171, 252, 0.5);
+}

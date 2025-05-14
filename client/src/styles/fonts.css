@@ -1,0 +1,53 @@
+/* Импорт шрифтов с Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Rubik+Dirt&family=Ruslan+Display&family=Yeseva+One&display=swap');
+
+/* 
+ * Подходящие шрифты для мистической темы с поддержкой кириллицы:
+ * - Ruslan Display - декоративный старорусский шрифт
+ * - Yeseva One - элегантный заголовочный шрифт
+ * - Cormorant Garamond - элегантный шрифт с засечками
+ * - Rubik Dirt - текстурированный шрифт
+ */
+
+.font-mystical {
+  font-family: 'Ruslan Display', cursive;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  letter-spacing: 0.05em;
+}
+
+.font-elegant {
+  font-family: 'Yeseva One', cursive;
+}
+
+.font-serif {
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.font-textured {
+  font-family: 'Rubik Dirt', cursive;
+}
+
+/* Золотистый градиент для текста */
+.text-gold-gradient {
+  background: linear-gradient(to bottom, #f0d264 0%, #c7a550 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
+/* Анимация мерцания для заголовков */
+@keyframes titleGlow {
+  0%, 100% { 
+    text-shadow: 0 0 4px rgba(255, 215, 0, 0.3),
+                 0 0 8px rgba(255, 215, 0, 0.3);
+  }
+  50% { 
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6),
+                 0 0 15px rgba(255, 215, 0, 0.4);
+  }
+}
+
+.title-glow {
+  animation: titleGlow 3s ease-in-out infinite;
+}

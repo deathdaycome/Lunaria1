@@ -1,0 +1,33 @@
+/* Глобальные исправления для проблем с z-index */
+
+/* Селектор для popover компонентов Radix UI */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Селектор для корректной работы Calendar */
+.rdp {
+  --rdp-accent-color: var(--primary);
+  --rdp-background-color: var(--card-background);
+  position: relative;
+  z-index: 9999 !important;
+}
+
+/* Исправление для порталов Radix UI */
+[data-radix-portal] {
+  z-index: 9999 !important;
+}
+
+/* Перемещение всех выпадающих меню и диалогов на верхний слой */
+.radix-popover, 
+.radix-dialog-overlay,
+.radix-dialog-content,
+.radix-popover-content {
+  z-index: 9999 !important;
+}
+
+/* Повышенный приоритет для календаря */
+.calendar-wrapper {
+  position: relative;
+  z-index: 9999 !important;
+}
