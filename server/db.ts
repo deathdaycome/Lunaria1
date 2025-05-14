@@ -1,5 +1,5 @@
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from "@shared/schema";
 
 console.log('=== DATABASE CONFIGURATION ===');
@@ -13,5 +13,13 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+// Создаем подключение
+const client = postgres(process.env.DATABASE_URL);
+export const db = drizzle(client, { schema });
+
+// Создаем заглушку pool для совместимости
+export const pool = {
+  end: async () => {
+    await client.end();
+  }
+};
