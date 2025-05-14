@@ -5,7 +5,7 @@ WORKDIR /app
 # Копируем package.json
 COPY package*.json ./
 
-# Устанавливаем зависимости включая dev (для сборки)
+# Устанавливаем ВСЕ зависимости (включая dev)
 RUN npm install
 
 # Копируем исходный код
@@ -14,8 +14,9 @@ COPY . .
 # Собираем проект
 RUN npm run build
 
-# Устанавливаем только production зависимости для финального образа
-RUN npm ci --only=production && npm cache clean --force
+# НЕ удаляем dev зависимости, так как они нужны в runtime
+# (Закомментируйте эту строку)
+# RUN npm ci --only=production && npm cache clean --force
 
 # Порт будет назначен CapRover
 ENV PORT=5000
