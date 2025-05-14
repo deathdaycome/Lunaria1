@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
 console.log('=== DATABASE CONFIGURATION ===');
@@ -13,9 +13,5 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Используем HTTP драйвер вместо WebSocket
-const sql = neon(process.env.DATABASE_URL);
-export const db = drizzle(sql, { schema });
-
-// Экспортируем заглушку для совместимости
-export const pool = { end: () => Promise.resolve() };
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle(pool, { schema });
