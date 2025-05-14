@@ -2,7 +2,7 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Устанавливаем curl для health check
+# Устанавливаем curl для health check (но не используем HEALTHCHECK в Dockerfile)
 RUN apk add --no-cache curl
 
 # Копируем package.json
@@ -25,9 +25,9 @@ RUN npm run build
 ENV PORT=5000
 EXPOSE 5000
 
-# Добавляем health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
+# НЕ ИСПОЛЬЗУЕМ HEALTHCHECK В DOCKERFILE - CapRover может его не любить
+# HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+#   CMD curl -f http://localhost:5000/health || exit 1
 
 # Запускаем приложение
 CMD ["npm", "start"]
