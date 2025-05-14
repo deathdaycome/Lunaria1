@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
 # FORCE CACHE BUST - CHANGE THIS LINE TO BUST CACHE
-RUN echo "Build time: Wed May 14 18:08:00 GMT 2025" > /build_info
+RUN echo "Build time: Wed May 14 18:15:00 GMT 2025" > /build_info
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN apk add --no-cache curl
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies - THIS SHOULD BE npm install NOT npm ci
+# Install all dependencies
 RUN npm install
 
 # Copy source code
@@ -20,8 +20,8 @@ COPY . .
 # Build the project
 RUN npm run build
 
-# Remove dev dependencies
-RUN npm prune --production
+# ИСПРАВЛЕНИЕ: НЕ удаляем dev dependencies, так как vite нужна для сервера
+# RUN npm prune --production
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodeuser -u 1001
