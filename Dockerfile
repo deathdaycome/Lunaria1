@@ -8,7 +8,11 @@ RUN apk add --no-cache curl
 # Копируем package files
 COPY package*.json ./
 
-# Устанавливаем зависимости
+# РЕШЕНИЕ 1: Генерируем актуальный package-lock.json в контейнере
+RUN rm -f package-lock.json
+RUN npm install --package-lock-only
+
+# Теперь используем npm ci
 RUN npm ci --only=production && npm cache clean --force
 
 # Копируем исходный код
@@ -20,8 +24,8 @@ RUN npm install --only=dev
 # Собираем проект
 RUN npm run build
 
-# Удаляем dev dependencies после сборки
-RUN npm prune --production
+# Удаляем node_modules и переустанавливаем только production
+RUN rm -rf node_modules && npm ci --only=production
 
 # Создаем non-root пользователя
 RUN addgroup -g 1001 -S nodejs && \
