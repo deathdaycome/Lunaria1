@@ -11,13 +11,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// СРАЗУ РЕГИСТРИРУЕМ HEALTH CHECK РОУТЫ - ДО ВСЕГО ОСТАЛЬНОГО
+// HEALTH CHECK РОУТЫ - ДО ВСЕГО ОСТАЛЬНОГО
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
     app: 'Lunaria AI',
-    port: process.env.PORT || 5000
+    port: process.env.PORT || 5000,
+    env: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -96,14 +97,29 @@ async function seedZodiacSignsIfNeeded() {
 }
 
 (async () => {
+  let server: any = null;
+  
   try {
-    // Инициализируем маршруты и создаем HTTP сервер
-    const server = await registerRoutes(app);
+    // ИСПРАВЛЕНИЕ 1: Присваиваем переменной NODE_ENV для корректной работы
+    if (!process.env.NODE_ENV) {
+      process.env.NODE_ENV = 'production';
+    }
+    
+    // ИСПРАВЛЕНИЕ 2: Настройка Vite ДО регистрации маршрутов
+    if (process.env.NODE_ENV === "development") {
+      server = await setupVite(app, null);
+    } else {
+      // Для production сразу подключаем статические файлы
+      serveStatic(app);
+    }
+    
+    // ИСПРАВЛЕНИЕ 3: Регистрируем маршруты ПОСЛЕ настройки Vite
+    await registerRoutes(app);
     
     // Запускаем заполнение базы данных знаками зодиака, если нужно
     await seedZodiacSignsIfNeeded();
     
-    // Глобальный обработчик ошибок
+    // Глобальный обработчик ошибок (ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error("Error:", err);
       const status = err.status || err.statusCode || 500;
@@ -112,47 +128,78 @@ async function seedZodiacSignsIfNeeded() {
       res.status(status).json({ message });
     });
     
-    // Настройка Vite для разработки или статических файлов для продакшена
-    if (app.get("env") === "development") {
-      await setupVite(app, server);
+    // ИСПРАВЛЕНИЕ 4: Создаем HTTP сервер правильно
+    const port = parseInt(process.env.PORT || '5000');
+    const host = process.env.HOST || '0.0.0.0';
+    
+    // Если сервер еще не создан (в production), создаем его
+    if (!server) {
+      server = app.listen(port, host, () => {
+        log(`🚀 Приложение "Lunaria AI" запущено`);
+        log(`📍 Адрес: http://${host}:${port}`);
+        log(`🏥 Health check: http://${host}:${port}/health`);
+        log(`🌍 Окружение: ${process.env.NODE_ENV}`);
+        
+        // Дополнительная проверка - тестируем здоровье приложения
+        setTimeout(() => {
+          log("✅ Приложение полностью инициализировано");
+        }, 2000);
+      });
     } else {
-      serveStatic(app);
+      // В режиме разработки сервер уже создан, просто логируем
+      log(`🚀 Приложение "Lunaria AI" запущено`);
+      log(`📍 Адрес: http://${host}:${port}`);
+      log(`🏥 Health check: http://${host}:${port}/health`);
+      log(`🌍 Окружение: ${process.env.NODE_ENV}`);
     }
     
-    // Запускаем сервер
-    const port = parseInt(process.env.PORT) || 5000;
-    server.listen({
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    }, () => {
-      log(`Приложение "Lunaria AI" запущено на порту ${port}`);
-      log(`Health check доступен на http://0.0.0.0:${port}/health`);
+    // ИСПРАВЛЕНИЕ 5: Обработчики сигналов с лучшей логикой
+    const gracefulShutdown = async (signal: string) => {
+      log(`${signal} received, shutting down gracefully`);
       
-      // Дополнительная проверка - тестируем здоровье приложения
-      setTimeout(() => {
-        log("Приложение полностью инициализировано");
-      }, 2000);
+      if (server) {
+        server.close(async () => {
+          log('HTTP server closed');
+          
+          try {
+            await pool.end();
+            log('Database connection closed');
+          } catch (err) {
+            console.error('Error closing database connection:', err);
+          }
+          
+          process.exit(0);
+        });
+        
+        // Принудительное закрытие через 10 секунд
+        setTimeout(() => {
+          log('Forcing shutdown after 10s');
+          process.exit(1);
+        }, 10000);
+      } else {
+        process.exit(0);
+      }
+    };
+    
+    // Регистрируем обработчики сигналов
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    
+    // ИСПРАВЛЕНИЕ 6: Обработка необработанных ошибок
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
     });
     
-    // Очистка ресурсов при остановке приложения
-    process.on('SIGTERM', async () => {
-      log('SIGTERM received, shutting down gracefully');
-      server.close(() => {
-        log('HTTP server closed');
-      });
-      
-      try {
-        await pool.end();
-        log('Database connection closed');
-      } catch (err) {
-        console.error('Error closing database connection:', err);
-      }
-      
-      process.exit(0);
+    process.on('uncaughtException', (error) => {
+      console.error('Uncaught Exception:', error);
+      process.exit(1);
     });
+    
   } catch (error) {
-    console.error("Error starting application:", error);
+    console.error("❌ Error starting application:", error);
     process.exit(1);
   }
 })();
+
+// Export app for testing purposes
+export default app;

@@ -30,7 +30,38 @@ export default defineConfig({
   },
   root: path.resolve(__dirname, "client"),
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    outDir: path.resolve(__dirname, "dist", "public"),
     emptyOutDir: true,
+    assetsDir: "assets",
+    sourcemap: false, // Отключаем sourcemap для production
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'ui-vendor': ['@mui/material', '@mui/icons-material'],
+          'radix-vendor': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-popover'
+          ]
+        }
+      }
+    }
+  },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+    host: true, // Разрешаем подключения извне
+    port: 3000,
+  },
+  preview: {
+    port: 3000,
+    host: true,
   },
 });
