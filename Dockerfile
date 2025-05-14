@@ -2,6 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Устанавливаем curl для health check
+RUN apk add --no-cache curl
+
 # Копируем package.json
 COPY package*.json ./
 
@@ -21,6 +24,10 @@ RUN npm run build
 # Порт будет назначен CapRover
 ENV PORT=5000
 EXPOSE 5000
+
+# Добавляем health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:5000/health || exit 1
 
 # Запускаем приложение
 CMD ["npm", "start"]
