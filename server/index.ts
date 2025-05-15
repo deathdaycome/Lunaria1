@@ -1,3 +1,37 @@
+// Добавляем crash protection В САМОЕ НАЧАЛО
+console.log('=== CRASH PROTECTION START ===');
+
+// Ловим ВСЕ необработанные ошибки
+process.on('uncaughtException', (error) => {
+    console.error('=== UNCAUGHT EXCEPTION ===');
+    console.error('Error:', error);
+    console.error('Stack:', error.stack);
+    console.error('Time:', new Date().toISOString());
+    console.error('Memory at crash:', process.memoryUsage());
+    // НЕ ЗАВЕРШАЕМ процесс
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('=== UNHANDLED PROMISE REJECTION ===');
+    console.error('Reason:', reason);
+    console.error('Promise:', promise);
+    console.error('Time:', new Date().toISOString());
+    console.error('Memory at rejection:', process.memoryUsage());
+    // НЕ ЗАВЕРШАЕМ процесс
+});
+
+// Детальный лог запуска
+console.log('=== STARTUP DIAGNOSTICS ===');
+console.log('Node.js version:', process.version);
+console.log('Platform:', process.platform);
+console.log('Working directory:', process.cwd());
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Port:', process.env.PORT);
+console.log('Available memory:', Math.round(process.memoryUsage().rss / 1024 / 1024), 'MB');
+
+// Логируем каждый этап загрузки
+console.log('Loading modules...');
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -5,6 +39,8 @@ import { format } from "date-fns";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { pool } from "./db";
+
+console.log('Modules loaded successfully');
 
 // Создаем и настраиваем Express приложение
 const app = express();
@@ -111,14 +147,20 @@ async function seedZodiacSignsIfNeeded() {
     }
   } catch (error) {
     log("⚠️  Database seeding skipped - will work once table exists");
-    // НЕ ЛОГИРУЕМ ОШИБКУ - просто пропускаем
+    console.log("DB seed error (harmless):", error);
+    // НЕ ЛОГИРУЕМ ОШИБКУ КАК КРИТИЧЕСКУЮ - просто пропускаем
   }
 }
+
+// Флаг для предотвращения множественных попыток завершения
+let isShuttingDown = false;
 
 (async () => {
   let server: any = null;
   
   try {
+    console.log('Starting main application logic...');
+    
     // ИСПРАВЛЕНИЕ 1: Присваиваем переменной NODE_ENV для корректной работы
     if (!process.env.NODE_ENV) {
       process.env.NODE_ENV = 'production';
@@ -129,22 +171,28 @@ async function seedZodiacSignsIfNeeded() {
     log(`📊 Node version: ${process.version}`);
     
     // ИСПРАВЛЕНИЕ 2: Настройка Vite ДО регистрации маршрутов
+    console.log('Setting up Vite/Static files...');
     if (process.env.NODE_ENV === "development") {
       server = await setupVite(app, null);
     } else {
       // Для production сразу подключаем статические файлы
       serveStatic(app);
     }
+    console.log('Vite/Static setup complete');
     
     // ИСПРАВЛЕНИЕ 3: Регистрируем маршруты ПОСЛЕ настройки Vite
+    console.log('Registering routes...');
     await registerRoutes(app);
+    console.log('Routes registered');
     
     // Запускаем заполнение базы данных знаками зодиака, если нужно
+    console.log('Starting database seeding...');
     await seedZodiacSignsIfNeeded();
+    console.log('Database seeding complete');
     
     // Глобальный обработчик ошибок (ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      console.error("Error:", err);
+      console.error("Express Error Handler:", err);
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Внутренняя ошибка сервера";
       
@@ -154,6 +202,8 @@ async function seedZodiacSignsIfNeeded() {
     // ИСПРАВЛЕНИЕ 4: Создаем HTTP сервер правильно
     const port = parseInt(process.env.PORT || '5000');
     const host = '0.0.0.0'; // ОБЯЗАТЕЛЬНО 0.0.0.0 для Docker
+    
+    console.log(`Starting server on ${host}:${port}...`);
     
     // Если сервер еще не создан (в production), создаем его
     if (!server) {
@@ -192,8 +242,14 @@ async function seedZodiacSignsIfNeeded() {
       log(`🌍 Окружение: ${process.env.NODE_ENV}`);
     }
     
-    // ИСПРАВЛЕНИЕ 5: Обработчики сигналов с лучшей логикой
+    // ИСПРАВЛЕНИЕ 5: Улучшенный обработчик graceful shutdown
     const gracefulShutdown = async (signal: string) => {
+      if (isShuttingDown) {
+        log(`${signal} already received, ignoring...`);
+        return;
+      }
+      
+      isShuttingDown = true;
       log(`${signal} received, shutting down gracefully`);
       log(`Uptime: ${process.uptime()}s`);
       log(`Memory usage: ${JSON.stringify(process.memoryUsage())}`);
@@ -213,44 +269,54 @@ async function seedZodiacSignsIfNeeded() {
           }
           
           log('👋 Graceful shutdown complete');
+          log('📤 Process exiting with code: 0');
           process.exit(0);
         });
         
-        // Принудительное закрытие через 15 секунд (увеличил время)
+        // Принудительное закрытие через 30 секунд
         setTimeout(() => {
-          log('⚠️  Forcing shutdown after 15s');
+          log('⚠️  Forcing shutdown after 30s');
           process.exit(1);
-        }, 15000);
+        }, 30000);
       } else {
         log('No server to close, exiting immediately');
         process.exit(0);
       }
     };
     
+    // ВАЖНО: Удаляем старые обработчики перед добавлением новых
+    process.removeAllListeners('SIGTERM');
+    process.removeAllListeners('SIGINT');
+    process.removeAllListeners('unhandledRejection');
+    process.removeAllListeners('uncaughtException');
+    
     // Регистрируем обработчики сигналов
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-    
-    // ИСПРАВЛЕНИЕ 6: Обработка необработанных ошибок
-    process.on('unhandledRejection', (reason, promise) => {
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-      log(`❌ Unhandled Rejection: ${reason}`);
-    });
-    
-    process.on('uncaughtException', (error) => {
-      console.error('Uncaught Exception:', error);
-      log(`❌ Uncaught Exception: ${error.message}`);
-      // НЕ выходим немедленно, даём время для логирования
-      setTimeout(() => process.exit(1), 100);
-    });
     
     // Дополнительные обработчики событий процесса
     process.on('exit', (code) => {
       log(`📤 Process exiting with code: ${code}`);
     });
     
+    // Мониторинг памяти каждые 60 секунд
+    setInterval(() => {
+      const memUsage = process.memoryUsage();
+      const formatBytes = (bytes: number) => Math.round(bytes / 1024 / 1024);
+      
+      log(`Memory: RSS ${formatBytes(memUsage.rss)}MB, Heap ${formatBytes(memUsage.heapUsed)}/${formatBytes(memUsage.heapTotal)}MB`);
+      
+      // Предупреждение если память превышает 1GB
+      if (memUsage.heapUsed > 1024 * 1024 * 1024) {
+        log('⚠️ High memory usage detected!');
+      }
+    }, 60000);
+    
+    console.log('Application startup complete!');
+    
   } catch (error) {
     console.error("❌ Error starting application:", error);
+    console.error("Stack trace:", error.stack);
     log(`❌ Fatal error starting application: ${error}`);
     process.exit(1);
   }
