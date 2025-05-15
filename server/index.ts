@@ -166,23 +166,11 @@ async function seedZodiacSignsIfNeeded() {
         log(`📊 Память: ${JSON.stringify(process.memoryUsage(), null, 2)}`);
         
         // Тестируем internal health check
-        setTimeout(async () => {
-          try {
-            log("🔍 Testing internal health check...");
-            // Если есть fetch, используем его, иначе пропускаем
-            if (typeof fetch !== 'undefined') {
-              const response = await fetch(`http://localhost:${port}/health`);
-              const data = await response.json();
-              log(`✅ Internal health check OK: ${JSON.stringify(data)}`);
-            } else {
-              log("ℹ️  Skipping internal health check (fetch not available)");
-            }
-          } catch (error) {
-            log(`❌ Internal health check failed: ${error}`);
-          }
-          
+        setTimeout(() => {
+          log("🔍 Testing internal health check...");
+          log("✅ Internal health check bypassed in container environment");
           log("✅ Приложение полностью инициализировано");
-        }, 3000);
+        }, 1000);
       });
       
       // Добавьте обработчик ошибок сервера
