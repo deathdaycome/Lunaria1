@@ -47,6 +47,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ ВСЕХ ЗАПРОСОВ
+app.use((req, res, next) => {
+  const userAgent = req.get('User-Agent') || 'unknown';
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${ip} UA: ${userAgent}`);
+  next();
+});
+
 // Добавляем логирование всех входящих запросов
 app.use((req, res, next) => {
   log(`${req.method} ${req.path} from ${req.ip || 'unknown'}`);
@@ -55,7 +63,7 @@ app.use((req, res, next) => {
 
 // HEALTH CHECK РОУТЫ - ДО ВСЕГО ОСТАЛЬНОГО
 app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ 
+  const healthData = {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     app: 'Lunaria AI',
@@ -63,14 +71,27 @@ app.get('/health', (req: Request, res: Response) => {
     env: process.env.NODE_ENV || 'development',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
+    pid: process.pid,
     urls: {
       health: '/health',
       api: '/api'
     }
-  });
+  };
+  
+  console.log('=== HEALTH CHECK REQUESTED ===');
+  console.log('From IP:', req.ip || req.connection.remoteAddress);
+  console.log('User Agent:', req.get('User-Agent'));
+  console.log('Health data:', healthData);
+  console.log('=== HEALTH CHECK RESPONSE SENT ===');
+  
+  res.status(200).json(healthData);
 });
 
 app.get('/', (req: Request, res: Response) => {
+  console.log('=== ROOT PATH REQUESTED ===');
+  console.log('From IP:', req.ip || req.connection.remoteAddress);
+  console.log('User Agent:', req.get('User-Agent'));
+  
   res.status(200).json({ 
     message: 'Lunaria AI is running',
     version: '1.0.0',
@@ -250,6 +271,7 @@ let isShuttingDown = false;
       }
       
       isShuttingDown = true;
+      console.log('=== GRACEFUL SHUTDOWN START ===');
       log(`${signal} received, shutting down gracefully`);
       log(`Uptime: ${process.uptime()}s`);
       log(`Memory usage: ${JSON.stringify(process.memoryUsage())}`);
@@ -291,15 +313,26 @@ let isShuttingDown = false;
     process.removeAllListeners('uncaughtException');
     
     // Регистрируем обработчики сигналов
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    process.on('SIGTERM', () => {
+      console.log('=== SIGTERM RECEIVED ===');
+      console.log('Time:', new Date().toISOString());
+      console.log('Uptime at SIGTERM:', process.uptime());
+      gracefulShutdown('SIGTERM');
+    });
+    
+    process.on('SIGINT', () => {
+      console.log('=== SIGINT RECEIVED ===');
+      console.log('Time:', new Date().toISOString());
+      console.log('Uptime at SIGINT:', process.uptime());
+      gracefulShutdown('SIGINT');
+    });
     
     // Дополнительные обработчики событий процесса
     process.on('exit', (code) => {
       log(`📤 Process exiting with code: ${code}`);
     });
     
-    // Мониторинг памяти каждые 60 секунд
+    // Мониторинг памяти каждые 30 секунд
     setInterval(() => {
       const memUsage = process.memoryUsage();
       const formatBytes = (bytes: number) => Math.round(bytes / 1024 / 1024);
@@ -310,7 +343,7 @@ let isShuttingDown = false;
       if (memUsage.heapUsed > 1024 * 1024 * 1024) {
         log('⚠️ High memory usage detected!');
       }
-    }, 60000);
+    }, 30000);
     
     console.log('Application startup complete!');
     
