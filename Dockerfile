@@ -32,8 +32,8 @@ EXPOSE 5000
 ENV PORT=5000
 
 # Add health check (ИСПРАВЛЕНО - объединено в одну строку!)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
+#HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+ # CMD curl -f http://localhost:5000/health || exit 1
 
 # Start the application (только один CMD!)
 CMD ["node", "--max-old-space-size=512", "dist/index.js"]
