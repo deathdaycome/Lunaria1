@@ -152,7 +152,7 @@ async function seedZodiacSignsIfNeeded() {
     });
     
     // ИСПРАВЛЕНИЕ 4: Создаем HTTP сервер правильно
-    const port = parseInt(process.env.PORT || '80');
+    const port = parseInt(process.env.PORT || '5000');
     const host = '0.0.0.0'; // ОБЯЗАТЕЛЬНО 0.0.0.0 для Docker
     
     // Если сервер еще не создан (в production), создаем его

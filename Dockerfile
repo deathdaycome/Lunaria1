@@ -17,10 +17,9 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nodeuser -u 1001
 RUN chown -R nodeuser:nodejs /app
 USER nodeuser
 # Expose port explicitly
-EXPOSE 80
+EXPOSE 80EXPOSE 5000
 # Set environment variable for port
-ENV PORT=80
+ENV PORT=5000
 # Add health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl -f http://localhost:80/ || exit 1
-# Start with memory limit
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl -f http://localhost:5000/ || exit 1
 CMD ["node", "--max-old-space-size=512", "dist/index.js"]
