@@ -108,17 +108,28 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
           variant: "default"
         });
         
-        console.log("Регистрация успешна, перенаправляем на страницу успеха");
+        console.log("Регистрация успешна, перенаправляем на страницу гороскопов");
         
-        // Сохраняем данные пользователя в localStorage, чтобы не потерять их
+        // Сохраняем данные пользователя в localStorage
         localStorage.setItem('lunaria_user', JSON.stringify(userData));
         
-        // Перенаправляем на страницу успеха вместо защищенных маршрутов
-        // Перенаправляем на главную страницу
+        // Инвалидируем кэш для обновления состояния аутентификации
+        queryClient.invalidateQueries(['auth']);
+        
+        // Перенаправляем на страницу с гороскопами
         setTimeout(() => {
-          console.log("Выполняем переход на главную страницу");
-          window.location.href = '/';
+          console.log("Выполняем переход на страницу гороскопов");
+          navigate('/horoscope'); // или /horoscopes в зависимости от вашего роутинга
         }, 1500);
+      },
+      onError: (error) => {
+        console.error("Ошибка регистрации:", error);
+        toast({
+          title: "Ошибка регистрации",
+          description: "Не удалось создать профиль. Попробуйте еще раз.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
       }
     });
   };
@@ -266,9 +277,10 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
 
               <Button
                 type="submit"
-                className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-all rounded-full shadow-[0_0_15px_var(--primary-opacity)] font-connie text-white mt-6 text-lg"
+                disabled={isSubmitting}
+                className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-all rounded-full shadow-[0_0_15px_var(--primary-opacity)] font-connie text-white mt-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Начать путешествие с Лунарией
+                {isSubmitting ? "Создаем профиль..." : "Начать путешествие с Лунарией"}
               </Button>
             </form>
           </Form>
