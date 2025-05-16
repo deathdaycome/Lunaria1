@@ -1,0 +1,31 @@
+2025-05-16T09:16:41.304436695Z 9:16:41 AM [express] ✅ Server is listening on 0.0.0.0:5000
+2025-05-16T09:16:42.305480405Z 9:16:42 AM [express] 🔍 Testing internal health check...
+2025-05-16T09:16:42.305999408Z 9:16:42 AM [express] ✅ Internal health check bypassed in container environment
+2025-05-16T09:16:42.306458515Z 9:16:42 AM [express] ✅ Приложение полностью инициализировано
+2025-05-16T09:16:43.238434791Z === SIGTERM RECEIVED ===
+2025-05-16T09:16:43.238792913Z Time: 2025-05-16T09:16:43.238Z
+2025-05-16T09:16:43.239159553Z Uptime at SIGTERM: 533.009172588
+2025-05-16T09:16:43.239542840Z === GRACEFUL SHUTDOWN START ===
+2025-05-16T09:16:43.240486846Z 9:16:43 AM [express] SIGTERM received, shutting down gracefully
+2025-05-16T09:16:43.240812648Z 9:16:43 AM [express] Uptime: 533.010798718s
+2025-05-16T09:16:43.241239696Z 9:16:43 AM [express] Memory usage: {"rss":94789632,"heapTotal":35074048,"heapUsed":33347608,"external":2100814,"arrayBuffers":61819}
+2025-05-16T09:16:43.242471862Z 9:16:43 AM [express] HTTP server closed
+2025-05-16T09:16:43.247726005Z 9:16:43 AM [express] Database connection closed
+2025-05-16T09:16:43.247986920Z 9:16:43 AM [express] 👋 Graceful shutdown complete
+2025-05-16T09:16:43.248324378Z 9:16:43 AM [express] 📤 Process exiting with code: 0
+2025-05-16T09:16:43.248777311Z 9:16:43 AM [express] 📤 Process exiting with code: 0
+2025-05-16T09:17:11.315981550Z 9:17:11 AM [express] Memory: RSS 92MB, Heap 29/32MB
+2025-05-16T09:17:41.344407413Z 9:17:41 AM [express] Memory: RSS 92MB, Heap 30/32MB
+2025-05-16T09:17:47.474802069Z [2025-05-16T09:17:47.474Z] GET /auth from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:17:47.475231861Z 9:17:47 AM [express] GET /auth from 103.249.132.141
+2025-05-16T09:17:47.903616168Z [2025-05-16T09:17:47.903Z] GET /assets/index-CaL4e0Cp.js from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:17:47.904142779Z 9:17:47 AM [express] GET /assets/index-CaL4e0Cp.js from 103.249.132.141
+2025-05-16T09:17:48.899484344Z [2025-05-16T09:17:48.899Z] GET /api/user from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:17:48.899980734Z 9:17:48 AM [express] GET /api/user from 103.249.132.141
+2025-05-16T09:17:48.907135855Z 9:17:48 AM [express] GET /api/user 401 in 7ms
+2025-05-16T09:17:48.916113974Z [2025-05-16T09:17:48.915Z] GET /favicon.ico from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:17:48.916490050Z 9:17:48 AM [express] GET /favicon.ico from 103.249.132.141
+2025-05-16T09:17:58.957268725Z [2025-05-16T09:17:58.957Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:17:58.957839539Z 9:17:58 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:17:59.043201223Z 9:17:59 AM [express] POST /api/register 201 in 85ms :: {"id":21,"name":"Иван","email":"temp_17473870…
+2025-05-16T09:18:11.355564136Z 9:18:11 AM [express] Memory: RSS 93MB, Heap 31/33MB

@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getZodiacSign } from "@/lib/zodiac";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 // Упрощенная схема регистрации без username и password
 const registerSchema = z.object({
@@ -97,12 +98,20 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
           variant: "default"
         });
         
-        // После регистрации редирект на главную страницу
-        console.log("Выполняем редирект на /home через 1.5 секунды");
+        // После регистрации перезагружаем данные о пользователе и редиректим на главную страницу
+        console.log("Выполняем редирект на /home через 2 секунды");
+        
+        // Увеличиваем задержку, чтобы данные пользователя точно успели загрузиться
         setTimeout(() => {
-          console.log("Выполняем переход на /home");
-          navigate("/home");
-        }, 1500); // небольшая задержка, чтобы пользователь успел увидеть сообщение
+          console.log("Инвалидируем кэш пользователя");
+          // Инвалидируем кэш, чтобы гарантировать получение актуальных данных о пользователе
+          queryClient.invalidateQueries({queryKey: ["/api/user"]});
+          
+          setTimeout(() => {
+            console.log("Выполняем переход на /home");
+            navigate("/home");
+          }, 500);
+        }, 2000); // увеличенная задержка для надежности
       }
     });
   };
