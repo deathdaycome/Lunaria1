@@ -108,13 +108,45 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
           variant: "default"
         });
         
-        // Используем простой редирект через window.location
-        console.log("Выполняем редирект на главную страницу через window.location");
+        console.log("Регистрация успешна, делаем дополнительную проверку сессии");
         
-        setTimeout(() => {
-          // Используем прямое изменение URL, чтобы обойти возможные проблемы с роутером
-          window.location.href = '/home';
-        }, 2000); // задержка для того, чтобы пользователь увидел сообщение об успешной регистрации
+        // Добавляем ещё один запрос, чтобы гарантировать сохранение сессии
+        const checkSession = async () => {
+          try {
+            console.log("Проверяем сессию через /api/user");
+            const response = await fetch('/api/user');
+            
+            if (response.ok) {
+              const sessionData = await response.json();
+              console.log("Сессия успешно получена:", sessionData);
+              
+              // Обновляем данные в кэше
+              queryClient.setQueryData(["/api/user"], sessionData);
+              
+              // Выполняем переход на домашнюю страницу
+              console.log("Переход на домашнюю страницу");
+              window.location.href = '/';
+            } else {
+              console.log("Ошибка получения сессии:", response.status);
+              
+              // Пробуем еще раз через 2 секунды
+              setTimeout(() => {
+                console.log("Повторный переход на домашнюю страницу");
+                window.location.href = '/home';
+              }, 2000);
+            }
+          } catch (error) {
+            console.error("Ошибка при проверке сессии:", error);
+            
+            // В случае ошибки просто перезагружаем страницу
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }
+        };
+        
+        // Выполняем проверку сессии через 1 секунду
+        setTimeout(checkSession, 1000);
       }
     });
   };

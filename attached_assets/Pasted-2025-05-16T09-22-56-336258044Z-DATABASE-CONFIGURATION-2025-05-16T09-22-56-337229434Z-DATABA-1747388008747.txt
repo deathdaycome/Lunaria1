@@ -1,0 +1,185 @@
+2025-05-16T09:22:56.336258044Z === DATABASE CONFIGURATION ===
+2025-05-16T09:22:56.337229434Z DATABASE_URL exists: true
+2025-05-16T09:22:56.337359021Z DATABASE_URL starts with postgresql: true
+2025-05-16T09:22:56.348499742Z === CRASH PROTECTION START ===
+2025-05-16T09:22:56.348635550Z === STARTUP DIAGNOSTICS ===
+2025-05-16T09:22:56.348733667Z Node.js version: v18.20.8
+2025-05-16T09:22:56.348829886Z Platform: linux
+2025-05-16T09:22:56.348943077Z Working directory: /app
+2025-05-16T09:22:56.349070470Z Environment: production
+2025-05-16T09:22:56.349432630Z Port: 5000
+2025-05-16T09:22:56.350144491Z Available memory: 101 MB
+2025-05-16T09:22:56.350279287Z Loading modules...
+2025-05-16T09:22:56.350375676Z Modules loaded successfully
+2025-05-16T09:22:56.354411616Z Starting main application logic...
+2025-05-16T09:22:56.402235732Z 9:22:56 AM [express] 🔧 Starting in production mode
+2025-05-16T09:22:56.402780125Z 9:22:56 AM [express] 📊 Process ID: 1
+2025-05-16T09:22:56.403223444Z 9:22:56 AM [express] 📊 Node version: v18.20.8
+2025-05-16T09:22:56.403314907Z Setting up Vite/Static files...
+2025-05-16T09:22:56.404162391Z 9:22:56 AM [express] === DEBUG serveStatic ===
+2025-05-16T09:22:56.404507634Z 9:22:56 AM [express] Checking possible paths:
+2025-05-16T09:22:56.404816883Z 9:22:56 AM [express] - /app/dist/public: true
+2025-05-16T09:22:56.405287195Z 9:22:56 AM [express] Found 2 files in /app/dist/public
+2025-05-16T09:22:56.405644746Z 9:22:56 AM [express] - /app/dist: true
+2025-05-16T09:22:56.405999833Z 9:22:56 AM [express] - /app/build: false
+2025-05-16T09:22:56.406511733Z 9:22:56 AM [express] - /app/client/dist: false
+2025-05-16T09:22:56.406779764Z 9:22:56 AM [express] - /app/dist/public: true
+2025-05-16T09:22:56.407086506Z 9:22:56 AM [express] - /app/dist: true
+2025-05-16T09:22:56.407414390Z 9:22:56 AM [express] - /app/public: false
+2025-05-16T09:22:56.407769496Z 9:22:56 AM [express] ✅ Using distPath: /app/dist/public
+2025-05-16T09:22:56.408302073Z Vite/Static setup complete
+2025-05-16T09:22:56.408317868Z Registering routes...
+2025-05-16T09:22:56.411020277Z Routes registered
+2025-05-16T09:22:56.411053692Z Starting database seeding...
+2025-05-16T09:22:56.411558808Z 9:22:56 AM [express] Checking zodiac signs...
+2025-05-16T09:22:56.457147082Z 9:22:56 AM [express] Found 12 zodiac signs, skipping seed
+2025-05-16T09:22:56.457172140Z Database seeding complete
+2025-05-16T09:22:56.457323751Z Starting server on 0.0.0.0:5000...
+2025-05-16T09:22:56.458590152Z Application startup complete!
+2025-05-16T09:22:56.461346911Z 9:22:56 AM [express] 🚀 Приложение "Lunaria AI" запущено
+2025-05-16T09:22:56.461663060Z 9:22:56 AM [express] 📍 Адрес: http://0.0.0.0:5000
+2025-05-16T09:22:56.461954292Z 9:22:56 AM [express] 🏥 Health check: http://0.0.0.0:5000/health
+2025-05-16T09:22:56.462300436Z 9:22:56 AM [express] 🌍 Окружение: production
+2025-05-16T09:22:56.462619392Z 9:22:56 AM [express] 📊 PID: 1
+2025-05-16T09:22:56.462958802Z 9:22:56 AM [express] 📊 Память: {
+2025-05-16T09:22:56.462964122Z "rss": 115593216,
+2025-05-16T09:22:56.462967332Z "heapTotal": 62803968,
+2025-05-16T09:22:56.462970433Z "heapUsed": 35946392,
+2025-05-16T09:22:56.462973246Z "external": 2303829,
+2025-05-16T09:22:56.462976143Z "arrayBuffers": 262433
+2025-05-16T09:22:56.462979064Z }
+2025-05-16T09:22:56.463267875Z 9:22:56 AM [express] ✅ Server is listening on 0.0.0.0:5000
+2025-05-16T09:22:57.465117828Z 9:22:57 AM [express] 🔍 Testing internal health check...
+2025-05-16T09:22:57.465344556Z 9:22:57 AM [express] ✅ Internal health check bypassed in container environment
+2025-05-16T09:22:57.465608929Z 9:22:57 AM [express] ✅ Приложение полностью инициализировано
+2025-05-16T09:23:26.473651233Z 9:23:26 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:23:56.503921965Z 9:23:56 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:24:26.533722997Z 9:24:26 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:24:56.560919749Z 9:24:56 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:25:07.030832566Z [2025-05-16T09:25:07.030Z] GET /auth from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:07.031454546Z 9:25:07 AM [express] GET /auth from 103.249.132.141
+2025-05-16T09:25:07.455641013Z [2025-05-16T09:25:07.455Z] GET /assets/index-uOKqqeLj.js from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:07.456142220Z 9:25:07 AM [express] GET /assets/index-uOKqqeLj.js from 103.249.132.141
+2025-05-16T09:25:10.017163357Z [2025-05-16T09:25:10.015Z] GET /api/user from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:10.017196074Z 9:25:10 AM [express] GET /api/user from 103.249.132.141
+2025-05-16T09:25:10.024985871Z 9:25:10 AM [express] GET /api/user 401 in 8ms
+2025-05-16T09:25:10.026333481Z [2025-05-16T09:25:10.026Z] GET /favicon.ico from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:10.026805964Z 9:25:10 AM [express] GET /favicon.ico from 103.249.132.141
+2025-05-16T09:25:20.233146660Z [2025-05-16T09:25:20.232Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:20.233617710Z 9:25:20 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:20.311528630Z 9:25:20 AM [express] POST /api/register 201 in 78ms :: {"id":22,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:22.323867772Z [2025-05-16T09:25:22.323Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:22.324299731Z 9:25:22 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:22.394707684Z 9:25:22 AM [express] POST /api/register 201 in 70ms :: {"id":23,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:23.183930113Z [2025-05-16T09:25:23.183Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:23.184281216Z 9:25:23 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:23.255708433Z 9:25:23 AM [express] POST /api/register 201 in 71ms :: {"id":24,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:23.325867314Z [2025-05-16T09:25:23.325Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:23.326244664Z 9:25:23 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:23.400121154Z 9:25:23 AM [express] POST /api/register 201 in 73ms :: {"id":25,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:23.857243142Z [2025-05-16T09:25:23.857Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:23.857609145Z 9:25:23 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:23.927445762Z 9:25:23 AM [express] POST /api/register 201 in 69ms :: {"id":26,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:23.994291472Z [2025-05-16T09:25:23.994Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:23.994803911Z 9:25:23 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:24.087505877Z 9:25:24 AM [express] POST /api/register 201 in 92ms :: {"id":27,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:26.505652524Z [2025-05-16T09:25:26.505Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:26.506018426Z 9:25:26 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:26.561237924Z 9:25:26 AM [express] Memory: RSS 110MB, Heap 32/33MB
+2025-05-16T09:25:26.578981798Z 9:25:26 AM [express] POST /api/register 201 in 73ms :: {"id":28,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:26.722429795Z [2025-05-16T09:25:26.722Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:26.722923427Z 9:25:26 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:26.799134920Z 9:25:26 AM [express] POST /api/register 201 in 76ms :: {"id":29,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:56.576469837Z 9:25:56 AM [express] Memory: RSS 94MB, Heap 32/34MB
+2025-05-16T09:26:26.606437571Z 9:26:26 AM [express] Memory: RSS 94MB, Heap 32/34MB
+2025-05-16T09:26:56.635751975Z 9:26:56 AM [express] Memory: RSS 94MB, Heap 32/34MB
+2025-05-16T09:27:26.659360756Z 9:27:26 AM [express] Memory: RSS 94MB, Heap 32/34MB
+2025-05-16T09:27:56.690330975Z 9:27:56 AM [express] Memory: RSS 94MB, Heap 32/34MB
+2025-05-16T09:28:26.721370477Z 9:28:26 AM [express] Memory: RSS 94MB, Heap 32/34MB
+2025-05-16T09:28:56.752993102Z 9:28:56 AM [express] Memory: RSS 94MB, Heap 32/34MB
+2025-05-16T09:29:26.780702774Z 9:29:26 AM [express] Memory: RSS 90MB, Heap 32/34MB
+2025-05-16T09:29:56.811820091Z 9:29:56 AM [express] Memory: RSS 91MB, Heap 32/34MB
+2025-05-16T09:30:26.843381136Z 9:30:26 AM [express] Memory: RSS 91MB, Heap 32/34MB
+2025-05-16T09:30:56.873628411Z 9:30:56 AM [express] Memory: RSS 91MB, Heap 32/34MB
+2025-05-16T09:31:26.885706181Z 9:31:26 AM [express] Memory: RSS 91MB, Heap 32/34MB
+2025-05-16T09:31:45.301180738Z === DATABASE CONFIGURATION ===
+2025-05-16T09:31:45.301809679Z DATABASE_URL exists: true
+2025-05-16T09:31:45.301882190Z DATABASE_URL starts with postgresql: true
+2025-05-16T09:31:45.310679244Z === CRASH PROTECTION START ===
+2025-05-16T09:31:45.310699623Z === STARTUP DIAGNOSTICS ===
+2025-05-16T09:31:45.310715296Z Node.js version: v18.20.8
+2025-05-16T09:31:45.310719420Z Platform: linux
+2025-05-16T09:31:45.310732471Z Working directory: /app
+2025-05-16T09:31:45.310788916Z Environment: production
+2025-05-16T09:31:45.310984122Z Port: 5000
+2025-05-16T09:31:45.311419700Z Available memory: 102 MB
+2025-05-16T09:31:45.311550767Z Loading modules...
+2025-05-16T09:31:45.311556629Z Modules loaded successfully
+2025-05-16T09:31:45.315314671Z Starting main application logic...
+2025-05-16T09:31:45.341106134Z 9:31:45 AM [express] 🔧 Starting in production mode
+2025-05-16T09:31:45.341333519Z 9:31:45 AM [express] 📊 Process ID: 1
+2025-05-16T09:31:45.341631418Z 9:31:45 AM [express] 📊 Node version: v18.20.8
+2025-05-16T09:31:45.341644840Z Setting up Vite/Static files...
+2025-05-16T09:31:45.342356009Z 9:31:45 AM [express] === DEBUG serveStatic ===
+2025-05-16T09:31:45.342717662Z 9:31:45 AM [express] Checking possible paths:
+2025-05-16T09:31:45.343019822Z 9:31:45 AM [express] - /app/dist/public: true
+2025-05-16T09:31:45.343455571Z 9:31:45 AM [express] Found 2 files in /app/dist/public
+2025-05-16T09:31:45.343723911Z 9:31:45 AM [express] - /app/dist: true
+2025-05-16T09:31:45.344051838Z 9:31:45 AM [express] - /app/build: false
+2025-05-16T09:31:45.344474790Z 9:31:45 AM [express] - /app/client/dist: false
+2025-05-16T09:31:45.344777547Z 9:31:45 AM [express] - /app/dist/public: true
+2025-05-16T09:31:45.344937063Z 9:31:45 AM [express] - /app/dist: true
+2025-05-16T09:31:45.345251459Z 9:31:45 AM [express] - /app/public: false
+2025-05-16T09:31:45.345594745Z 9:31:45 AM [express] ✅ Using distPath: /app/dist/public
+2025-05-16T09:31:45.346142815Z Vite/Static setup complete
+2025-05-16T09:31:45.346156015Z Registering routes...
+2025-05-16T09:31:45.348789768Z Routes registered
+2025-05-16T09:31:45.348801782Z Starting database seeding...
+2025-05-16T09:31:45.349217806Z 9:31:45 AM [express] Checking zodiac signs...
+2025-05-16T09:31:45.385979263Z 9:31:45 AM [express] Found 12 zodiac signs, skipping seed
+2025-05-16T09:31:45.386028203Z Database seeding complete
+2025-05-16T09:31:45.386103865Z Starting server on 0.0.0.0:5000...
+2025-05-16T09:31:45.387018666Z Application startup complete!
+2025-05-16T09:31:45.389583682Z 9:31:45 AM [express] 🚀 Приложение "Lunaria AI" запущено
+2025-05-16T09:31:45.389805920Z 9:31:45 AM [express] 📍 Адрес: http://0.0.0.0:5000
+2025-05-16T09:31:45.389978849Z 9:31:45 AM [express] 🏥 Health check: http://0.0.0.0:5000/health
+2025-05-16T09:31:45.390212601Z 9:31:45 AM [express] 🌍 Окружение: production
+2025-05-16T09:31:45.390415802Z 9:31:45 AM [express] 📊 PID: 1
+2025-05-16T09:31:45.390702561Z 9:31:45 AM [express] 📊 Память: {
+2025-05-16T09:31:45.390711063Z "rss": 115744768,
+2025-05-16T09:31:45.390715620Z "heapTotal": 62541824,
+2025-05-16T09:31:45.390719957Z "heapUsed": 36078912,
+2025-05-16T09:31:45.390724111Z "external": 2410319,
+2025-05-16T09:31:45.390728682Z "arrayBuffers": 368923
+2025-05-16T09:31:45.390733322Z }
+2025-05-16T09:31:45.390973153Z 9:31:45 AM [express] ✅ Server is listening on 0.0.0.0:5000
+2025-05-16T09:31:46.392855440Z 9:31:46 AM [express] 🔍 Testing internal health check...
+2025-05-16T09:31:46.393103729Z 9:31:46 AM [express] ✅ Internal health check bypassed in container environment
+2025-05-16T09:31:46.393318308Z 9:31:46 AM [express] ✅ Приложение полностью инициализировано
+2025-05-16T09:31:47.476154395Z === SIGTERM RECEIVED ===
+2025-05-16T09:31:47.476214841Z Time: 2025-05-16T09:31:47.476Z
+2025-05-16T09:31:47.476426118Z Uptime at SIGTERM: 532.145736898
+2025-05-16T09:31:47.476814810Z === GRACEFUL SHUTDOWN START ===
+2025-05-16T09:31:47.477343805Z 9:31:47 AM [express] SIGTERM received, shutting down gracefully
+2025-05-16T09:31:47.477676597Z 9:31:47 AM [express] Uptime: 532.146848718s
+2025-05-16T09:31:47.478187845Z 9:31:47 AM [express] Memory usage: {"rss":95080448,"heapTotal":35598336,"heapUsed":33488328,"external":2099536,"arrayBuffers":60413}
+2025-05-16T09:31:47.479248822Z 9:31:47 AM [express] HTTP server closed
+2025-05-16T09:31:47.484535163Z 9:31:47 AM [express] Database connection closed
+2025-05-16T09:31:47.484878825Z 9:31:47 AM [express] 👋 Graceful shutdown complete
+2025-05-16T09:31:47.485140681Z 9:31:47 AM [express] 📤 Process exiting with code: 0
+2025-05-16T09:31:47.485654658Z 9:31:47 AM [express] 📤 Process exiting with code: 0
+2025-05-16T09:32:15.410596649Z 9:32:15 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:32:21.108564459Z [2025-05-16T09:32:21.108Z] GET /auth from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:32:21.109013097Z 9:32:21 AM [express] GET /auth from 103.249.132.141
+2025-05-16T09:32:21.532979506Z [2025-05-16T09:32:21.532Z] GET /assets/index-DU-mDTrx.js from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:32:21.533491773Z 9:32:21 AM [express] GET /assets/index-DU-mDTrx.js from 103.249.132.141
+2025-05-16T09:32:22.520203920Z [2025-05-16T09:32:22.519Z] GET /api/user from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:32:22.520542828Z 9:32:22 AM [express] GET /api/user from 103.249.132.141
+2025-05-16T09:32:22.527942779Z 9:32:22 AM [express] GET /api/user 401 in 7ms
+2025-05-16T09:32:22.620656189Z [2025-05-16T09:32:22.620Z] GET /favicon.ico from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:32:22.620962902Z 9:32:22 AM [express] GET /favicon.ico from 103.249.132.141
+2025-05-16T09:32:34.753709132Z [2025-05-16T09:32:34.753Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:32:34.754270902Z 9:32:34 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:32:34.840601761Z 9:32:34 AM [express] POST /api/register 201 in 86ms :: {"id":30,"name":"Иван","email":"temp_17473879…
+2025-05-16T09:32:45.421130378Z 9:32:45 AM [express] Memory: RSS 92MB, Heap 31/33MB
+2025-05-16T09:33:15.445200953Z 9:33:15 AM [express] Memory: RSS 92MB, Heap 31/33MB
