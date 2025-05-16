@@ -125,12 +125,10 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
               variant: "default"
             });
             
-            console.log("Регистрация успешна, обновляем кэш и перенаправляем");
+            console.log("Сохраняем пользователя в кэш и перенаправляем");
             
-            // Принудительно обновляем все кэши аутентификации
+            // Просто сохраняем пользователя в кэш
             queryClient.setQueryData(["/api/user"], userData);
-            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-            queryClient.refetchQueries({ queryKey: ["/api/user"] });
             
             resolve(userData);
           },
@@ -146,23 +144,13 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
         });
       });
       
-      // Используем данные, которые уже есть после регистрации
+      // Прямой переход на главную страницу через полную перезагрузку
       setTimeout(() => {
-        console.log("Переходим на гороскоп с имеющимися данными");
+        console.log("Выполняем переход через window.location");
         
-        // Не делаем лишних запросов, используем данные из onSuccess
-        const cachedUser = queryClient.getQueryData(["/api/user"]);
-        console.log("Пользователь в кэше:", cachedUser);
-        
-        if (cachedUser) {
-          console.log("Пользователь найден, переходим на гороскоп");
-          navigate('/horoscope');
-        } else {
-          console.log("Пользователь не найден, переходим на главную");
-          // Если данных нет, попробуем через window.location
-          window.location.href = '/horoscope';
-        }
-      }, 1500); // Уменьшаем задержку
+        // Принудительная перезагрузка страницы с переходом на главную
+        window.location.href = '/';
+      }, 1000);
       
     } catch (error) {
       console.error("Ошибка в onSubmit:", error);
