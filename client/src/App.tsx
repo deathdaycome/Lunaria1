@@ -40,11 +40,45 @@ function RootRedirect() {
   }
 }
 
+// Добавляем компонент для страницы успешной регистрации
+function SuccessPage() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-[#1a1a2e] to-[#16213e]">
+      <div className="w-full max-w-md p-6 bg-background/80 backdrop-blur-md shadow-lg rounded-lg border border-accent/20">
+        <h1 className="text-2xl font-bold text-center mb-6 text-primary">Регистрация успешна!</h1>
+        <p className="text-center mb-6 text-foreground/80">
+          Ваш аккаунт создан успешно. Выберите, куда вы хотите перейти:
+        </p>
+        
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <a href="/horoscope" className="btn bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg py-2 px-4 text-center">
+            Гороскоп
+          </a>
+          <a href="/tarot" className="btn bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg py-2 px-4 text-center">
+            Таро
+          </a>
+          <a href="/compatibility" className="btn bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg py-2 px-4 text-center">
+            Совместимость
+          </a>
+          <a href="/settings" className="btn bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg py-2 px-4 text-center">
+            Настройки
+          </a>
+        </div>
+        
+        <div className="text-center">
+          <a href="/" className="text-accent hover:text-accent/80 underline">Вернуться на главную</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={RootRedirect} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/success" component={SuccessPage} />
       <ProtectedRoute path="/home" component={HomePage} />
       <ProtectedRoute path="/horoscope" component={HoroscopePage} />
       <ProtectedRoute path="/tarot" component={TarotPage} />
