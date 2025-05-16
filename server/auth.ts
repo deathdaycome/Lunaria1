@@ -32,14 +32,16 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "космический-путь-секрет",
-    resave: true, // Изменено на true для гарантированного сохранения сессии
-    saveUninitialized: true, // Изменено на true для создания сессии сразу
+    resave: true,
+    saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: process.env.NODE_ENV === 'production', // Безопасные куки в продакшене
-      httpOnly: true, // Защита от XSS
-      sameSite: 'lax' // Защита от CSRF, но позволяет переходы с других сайтов
+      secure: false, // Отключаем secure cookie для работы на HTTP
+      httpOnly: true,
+      sameSite: 'lax',
+      // Устанавливаем домен для cookie, если он задан в переменных окружения
+      domain: process.env.COOKIE_DOMAIN || undefined
     }
   };
 

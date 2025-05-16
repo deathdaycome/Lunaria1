@@ -1,0 +1,150 @@
+2025-05-16T09:40:46.122698802Z === DATABASE CONFIGURATION ===
+2025-05-16T09:40:46.123684018Z DATABASE_URL exists: true
+2025-05-16T09:40:46.123713548Z DATABASE_URL starts with postgresql: true
+2025-05-16T09:40:46.132174685Z === CRASH PROTECTION START ===
+2025-05-16T09:40:46.132217687Z === STARTUP DIAGNOSTICS ===
+2025-05-16T09:40:46.132395526Z Node.js version: v18.20.8
+2025-05-16T09:40:46.132464104Z Platform: linux
+2025-05-16T09:40:46.132484154Z Working directory: /app
+2025-05-16T09:40:46.132613418Z Environment: production
+2025-05-16T09:40:46.132945363Z Port: 5000
+2025-05-16T09:40:46.133557185Z Available memory: 102 MB
+2025-05-16T09:40:46.133703013Z Loading modules...
+2025-05-16T09:40:46.133823499Z Modules loaded successfully
+2025-05-16T09:40:46.137030090Z Starting main application logic...
+2025-05-16T09:40:46.162926923Z 9:40:46 AM [express] 🔧 Starting in production mode
+2025-05-16T09:40:46.163403873Z 9:40:46 AM [express] 📊 Process ID: 1
+2025-05-16T09:40:46.163700305Z 9:40:46 AM [express] 📊 Node version: v18.20.8
+2025-05-16T09:40:46.163713358Z Setting up Vite/Static files...
+2025-05-16T09:40:46.164553113Z 9:40:46 AM [express] === DEBUG serveStatic ===
+2025-05-16T09:40:46.164958142Z 9:40:46 AM [express] Checking possible paths:
+2025-05-16T09:40:46.165339002Z 9:40:46 AM [express] - /app/dist/public: true
+2025-05-16T09:40:46.165875368Z 9:40:46 AM [express] Found 2 files in /app/dist/public
+2025-05-16T09:40:46.166292164Z 9:40:46 AM [express] - /app/dist: true
+2025-05-16T09:40:46.166740004Z 9:40:46 AM [express] - /app/build: false
+2025-05-16T09:40:46.167281007Z 9:40:46 AM [express] - /app/client/dist: false
+2025-05-16T09:40:46.167586895Z 9:40:46 AM [express] - /app/dist/public: true
+2025-05-16T09:40:46.167967267Z 9:40:46 AM [express] - /app/dist: true
+2025-05-16T09:40:46.168363364Z 9:40:46 AM [express] - /app/public: false
+2025-05-16T09:40:46.168795942Z 9:40:46 AM [express] ✅ Using distPath: /app/dist/public
+2025-05-16T09:40:46.169387612Z Vite/Static setup complete
+2025-05-16T09:40:46.169399170Z Registering routes...
+2025-05-16T09:40:46.172233536Z Routes registered
+2025-05-16T09:40:46.172248306Z Starting database seeding...
+2025-05-16T09:40:46.172720904Z 9:40:46 AM [express] Checking zodiac signs...
+2025-05-16T09:40:46.208019312Z 9:40:46 AM [express] Found 12 zodiac signs, skipping seed
+2025-05-16T09:40:46.208213216Z Database seeding complete
+2025-05-16T09:40:46.208324077Z Starting server on 0.0.0.0:5000...
+2025-05-16T09:40:46.209407032Z Application startup complete!
+2025-05-16T09:40:46.211887517Z 9:40:46 AM [express] 🚀 Приложение "Lunaria AI" запущено
+2025-05-16T09:40:46.212284750Z 9:40:46 AM [express] 📍 Адрес: http://0.0.0.0:5000
+2025-05-16T09:40:46.212621695Z 9:40:46 AM [express] 🏥 Health check: http://0.0.0.0:5000/health
+2025-05-16T09:40:46.212938338Z 9:40:46 AM [express] 🌍 Окружение: production
+2025-05-16T09:40:46.213220170Z 9:40:46 AM [express] 📊 PID: 1
+2025-05-16T09:40:46.213631355Z 9:40:46 AM [express] 📊 Память: {
+2025-05-16T09:40:46.213642637Z "rss": 115511296,
+2025-05-16T09:40:46.213645889Z "heapTotal": 62283776,
+2025-05-16T09:40:46.213649118Z "heapUsed": 36026672,
+2025-05-16T09:40:46.213652050Z "external": 2386967,
+2025-05-16T09:40:46.213655140Z "arrayBuffers": 345571
+2025-05-16T09:40:46.213658183Z }
+2025-05-16T09:40:46.214116850Z 9:40:46 AM [express] ✅ Server is listening on 0.0.0.0:5000
+2025-05-16T09:40:47.215897876Z 9:40:47 AM [express] 🔍 Testing internal health check...
+2025-05-16T09:40:47.216254480Z 9:40:47 AM [express] ✅ Internal health check bypassed in container environment
+2025-05-16T09:40:47.216623453Z 9:40:47 AM [express] ✅ Приложение полностью инициализировано
+2025-05-16T09:41:13.110376324Z [2025-05-16T09:41:13.110Z] GET /auth from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:13.110996999Z 9:41:13 AM [express] GET /auth from 103.249.132.141
+2025-05-16T09:41:13.524514292Z [2025-05-16T09:41:13.524Z] GET /assets/index-Be8M5iRm.js from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:13.525149457Z 9:41:13 AM [express] GET /assets/index-Be8M5iRm.js from 103.249.132.141
+2025-05-16T09:41:14.501308483Z [2025-05-16T09:41:14.501Z] GET /api/user from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:14.501748933Z 9:41:14 AM [express] GET /api/user from 103.249.132.141
+2025-05-16T09:41:14.508684771Z 9:41:14 AM [express] GET /api/user 401 in 7ms
+2025-05-16T09:41:14.535753297Z [2025-05-16T09:41:14.535Z] GET /favicon.ico from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:14.536384507Z 9:41:14 AM [express] GET /favicon.ico from 103.249.132.141
+2025-05-16T09:41:16.211048332Z 9:41:16 AM [express] Memory: RSS 92MB, Heap 30/32MB
+2025-05-16T09:41:24.034957392Z [2025-05-16T09:41:24.034Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:24.035427682Z 9:41:24 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:41:24.038930761Z Начало обработки запроса /api/register {
+2025-05-16T09:41:24.038947401Z body: {
+2025-05-16T09:41:24.038966702Z username: 'user_ddf7kypt',
+2025-05-16T09:41:24.038985841Z password: 'iv242ypx9ne',
+2025-05-16T09:41:24.038988848Z name: 'Иван',
+2025-05-16T09:41:24.038992052Z gender: 'male',
+2025-05-16T09:41:24.038994932Z birthDate: '2025-05-19',
+2025-05-16T09:41:24.038997732Z birthTime: '11:00:00',
+2025-05-16T09:41:24.039000532Z birthPlace: 'Мытищи',
+2025-05-16T09:41:24.039003454Z zodiacSign: 'Телец'
+2025-05-16T09:41:24.039006328Z }
+2025-05-16T09:41:24.039013121Z }
+2025-05-16T09:41:24.070721062Z Определен знак зодиака: Телец
+2025-05-16T09:41:24.147380615Z Создаем пользователя с данными: {
+2025-05-16T09:41:24.147407038Z username: 'user_ddf7kypt',
+2025-05-16T09:41:24.147410938Z name: 'Иван',
+2025-05-16T09:41:24.147415467Z email: 'temp_1747388484070@lunaria.app',
+2025-05-16T09:41:24.147420278Z gender: 'male',
+2025-05-16T09:41:24.147424774Z birthPlace: 'Мытищи',
+2025-05-16T09:41:24.147429757Z birthTime: '11:00:00',
+2025-05-16T09:41:24.147434544Z birthDate: '2025-05-19',
+2025-05-16T09:41:24.147439171Z password: 'СКРЫТ',
+2025-05-16T09:41:24.147444101Z zodiacSign: 'Телец',
+2025-05-16T09:41:24.147447268Z subscriptionType: 'free',
+2025-05-16T09:41:24.147450238Z role: 'user'
+2025-05-16T09:41:24.147453095Z }
+2025-05-16T09:41:24.153025773Z Пользователь создан в БД: { id: 31, name: 'Иван' }
+2025-05-16T09:41:24.153830189Z Статус сессии после req.login: {
+2025-05-16T09:41:24.153848076Z authenticated: true,
+2025-05-16T09:41:24.153853127Z sessionID: 'aJ9gyDyzHiIVfWesO5uYWiR4tG6SCKuw',
+2025-05-16T09:41:24.153857691Z user: 'ID: 31'
+2025-05-16T09:41:24.153862275Z }
+2025-05-16T09:41:24.155904948Z 9:41:24 AM [express] POST /api/register 201 in 120ms :: {"id":31,"name":"Иван","email":"temp_1747388…
+2025-05-16T09:41:31.073850525Z [2025-05-16T09:41:31.073Z] GET /auth from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:31.074165657Z 9:41:31 AM [express] GET /auth from 103.249.132.141
+2025-05-16T09:41:31.559825625Z [2025-05-16T09:41:31.559Z] GET /api/user from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:31.560150340Z 9:41:31 AM [express] GET /api/user from 103.249.132.141
+2025-05-16T09:41:31.562427641Z 9:41:31 AM [express] GET /api/user 401 in 2ms
+2025-05-16T09:41:31.572715215Z [2025-05-16T09:41:31.572Z] GET /favicon.ico from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:31.573023211Z 9:41:31 AM [express] GET /favicon.ico from 103.249.132.141
+2025-05-16T09:41:40.541798447Z [2025-05-16T09:41:40.541Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:40.542188252Z 9:41:40 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:41:40.543115066Z Начало обработки запроса /api/register {
+2025-05-16T09:41:40.543133841Z body: {
+2025-05-16T09:41:40.543139072Z username: 'user_b3u5o7ka',
+2025-05-16T09:41:40.543147250Z password: 'jjs1jme757n',
+2025-05-16T09:41:40.543152189Z name: 'Иван',
+2025-05-16T09:41:40.543156616Z gender: 'male',
+2025-05-16T09:41:40.543161083Z birthDate: '2025-05-19',
+2025-05-16T09:41:40.543165500Z birthTime: '08:00:00',
+2025-05-16T09:41:40.543169942Z birthPlace: 'Мытищи',
+2025-05-16T09:41:40.543174628Z zodiacSign: 'Телец'
+2025-05-16T09:41:40.543179206Z }
+2025-05-16T09:41:40.543183659Z }
+2025-05-16T09:41:40.545056785Z Определен знак зодиака: Телец
+2025-05-16T09:41:40.606269543Z Создаем пользователя с данными: {
+2025-05-16T09:41:40.606296077Z username: 'user_b3u5o7ka',
+2025-05-16T09:41:40.606299500Z name: 'Иван',
+2025-05-16T09:41:40.606302545Z email: 'temp_1747388500544@lunaria.app',
+2025-05-16T09:41:40.606305921Z gender: 'male',
+2025-05-16T09:41:40.606309100Z birthPlace: 'Мытищи',
+2025-05-16T09:41:40.606312107Z birthTime: '08:00:00',
+2025-05-16T09:41:40.606314930Z birthDate: '2025-05-19',
+2025-05-16T09:41:40.606317853Z password: 'СКРЫТ',
+2025-05-16T09:41:40.606320691Z zodiacSign: 'Телец',
+2025-05-16T09:41:40.606323499Z subscriptionType: 'free',
+2025-05-16T09:41:40.606326323Z role: 'user'
+2025-05-16T09:41:40.606329193Z }
+2025-05-16T09:41:40.609185592Z Пользователь создан в БД: { id: 32, name: 'Иван' }
+2025-05-16T09:41:40.609581777Z Статус сессии после req.login: {
+2025-05-16T09:41:40.609597054Z authenticated: true,
+2025-05-16T09:41:40.609601665Z sessionID: '4EKRG9CiAgp12xNCwiiY7M328DxlDSA5',
+2025-05-16T09:41:40.609606440Z user: 'ID: 32'
+2025-05-16T09:41:40.609610830Z }
+2025-05-16T09:41:40.610783184Z 9:41:40 AM [express] POST /api/register 201 in 68ms :: {"id":32,"name":"Иван","email":"temp_17473885…
+2025-05-16T09:41:46.210962820Z 9:41:46 AM [express] Memory: RSS 93MB, Heap 31/33MB
+2025-05-16T09:41:57.988368018Z [2025-05-16T09:41:57.988Z] GET / from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:57.988676510Z 9:41:57 AM [express] GET / from 103.249.132.141
+2025-05-16T09:41:57.988936335Z === ROOT PATH REQUESTED ===
+2025-05-16T09:41:57.988965998Z From IP: 103.249.132.141
+2025-05-16T09:41:57.988971929Z User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:58.409063470Z [2025-05-16T09:41:58.408Z] GET /favicon.ico from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:41:58.409328422Z 9:41:58 AM [express] GET /favicon.ico from 103.249.132.141
+2025-05-16T09:42:16.227899955Z 9:42:16 AM [express] Memory: RSS 93MB, Heap 31/33MB

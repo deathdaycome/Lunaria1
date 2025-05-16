@@ -47,6 +47,25 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Настраиваем CORS заголовки для правильной работы сессий и куки
+app.use((req, res, next) => {
+  // Разрешаем запросы со всех источников (для работы с прокси)
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  // Разрешаем передачу учетных данных (важно для сессий)
+  res.header('Access-Control-Allow-Credentials', 'true');
+  // Разрешаем нужные заголовки
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  // Разрешаем нужные методы
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  
+  // Для preflight запросов
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
 // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ ВСЕХ ЗАПРОСОВ
 app.use((req, res, next) => {
   const userAgent = req.get('User-Agent') || 'unknown';
