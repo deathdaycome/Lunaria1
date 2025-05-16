@@ -114,9 +114,10 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
         localStorage.setItem('lunaria_user', JSON.stringify(userData));
         
         // Перенаправляем на страницу успеха вместо защищенных маршрутов
+        // Перенаправляем на главную страницу
         setTimeout(() => {
-          console.log("Выполняем переход на страницу успеха");
-          window.location.href = '/success';
+          console.log("Выполняем переход на главную страницу");
+          window.location.href = '/';
         }, 1500);
       }
     });

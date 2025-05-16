@@ -98,19 +98,46 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
   // Определяем, какой тип подписки у пользователя (для демо всегда "free")
   const subscriptionType = "free";
   
-  // Запрос для получения гороскопа
+  // Запрос для получения гороскопа (с обработкой ошибок)
   const { 
     data: horoscopeData,
     isLoading,
     error 
   } = useQuery<HoroscopeResponse>({
-    queryKey: ['/api/horoscope', period, activeCategory],
-    queryFn: () => 
-      fetch(`/api/horoscope?period=${period}&category=${activeCategory}`)
-        .then(res => {
-          if (!res.ok) throw new Error('Не удалось загрузить гороскоп');
-          return res.json();
-        }),
+    queryKey: ['/api/horoscope', period, activeCategory, zodiacSign],
+    queryFn: async () => {
+      try {
+        // Сначала пытаемся получить данные от защищенного API
+        try {
+          const authRes = await fetch(`/api/horoscope?period=${period}&category=${activeCategory}`);
+          
+          if (authRes.ok) {
+            return await authRes.json();
+          }
+        } catch (authErr) {
+          console.log("Не удалось получить данные от аутентифицированного API:", authErr);
+        }
+        
+        // Если защищенный API недоступен, используем демо-API
+        console.log(`Использование демо API с параметрами: знак=${zodiacSign}, период=${period}, категория=${activeCategory}`);
+        const demoRes = await fetch(`/api/demo-horoscope?period=${period}&category=${activeCategory}&sign=${zodiacSign}`);
+        
+        if (demoRes.ok) {
+          return await demoRes.json();
+        }
+        
+        throw new Error("Оба API недоступны");
+      } catch (err) {
+        console.error("Ошибка при запросе гороскопа:", err);
+        // В случае ошибки также возвращаем локальные демо-данные
+        return {
+          content: demoHoroscopes[activeCategory][period],
+          luckyNumbers: demoLuckyNumbers[zodiacSign.toLowerCase()] || [7, 14, 21],
+          compatibleSigns: getCompatibleSigns(zodiacSign),
+          lastUpdated: new Date().toISOString()
+        };
+      }
+    },
     staleTime: 5 * 60 * 1000, // 5 минут
   });
   

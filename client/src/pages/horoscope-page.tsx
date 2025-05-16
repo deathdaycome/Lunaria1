@@ -29,11 +29,13 @@ export default function HoroscopePage() {
   
   // Получение данных пользователя из localStorage при загрузке компонента
   useEffect(() => {
-    const storedProfile = localStorage.getItem('userProfile');
+    // Проверяем оба возможных ключа хранения профиля
+    const storedProfile = localStorage.getItem('userProfile') || localStorage.getItem('lunaria_user');
     
     if (storedProfile) {
       try {
         const profile = JSON.parse(storedProfile);
+        console.log("Загружен профиль пользователя:", profile);
         
         // Получение знака зодиака на основе даты рождения
         if (profile.birthDate) {
@@ -47,8 +49,23 @@ export default function HoroscopePage() {
         console.error("Ошибка при чтении профиля:", e);
       }
     } else {
-      // Если профиль отсутствует, перенаправляем на страницу регистрации
-      navigate("/");
+      console.log("Профиль пользователя не найден в localStorage");
+      
+      // Пытаемся получить данные из API, если пользователь авторизован через сессию
+      fetch('/api/user')
+        .then(response => {
+          if (response.ok) return response.json();
+          throw new Error('Пользователь не авторизован');
+        })
+        .then(userData => {
+          console.log("Получены данные пользователя из API:", userData);
+          setUserProfile(userData);
+        })
+        .catch(err => {
+          console.error("Не удалось получить данные пользователя:", err);
+          // Если профиль отсутствует и API не помог, перенаправляем на страницу регистрации
+          navigate("/");
+        });
     }
     
     // Имитация загрузки данных для демонстрации
@@ -109,3 +126,4 @@ export default function HoroscopePage() {
     </MainLayout>
   );
 }
+
