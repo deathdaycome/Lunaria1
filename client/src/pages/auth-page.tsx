@@ -303,6 +303,10 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
                 type="submit"
                 disabled={isSubmitting}
                 name="submit-button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  form.handleSubmit(onSubmit)();
+                }}
                 className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-all rounded-full shadow-[0_0_15px_var(--primary-opacity)] font-connie text-white mt-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Создаем профиль..." : "Начать путешествие с Лунарией"}
