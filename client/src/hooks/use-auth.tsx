@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
@@ -21,40 +21,14 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [localUser, setLocalUser] = useState<SelectUser | null>(null);
-  const [isLocalLoading, setIsLocalLoading] = useState(true);
-
-  // Читаем пользователя из localStorage при загрузке
-  useEffect(() => {
-    const savedUser = localStorage.getItem('lunaria_user');
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        setLocalUser(parsedUser);
-        // Также устанавливаем в кэш Query Client
-        queryClient.setQueryData(["/api/user"], parsedUser);
-        console.log("Загружен пользователь из localStorage:", parsedUser);
-      } catch (error) {
-        console.error("Ошибка парсинга пользователя из localStorage:", error);
-        localStorage.removeItem('lunaria_user');
-      }
-    }
-    setIsLocalLoading(false);
-  }, []);
-
   const {
-    data: queryUser,
+    data: user,
     error,
-    isLoading: isQueryLoading,
+    isLoading,
   } = useQuery<SelectUser | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    enabled: !localUser, // Не выполняем запрос, если уже есть данные из localStorage
   });
-
-  // Объединяем пользователя из localStorage и из запроса
-  const user = localUser || queryUser || null;
-  const isLoading = isLocalLoading || (isQueryLoading && !localUser);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginUser) => {
@@ -63,8 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
-      localStorage.setItem('lunaria_user', JSON.stringify(user));
-      setLocalUser(user);
       toast({
         title: "Успешный вход",
         description: `Добро пожаловать, ${user.name}!`,
@@ -89,9 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: SelectUser) => {
       console.log("Мутация registerMutation onSuccess, пользователь:", user);
       queryClient.setQueryData(["/api/user"], user);
-      localStorage.setItem('lunaria_user', JSON.stringify(user));
-      setLocalUser(user);
-      console.log("Данные пользователя сохранены в кэше queryClient и localStorage");
+      console.log("Данные пользователя сохранены в кэше queryClient");
       toast({
         title: "Успешная регистрация",
         description: `Добро пожаловать, ${user.name}!`,
@@ -112,8 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
-      localStorage.removeItem('lunaria_user');
-      setLocalUser(null);
       toast({
         title: "Выход выполнен",
         description: "Вы успешно вышли из аккаунта",
@@ -131,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: user ?? null,
         isLoading,
         error,
         loginMutation,
@@ -150,3 +118,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+}
