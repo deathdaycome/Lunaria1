@@ -68,6 +68,8 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const onSubmit = (data: RegisterFormValues) => {
+    console.log("onSubmit вызвана, данные:", data);
+    
     // Предотвращаем повторные отправки
     if (isSubmitting) {
       console.log("Форма уже отправляется, предотвращаем повторную отправку");
@@ -97,6 +99,19 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
     };
     
     console.log("Регистрируем пользователя:", formData);
+    console.log("registerMutation:", registerMutation);
+    
+    if (!registerMutation || !registerMutation.mutate) {
+      console.error("registerMutation не определен или не имеет метод mutate");
+      setIsSubmitting(false);
+      toast({
+        title: "Ошибка",
+        description: "Проблема с инициализацией. Попробуйте перезагрузить страницу.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     registerMutation.mutate(formData, {
       onSuccess: (userData) => {
         console.log("Регистрация успешна, получены данные:", userData);
@@ -156,7 +171,13 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                form.handleSubmit(onSubmit)(e);
+              }} 
+              className="space-y-5"
+            >
               <FormField
                 control={form.control}
                 name="name"
