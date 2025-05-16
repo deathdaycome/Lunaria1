@@ -180,13 +180,7 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
           </div>
 
           <Form {...form}>
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                form.handleSubmit(onSubmit)(e);
-              }} 
-              className="space-y-5"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField
                 control={form.control}
                 name="name"
