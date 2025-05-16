@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import StarBackground from "@/components/shared/star-background";
 import ZodiacCreaturesCorners from "@/components/shared/zodiac-creatures-corners";
 import LunariaAvatar from "@/components/shared/lunaria-avatar";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getZodiacSign } from "@/lib/zodiac";
 import { useToast } from "@/hooks/use-toast";
@@ -64,7 +64,17 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
   const { registerMutation } = useAuth();
   const { toast } = useToast();
 
+  // Флаг для предотвращения множественных отправок формы
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   const onSubmit = (data: RegisterFormValues) => {
+    // Предотвращаем повторные отправки
+    if (isSubmitting) {
+      console.log("Форма уже отправляется, предотвращаем повторную отправку");
+      return;
+    }
+    
+    setIsSubmitting(true);
     console.log("User data:", data);
     
     // Генерируем случайное имя пользователя и пароль
@@ -98,20 +108,13 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
           variant: "default"
         });
         
-        // После регистрации перезагружаем данные о пользователе и редиректим на главную страницу
-        console.log("Выполняем редирект на /home через 2 секунды");
+        // Используем простой редирект через window.location
+        console.log("Выполняем редирект на главную страницу через window.location");
         
-        // Увеличиваем задержку, чтобы данные пользователя точно успели загрузиться
         setTimeout(() => {
-          console.log("Инвалидируем кэш пользователя");
-          // Инвалидируем кэш, чтобы гарантировать получение актуальных данных о пользователе
-          queryClient.invalidateQueries({queryKey: ["/api/user"]});
-          
-          setTimeout(() => {
-            console.log("Выполняем переход на /home");
-            navigate("/home");
-          }, 500);
-        }, 2000); // увеличенная задержка для надежности
+          // Используем прямое изменение URL, чтобы обойти возможные проблемы с роутером
+          window.location.href = '/home';
+        }, 2000); // задержка для того, чтобы пользователь увидел сообщение об успешной регистрации
       }
     });
   };

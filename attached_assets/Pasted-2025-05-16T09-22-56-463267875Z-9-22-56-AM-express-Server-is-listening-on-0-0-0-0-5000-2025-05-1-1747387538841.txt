@@ -1,0 +1,54 @@
+2025-05-16T09:22:56.463267875Z 9:22:56 AM [express] ✅ Server is listening on 0.0.0.0:5000
+2025-05-16T09:22:57.465117828Z 9:22:57 AM [express] 🔍 Testing internal health check...
+2025-05-16T09:22:57.465344556Z 9:22:57 AM [express] ✅ Internal health check bypassed in container environment
+2025-05-16T09:22:57.465608929Z 9:22:57 AM [express] ✅ Приложение полностью инициализировано
+2025-05-16T09:22:58.462935400Z === SIGTERM RECEIVED ===
+2025-05-16T09:22:58.463307314Z Time: 2025-05-16T09:22:58.463Z
+2025-05-16T09:22:58.463553040Z Uptime at SIGTERM: 378.334748359
+2025-05-16T09:22:58.464101994Z === GRACEFUL SHUTDOWN START ===
+2025-05-16T09:22:58.465244021Z 9:22:58 AM [express] SIGTERM received, shutting down gracefully
+2025-05-16T09:22:58.465685462Z 9:22:58 AM [express] Uptime: 378.336665064s
+2025-05-16T09:22:58.466257036Z 9:22:58 AM [express] Memory usage: {"rss":93339648,"heapTotal":34287616,"heapUsed":32458088,"external":2098703,"arrayBuffers":60028}
+2025-05-16T09:22:58.467851523Z 9:22:58 AM [express] HTTP server closed
+2025-05-16T09:22:58.473499156Z 9:22:58 AM [express] Database connection closed
+2025-05-16T09:22:58.473868871Z 9:22:58 AM [express] 👋 Graceful shutdown complete
+2025-05-16T09:22:58.474308262Z 9:22:58 AM [express] 📤 Process exiting with code: 0
+2025-05-16T09:22:58.474944341Z 9:22:58 AM [express] 📤 Process exiting with code: 0
+2025-05-16T09:23:26.473651233Z 9:23:26 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:23:56.503921965Z 9:23:56 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:24:26.533722997Z 9:24:26 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:24:56.560919749Z 9:24:56 AM [express] Memory: RSS 91MB, Heap 30/32MB
+2025-05-16T09:25:07.030832566Z [2025-05-16T09:25:07.030Z] GET /auth from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:07.031454546Z 9:25:07 AM [express] GET /auth from 103.249.132.141
+2025-05-16T09:25:07.455641013Z [2025-05-16T09:25:07.455Z] GET /assets/index-uOKqqeLj.js from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:07.456142220Z 9:25:07 AM [express] GET /assets/index-uOKqqeLj.js from 103.249.132.141
+2025-05-16T09:25:10.017163357Z [2025-05-16T09:25:10.015Z] GET /api/user from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:10.017196074Z 9:25:10 AM [express] GET /api/user from 103.249.132.141
+2025-05-16T09:25:10.024985871Z 9:25:10 AM [express] GET /api/user 401 in 8ms
+2025-05-16T09:25:10.026333481Z [2025-05-16T09:25:10.026Z] GET /favicon.ico from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:10.026805964Z 9:25:10 AM [express] GET /favicon.ico from 103.249.132.141
+2025-05-16T09:25:20.233146660Z [2025-05-16T09:25:20.232Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:20.233617710Z 9:25:20 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:20.311528630Z 9:25:20 AM [express] POST /api/register 201 in 78ms :: {"id":22,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:22.323867772Z [2025-05-16T09:25:22.323Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:22.324299731Z 9:25:22 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:22.394707684Z 9:25:22 AM [express] POST /api/register 201 in 70ms :: {"id":23,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:23.183930113Z [2025-05-16T09:25:23.183Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:23.184281216Z 9:25:23 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:23.255708433Z 9:25:23 AM [express] POST /api/register 201 in 71ms :: {"id":24,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:23.325867314Z [2025-05-16T09:25:23.325Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:23.326244664Z 9:25:23 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:23.400121154Z 9:25:23 AM [express] POST /api/register 201 in 73ms :: {"id":25,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:23.857243142Z [2025-05-16T09:25:23.857Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:23.857609145Z 9:25:23 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:23.927445762Z 9:25:23 AM [express] POST /api/register 201 in 69ms :: {"id":26,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:23.994291472Z [2025-05-16T09:25:23.994Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:23.994803911Z 9:25:23 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:24.087505877Z 9:25:24 AM [express] POST /api/register 201 in 92ms :: {"id":27,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:26.505652524Z [2025-05-16T09:25:26.505Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:26.506018426Z 9:25:26 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:26.561237924Z 9:25:26 AM [express] Memory: RSS 110MB, Heap 32/33MB
+2025-05-16T09:25:26.578981798Z 9:25:26 AM [express] POST /api/register 201 in 73ms :: {"id":28,"name":"Иван","email":"temp_17473875…
+2025-05-16T09:25:26.722429795Z [2025-05-16T09:25:26.722Z] POST /api/register from 103.249.132.141 UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+2025-05-16T09:25:26.722923427Z 9:25:26 AM [express] POST /api/register from 103.249.132.141
+2025-05-16T09:25:26.799134920Z 9:25:26 AM [express] POST /api/register 201 in 76ms :: {"id":29,"name":"Иван","email":"temp_17473875…
