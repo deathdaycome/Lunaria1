@@ -108,21 +108,30 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
           variant: "default"
         });
         
-        console.log("Регистрация успешна, перенаправляем напрямую на основную страницу");
+        console.log("Регистрация успешна, показываем кнопку для перехода на следующую страницу");
         
-        // Прекращаем делать проверку сессии, поскольку она может не работать в контейнерной среде
-        // Вместо этого просто перенаправляем на начальную страницу приложения
-        // Поскольку мы знаем, что регистрация прошла успешно (сервер вернул код 201)
+        // Вместо автоматического перенаправления, добавляем кнопку для ручного перехода
+        // и сохраняем данные пользователя в localStorage для сохранения между перезагрузками
+        localStorage.setItem('lunaria_user', JSON.stringify(userData));
         
-        // Обработчик для перенаправления на гороскоп (первая доступная страница)
-        const redirect = () => {
-          console.log("Прямое перенаправление на страницу гороскопа");
-          // Используем /horoscope вместо /home, потому что это может быть первый доступный маршрут
-          window.location.href = '/horoscope';
-        };
-        
-        // Выполняем перенаправление с небольшой задержкой
-        setTimeout(redirect, 2000);
+        // Добавляем кнопку для перехода на разные страницы в нижней части экрана
+        const redirectButtons = document.createElement('div');
+        redirectButtons.style.position = 'fixed';
+        redirectButtons.style.bottom = '20px';
+        redirectButtons.style.left = '0';
+        redirectButtons.style.right = '0';
+        redirectButtons.style.textAlign = 'center';
+        redirectButtons.style.zIndex = '9999';
+        redirectButtons.innerHTML = `
+          <div style="background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; display: inline-block;">
+            <p style="color: white; margin-bottom: 10px;">Выберите страницу для перехода:</p>
+            <button onclick="window.location.href='/horoscope'" style="background: #8a2be2; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer;">Гороскоп</button>
+            <button onclick="window.location.href='/home'" style="background: #8a2be2; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer;">Главная</button>
+            <button onclick="window.location.href='/tarot'" style="background: #8a2be2; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer;">Таро</button>
+            <button onclick="window.location.href='/compatibility'" style="background: #8a2be2; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer;">Совместимость</button>
+          </div>
+        `;
+        document.body.appendChild(redirectButtons);
       }
     });
   };
