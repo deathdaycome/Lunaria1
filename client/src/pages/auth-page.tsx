@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -132,6 +133,7 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
             
             // Инвалидируем кэш для обновления состояния аутентификации
             queryClient.invalidateQueries(['auth']);
+            queryClient.invalidateQueries(['user']);
             
             resolve(userData);
           },
