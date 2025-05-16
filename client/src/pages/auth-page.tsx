@@ -125,11 +125,12 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
               variant: "default"
             });
             
-            console.log("Регистрация успешна, перенаправляем на страницу гороскопов");
+            console.log("Регистрация успешна, обновляем кэш и перенаправляем");
             
-            // Данные уже сохраняются в useAuth, дополнительно инвалидируем кэш
-            queryClient.invalidateQueries(['auth']);
-            queryClient.invalidateQueries(['user']);
+            // Принудительно обновляем все кэши аутентификации
+            queryClient.setQueryData(["/api/user"], userData);
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            queryClient.refetchQueries({ queryKey: ["/api/user"] });
             
             resolve(userData);
           },
