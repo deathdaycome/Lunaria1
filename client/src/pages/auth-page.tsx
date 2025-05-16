@@ -67,7 +67,7 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
   // Флаг для предотвращения множественных отправок формы
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const onSubmit = (data: RegisterFormValues) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     console.log("onSubmit вызвана, данные:", data);
     
     // Предотвращаем повторные отправки
@@ -79,74 +79,84 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
     setIsSubmitting(true);
     console.log("User data:", data);
     
-    // Генерируем случайное имя пользователя и пароль
-    const username = `user_${Math.random().toString(36).substring(2, 10)}`;
-    const password = Math.random().toString(36).substring(2, 15);
+    try {
+      // Генерируем случайное имя пользователя и пароль
+      const username = `user_${Math.random().toString(36).substring(2, 10)}`;
+      const password = Math.random().toString(36).substring(2, 15);
 
-    // Регистрируем пользователя через мутацию
-    const formData = {
-      username,
-      password,
-      name: data.name,
-      gender: data.gender,
-      birthDate: data.birthDate.toISOString().split('T')[0], // формат YYYY-MM-DD для date в БД
-      birthTime: data.birthTime ? 
-        data.birthTime.toTimeString().split(' ')[0] : // формат HH:MM:SS для time в БД
-        null,
-      birthPlace: data.birthPlace || "",
-      // Определяем знак зодиака на основе даты рождения
-      zodiacSign: getZodiacSign(data.birthDate).name
-    };
-    
-    console.log("Регистрируем пользователя:", formData);
-    console.log("registerMutation:", registerMutation);
-    
-    if (!registerMutation || !registerMutation.mutate) {
-      console.error("registerMutation не определен или не имеет метод mutate");
-      setIsSubmitting(false);
-      toast({
-        title: "Ошибка",
-        description: "Проблема с инициализацией. Попробуйте перезагрузить страницу.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    registerMutation.mutate(formData, {
-      onSuccess: (userData) => {
-        console.log("Регистрация успешна, получены данные:", userData);
-        
-        // Оповещаем пользователя об успешной регистрации
+      // Регистрируем пользователя через мутацию
+      const formData = {
+        username,
+        password,
+        name: data.name,
+        gender: data.gender,
+        birthDate: data.birthDate.toISOString().split('T')[0],
+        birthTime: data.birthTime ? 
+          data.birthTime.toTimeString().split(' ')[0] : 
+          null,
+        birthPlace: data.birthPlace || "",
+        zodiacSign: getZodiacSign(data.birthDate).name
+      };
+      
+      console.log("Регистрируем пользователя:", formData);
+      console.log("registerMutation:", registerMutation);
+      
+      if (!registerMutation || !registerMutation.mutate) {
+        console.error("registerMutation не определен или не имеет метод mutate");
+        setIsSubmitting(false);
         toast({
-          title: "Успешная регистрация",
-          description: `${data.name}, ваш профиль был создан. Добро пожаловать в Lunaria AI!`,
-          variant: "default"
-        });
-        
-        console.log("Регистрация успешна, перенаправляем на страницу гороскопов");
-        
-        // Сохраняем данные пользователя в localStorage
-        localStorage.setItem('lunaria_user', JSON.stringify(userData));
-        
-        // Инвалидируем кэш для обновления состояния аутентификации
-        queryClient.invalidateQueries(['auth']);
-        
-        // Перенаправляем на страницу с гороскопами
-        setTimeout(() => {
-          console.log("Выполняем переход на страницу гороскопов");
-          navigate('/horoscope'); // или /horoscopes в зависимости от вашего роутинга
-        }, 1500);
-      },
-      onError: (error) => {
-        console.error("Ошибка регистрации:", error);
-        toast({
-          title: "Ошибка регистрации",
-          description: "Не удалось создать профиль. Попробуйте еще раз.",
+          title: "Ошибка",
+          description: "Проблема с инициализацией. Попробуйте перезагрузить страницу.",
           variant: "destructive"
         });
-        setIsSubmitting(false);
+        return;
       }
-    });
+      
+      // Используем Promise вместо колбэков для лучшего контроля
+      await new Promise((resolve, reject) => {
+        registerMutation.mutate(formData, {
+          onSuccess: (userData) => {
+            console.log("Регистрация успешна, получены данные:", userData);
+            
+            // Оповещаем пользователя об успешной регистрации
+            toast({
+              title: "Успешная регистрация",
+              description: `${data.name}, ваш профиль был создан. Добро пожаловать в Lunaria AI!`,
+              variant: "default"
+            });
+            
+            console.log("Регистрация успешна, перенаправляем на страницу гороскопов");
+            
+            // Сохраняем данные пользователя в localStorage
+            localStorage.setItem('lunaria_user', JSON.stringify(userData));
+            
+            // Инвалидируем кэш для обновления состояния аутентификации
+            queryClient.invalidateQueries(['auth']);
+            
+            resolve(userData);
+          },
+          onError: (error) => {
+            console.error("Ошибка регистрации:", error);
+            toast({
+              title: "Ошибка регистрации",
+              description: "Не удалось создать профиль. Попробуйте еще раз.",
+              variant: "destructive"
+            });
+            reject(error);
+          }
+        });
+      });
+      
+      // Перенаправляем на страницу с гороскопами
+      setTimeout(() => {
+        console.log("Выполняем переход на страницу гороскопов");
+        navigate('/horoscope');
+      }, 1500);
+      
+    } catch (error) {
+      console.error("Ошибка в onSubmit:", error);
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -299,6 +309,7 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
               <Button
                 type="submit"
                 disabled={isSubmitting}
+                name="submit-button"
                 className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-all rounded-full shadow-[0_0_15px_var(--primary-opacity)] font-connie text-white mt-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Создаем профиль..." : "Начать путешествие с Лунарией"}
