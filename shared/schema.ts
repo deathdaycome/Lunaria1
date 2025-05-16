@@ -7,6 +7,7 @@ import { relations } from "drizzle-orm";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  email: text("email"),
   gender: text("gender").notNull(),
   birthDate: date("birth_date").notNull(),
   birthTime: time("birth_time"),
@@ -29,6 +30,7 @@ export const friends = pgTable("friends", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
+  email: text("email"),
   gender: text("gender").notNull(),
   birthDate: date("birth_date").notNull(),
   birthTime: time("birth_time"),
