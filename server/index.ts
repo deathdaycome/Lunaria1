@@ -39,6 +39,7 @@ import { format } from "date-fns";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { pool } from "./db";
+import { setupAuth } from "./auth"; // ДОБАВЛЕН ИМПОРТ
 
 console.log('Modules loaded successfully');
 
@@ -220,7 +221,12 @@ let isShuttingDown = false;
     }
     console.log('Vite/Static setup complete');
     
-    // ИСПРАВЛЕНИЕ 3: Регистрируем маршруты ПОСЛЕ настройки Vite
+    // ДОБАВЛЕНО: Настраиваем аутентификацию ПЕРЕД маршрутами
+    console.log('Setting up authentication...');
+    setupAuth(app);
+    console.log('Authentication setup complete');
+    
+    // ИСПРАВЛЕНИЕ 3: Регистрируем маршруты ПОСЛЕ настройки Vite и аутентификации
     console.log('Registering routes...');
     await registerRoutes(app);
     console.log('Routes registered');
