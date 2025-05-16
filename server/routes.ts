@@ -196,7 +196,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const zodiacSignData = getZodiacSign(new Date(birthDateObj));
       
       const newFriend = await storage.createFriend({
-        ...friendData,
+        name: friendData.name,
+        email: friendData.email || '', // Добавьте эту строку если её нет
         userId: req.user!.id,
         birthDate: birthDateObj.toISOString().split('T')[0],
         zodiacSign: zodiacSignData.name,

@@ -88,11 +88,17 @@ export function setupAuth(app: Express) {
       
       // Create the user
       const user = await storage.createUser({
-        ...userData,
-        email: userData.email || '', // Пустая строка вместо null
+        username: userData.username,
+        name: userData.name,
+        email: userData.email || `temp_${Date.now()}@lunaria.app`,
+        gender: userData.gender,
+        birthPlace: userData.birthPlace,
+        birthTime: userData.birthTime || '12:00:00',
         birthDate: birthDateObj.toISOString().split('T')[0],
         password: await hashPassword(req.body.password),
         zodiacSign: zodiacSignData.name,
+        subscriptionType: 'free',
+        role: 'user'
       });
 
       req.login(user, (err) => {
