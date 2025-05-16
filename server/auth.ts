@@ -89,7 +89,8 @@ export function setupAuth(app: Express) {
       // Create the user
       const user = await storage.createUser({
         ...userData,
-        birthDate: birthDateObj.toISOString().split('T')[0],
+        email: userData.email || null, // Разрешаем null для email
+        birthDate: birthDateObj.toISOString().split('T')[0], 
         password: await hashPassword(req.body.password),
         zodiacSign: zodiacSignData.name,
       });
