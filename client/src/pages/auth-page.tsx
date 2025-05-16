@@ -34,7 +34,7 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export default function AuthPage() { // переписал ИП, 13.05.2025
+export default function AuthPage() {
   const [, navigate] = useLocation();
 
   // Установка темного фона для всей страницы
@@ -112,28 +112,48 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
         return;
       }
       
-      // Используем Promise вместо колбэков для лучшего контроля
+      // Регистрация с использованием мутации
       await new Promise((resolve, reject) => {
         registerMutation.mutate(formData, {
-          onSuccess: (userData) => {
+          onSuccess: async (userData) => {
             console.log("Регистрация успешна, получены данные:", userData);
             
-            // Оповещаем пользователя об успешной регистрации
-            toast({
-              title: "Успешная регистрация",
-              description: `${data.name}, ваш профиль был создан. Добро пожаловать в Lunaria AI!`,
-              variant: "default"
-            });
-            
-            console.log("Сохраняем пользователя в кэш и перенаправляем");
-            
-            // Просто сохраняем пользователя в кэш
-            queryClient.setQueryData(["/api/user"], userData);
-            
-            resolve(userData);
+            try {
+              // Обновляем кэш пользователя
+              queryClient.setQueryData(["/api/user"], userData);
+              console.log("Пользователь сохранен в кэш:", userData);
+              
+              // Показываем успешное уведомление
+              toast({
+                title: "Успешная регистрация",
+                description: `${data.name}, ваш профиль был создан. Добро пожаловать в Lunaria AI!`,
+                variant: "default"
+              });
+              
+              // Инвалидируем запрос пользователя, чтобы AuthProvider обновился
+              await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+              console.log("Кэш инвалидирован, запускается обновление состояния");
+              
+              // Небольшая задержка для синхронизации состояния
+              setTimeout(() => {
+                console.log("Выполняем переход на /horoscope");
+                navigate("/horoscope");
+              }, 500);
+              
+              resolve(userData);
+            } catch (error) {
+              console.error("Ошибка после успешной регистрации:", error);
+              // Если инвалидация не сработала, пробуем прямое перенаправление
+              setTimeout(() => {
+                console.log("Попытка прямого перенаправления");
+                window.location.href = "/horoscope";
+              }, 1000);
+              resolve(userData);
+            }
           },
           onError: (error) => {
             console.error("Ошибка регистрации:", error);
+            setIsSubmitting(false);
             toast({
               title: "Ошибка регистрации",
               description: "Не удалось создать профиль. Попробуйте еще раз.",
@@ -143,14 +163,6 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
           }
         });
       });
-      
-      // Прямой переход на главную страницу через полную перезагрузку
-      setTimeout(() => {
-        console.log("Выполняем переход через window.location");
-        
-        // Принудительная перезагрузка страницы с переходом на главную
-        window.location.href = '/';
-      }, 1000);
       
     } catch (error) {
       console.error("Ошибка в onSubmit:", error);
