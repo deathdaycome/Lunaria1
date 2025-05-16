@@ -53,11 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
+      console.log("Отправка запроса на регистрацию:", credentials);
       const res = await apiRequest("POST", "/api/register", credentials);
+      console.log("Ответ сервера:", res.status);
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      console.log("Мутация registerMutation onSuccess, пользователь:", user);
       queryClient.setQueryData(["/api/user"], user);
+      console.log("Данные пользователя сохранены в кэше queryClient");
       toast({
         title: "Успешная регистрация",
         description: `Добро пожаловать, ${user.name}!`,

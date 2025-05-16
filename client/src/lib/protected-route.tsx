@@ -14,9 +14,7 @@ export function ProtectedRoute({
   if (isLoading) {
     return (
       <Route path={path}>
-        <div class
-// FIXME: временное решение, исправить до релиза
-Name="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-accent" />
         </div>
       </Route>

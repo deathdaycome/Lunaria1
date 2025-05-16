@@ -87,7 +87,9 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
     
     console.log("Регистрируем пользователя:", formData);
     registerMutation.mutate(formData, {
-      onSuccess: () => {
+      onSuccess: (userData) => {
+        console.log("Регистрация успешна, получены данные:", userData);
+        
         // Оповещаем пользователя об успешной регистрации
         toast({
           title: "Успешная регистрация",
@@ -96,7 +98,9 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
         });
         
         // После регистрации редирект на главную страницу
+        console.log("Выполняем редирект на /home через 1.5 секунды");
         setTimeout(() => {
+          console.log("Выполняем переход на /home");
           navigate("/home");
         }, 1500); // небольшая задержка, чтобы пользователь успел увидеть сообщение
       }
