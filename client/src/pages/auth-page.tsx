@@ -146,11 +146,23 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
         });
       });
       
-      // Перенаправляем на страницу с гороскопами
+      // Используем данные, которые уже есть после регистрации
       setTimeout(() => {
-        console.log("Выполняем переход на страницу гороскопов");
-        navigate('/horoscope');
-      }, 1500);
+        console.log("Переходим на гороскоп с имеющимися данными");
+        
+        // Не делаем лишних запросов, используем данные из onSuccess
+        const cachedUser = queryClient.getQueryData(["/api/user"]);
+        console.log("Пользователь в кэше:", cachedUser);
+        
+        if (cachedUser) {
+          console.log("Пользователь найден, переходим на гороскоп");
+          navigate('/horoscope');
+        } else {
+          console.log("Пользователь не найден, переходим на главную");
+          // Если данных нет, попробуем через window.location
+          window.location.href = '/horoscope';
+        }
+      }, 1500); // Уменьшаем задержку
       
     } catch (error) {
       console.error("Ошибка в onSubmit:", error);
