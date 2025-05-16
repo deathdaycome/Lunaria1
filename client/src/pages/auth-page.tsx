@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -128,10 +127,7 @@ export default function AuthPage() { // переписал ИП, 13.05.2025
             
             console.log("Регистрация успешна, перенаправляем на страницу гороскопов");
             
-            // Сохраняем данные пользователя в localStorage
-            localStorage.setItem('lunaria_user', JSON.stringify(userData));
-            
-            // Инвалидируем кэш для обновления состояния аутентификации
+            // Данные уже сохраняются в useAuth, дополнительно инвалидируем кэш
             queryClient.invalidateQueries(['auth']);
             queryClient.invalidateQueries(['user']);
             
