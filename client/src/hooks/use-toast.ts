@@ -132,7 +132,8 @@ const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
-function dispatch() {
+// ИСПРАВЛЕНО: Добавлен параметр action в функцию dispatch
+function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
   listeners.forEach((listener) => {
     listener(memoryState)
