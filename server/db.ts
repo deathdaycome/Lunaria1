@@ -5,21 +5,29 @@ import * as schema from "@shared/schema";
 console.log('=== DATABASE CONFIGURATION ===');
 console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
 console.log('DATABASE_URL starts with postgresql:', process.env.DATABASE_URL?.startsWith('postgresql:'));
+console.log('NODE_ENV:', process.env.NODE_ENV);
 
-if (!process.env.DATABASE_URL) {
-  console.error('Available environment variables:', Object.keys(process.env).filter(key => key.includes('DATABASE')));
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+// Объявление переменных db и pool
+let db: any;
+let pool: { end: () => Promise<void> };
 
-// Создаем подключение
-const client = postgres(process.env.DATABASE_URL);
-export const db = drizzle(client, { schema });
+// ВРЕМЕННОЕ РЕШЕНИЕ: Всегда используем заглушку для локального запуска
+console.log('=== RUNNING WITH MOCK DATABASE ===');
 
-// Создаем заглушку pool для совместимости
-export const pool = {
+// Используем заглушки для работы без базы данных
+db = {
+  query: async () => [],
+  select: () => ({ from: () => [] }),
+  insert: () => ({ values: () => ({ returning: () => [] }) }),
+  update: () => ({ set: () => ({ where: () => ({ returning: () => [] }) }) }),
+  delete: () => ({ where: () => ({ returning: () => [] }) }),
+};
+
+pool = {
   end: async () => {
-    await client.end();
+    console.log('Mock pool ended');
   }
 };
+
+// Экспортируем переменные
+export { db, pool };

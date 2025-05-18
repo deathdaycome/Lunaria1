@@ -25,7 +25,7 @@ export async function setupVite(app: Express, server: Server | null) {
     const serverOptions = {
       middlewareMode: true,
       hmr: server ? { server } : false,
-      allowedHosts: true,
+      // allowedHosts removed from here, will be set in the server property below
     };
 
     const vite = await createViteServer({
@@ -39,7 +39,10 @@ export async function setupVite(app: Express, server: Server | null) {
           // process.exit(1);
         },
       },
-      server: serverOptions,
+      server: {
+        ...serverOptions,
+        allowedHosts: true, // valid value for ServerOptions
+      },
       appType: "custom",
     });
 
@@ -126,7 +129,7 @@ export function serveStatic(app: Express) {
         log('Files in dist:', distFiles.join(', '));
       }
     } catch (err) {
-      log('Error reading directories:', err);
+      log('Error reading directories: ' + (err instanceof Error ? err.message : String(err)));
     }
     
     // ИСПРАВЛЕНИЕ 5: Лучший fallback
@@ -165,7 +168,7 @@ export function serveStatic(app: Express) {
       distPath = fallbackPath;
       log('✅ Created fallback static directory:', distPath);
     } catch (err) {
-      log('❌ Error creating fallback directory:', err);
+      log('❌ Error creating fallback directory: ' + (err instanceof Error ? err.message : String(err)));
     }
   }
   

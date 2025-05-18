@@ -51,11 +51,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": {
-        target: "http://localhost:5000",
-        changeOrigin: true,
-        secure: false,
-      },
+      "/api": "http://localhost:5000",
     },
     host: true, // Разрешаем подключения извне
     port: 3000,

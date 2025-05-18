@@ -2,8 +2,33 @@ import OpenAI from "openai";
 import { InsertApiUsage } from "@shared/schema";
 import { storage } from "./storage";
 
-// Используем модель gpt-4o-mini согласно требованиям
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Заглушка для OpenAI API
+console.log('=== RUNNING WITH MOCK OPENAI API ===');
+let openai: any;
+
+// Проверяем наличие API-ключа
+if (!process.env.OPENAI_API_KEY) {
+  console.log('OPENAI_API_KEY is not set, using mock OpenAI client');
+  // Создаем заглушку для OpenAI
+  openai = {
+    chat: {
+      completions: {
+        create: async () => ({
+          choices: [
+            {
+              message: {
+                content: "Это ответ от заглушки OpenAI API. Настоящий API не используется в данный момент."
+              }
+            }
+          ],
+        })
+      }
+    }
+  };
+} else {
+  // Используем модель gpt-4o-mini согласно требованиям
+  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 // Track OpenAI API usage with a database entry
 async function trackApiUsage(userId: number, requestSource: string, requestText: string, responseText: string, tokensIn: number, tokensOut: number) {

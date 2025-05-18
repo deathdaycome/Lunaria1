@@ -32,6 +32,7 @@ console.log('Available memory:', Math.round(process.memoryUsage().rss / 1024 / 1
 // Логируем каждый этап загрузки
 console.log('Loading modules...');
 
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -374,7 +375,9 @@ let isShuttingDown = false;
     
   } catch (error) {
     console.error("❌ Error starting application:", error);
-    console.error("Stack trace:", error.stack);
+    if (typeof error === "object" && error !== null && "stack" in error) {
+      console.error("Stack trace:", (error as { stack?: string }).stack);
+    }
     log(`❌ Fatal error starting application: ${error}`);
     process.exit(1);
   }
