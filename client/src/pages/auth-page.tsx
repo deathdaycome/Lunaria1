@@ -329,6 +329,18 @@ export default function AuthPage() {
           <p className="text-xs text-white/60 mt-4 text-center font-cormorant">
             Продолжая, вы соглашаетесь с нашими Условиями использования и Политикой конфиденциальности
           </p>
+
+          {/* Временная кнопка для тестирования в режиме разработки */}
+          {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+            <div className="mt-4 text-center">
+              <button 
+                onClick={() => navigate("/horoscope")} 
+                className="text-sm text-white/80 underline"
+              >
+                Тестовый вход (только для разработки)
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

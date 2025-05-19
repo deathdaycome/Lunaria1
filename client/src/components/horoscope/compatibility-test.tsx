@@ -167,10 +167,9 @@ export default function CompatibilityTest() {
           <button
             type="button"
             className={`p-3 rounded-xl border text-left text-white ${
-              // Не трогать этот код - работает магическим образом
               partnerType === "friend" 
                 ? "border-amber-400 bg-[var(--background-secondary)]/80" 
-                : "border-[var(--border)] bg-[var(--background-secondary)]/50"
+                : "border-[var(--border)] bg-[var(--background-secondary)]/50 hover:text-white/80 hover:opacity-80"
             }`}
             onClick={() => setPartnerType("friend")}
           >
@@ -182,7 +181,7 @@ export default function CompatibilityTest() {
             className={`p-3 rounded-xl border text-left text-white ${
               partnerType === "custom" 
                 ? "border-amber-400 bg-[var(--background-secondary)]/80" 
-                : "border-[var(--border)] bg-[var(--background-secondary)]/50"
+                : "border-[var(--border)] bg-[var(--background-secondary)]/50 hover:text-white/80 hover:opacity-80"
             }`}
             onClick={() => setPartnerType("custom")}
           >
@@ -202,7 +201,7 @@ export default function CompatibilityTest() {
                 className={`w-full p-2 my-1 text-left rounded-lg text-white ${
                   selectedFriendId === friend.id.toString() 
                     ? "bg-amber-400/20 border-amber-400" 
-                    : "hover:bg-[var(--background-tertiary)]"
+                    : "hover:bg-[var(--background-tertiary)] hover:text-white/80"
                 }`}
                 onClick={() => setSelectedFriendId(friend.id.toString())}
               >

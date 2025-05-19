@@ -125,7 +125,19 @@
 
 @layer base {
   * {
-    @apply border-[var(--border)];
+    @apply border-border;
+  }
+  
+  /* Глобальное переопределение hover-эффектов для текста */
+  *:hover {
+    color: rgba(255, 255, 255, 0.8) !important; /* Делаем текст при наведении более тусклым белым */
+  }
+  
+  /* Переопределение текста для элементов с акцентным цветом при наведении */
+  .hover\:text-accent-foreground:hover,
+  .focus\:text-accent-foreground:focus,
+  [data-state=active]:text-accent-foreground {
+    color: rgba(255, 255, 255, 0.8) !important;
   }
 
   body {
@@ -699,6 +711,7 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4),
                 0 0 15px rgba(155, 89, 182, 0.3),
                 inset 0 0 12px rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7); /* Более тусклый белый при наведении вместо черного */
   }
   
   .crystal-tab:hover::before {

@@ -387,7 +387,7 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
                       value={key}
                       disabled={category.disabled}
                       className={`crystal-tab group w-full h-[44px] py-1 px-1 flex flex-col items-center justify-center z-10
-                        ${category.disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        ${category.disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:text-white/80 hover:opacity-80'}`}
                       data-category={key}
                     >
                       {/* Декоративный эффект стеклянной поверхности */}
@@ -435,7 +435,7 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
                       
                       {/* Название категории */}
                       <span 
-                        className={`text-center transition-all duration-300 font-cinzel text-[8px] mt-[2px]
+                        className={`text-center transition-all duration-300 font-cinzel text-[11px] mt-[2px]
                           ${key === activeCategory ? 'font-medium' : 'font-normal'}`}
                         style={{
                           textShadow: key === activeCategory ? `0 0 4px ${getCategoryColor(category.color, 0.5)}` : 'none'
