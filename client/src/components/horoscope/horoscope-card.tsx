@@ -236,9 +236,11 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
       // После успешного обновления, сбрасываем кэш для запроса гороскопа
       queryClient.invalidateQueries({queryKey: ['/api/horoscope', period, activeCategory]});
       
+      // Более информативное уведомление при обновлении (пункт 14 ТЗ)
       toast({
-        title: "Успешно",
-        description: "Ваш гороскоп обновлен",
+        title: "Гороскоп обновлен",
+        description: "Звезды раскрыли новые предсказания для вас",
+        variant: "default"
       });
     },
     onError: (error: Error) => {
@@ -371,7 +373,7 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
         ) : (
           /* Категории и контент */
           <Tabs value={activeCategory} onValueChange={(value) => setActiveCategory(value as Category)}>
-            {/* Категории в стиле мистических плиток - ещё меньше */}
+            {/* Категории в стиле мистических плиток - увеличиваем шрифт иконок (пункт 2 ТЗ) */}
             <div className="mb-2">
               {/* Новый дизайн категорий в стиле плиток */}
               <TabsList className="grid grid-cols-5 gap-1 p-1 mx-auto bg-transparent">
@@ -387,7 +389,7 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
                       value={key}
                       disabled={category.disabled}
                       className={`crystal-tab group w-full h-[44px] py-1 px-1 flex flex-col items-center justify-center z-10
-                        ${category.disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:text-white/80 hover:opacity-80'}`}
+                        ${category.disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:text-white hover:opacity-80'}`}
                       data-category={key}
                     >
                       {/* Декоративный эффект стеклянной поверхности */}
@@ -428,14 +430,15 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
                         </div>
                       )}
                       
-                      {/* Иконка категории */}
+                      {/* Иконка категории - увеличиваем до medium (пункт 2 ТЗ) */}
                       <div className={`text-base transition-all duration-300 ${key === activeCategory ? 'scale-110' : 'scale-100'}`}>
-                        {category.icon}
+                        {/* Заменяем fontSize="small" на fontSize="medium" */}
+                        {React.cloneElement(category.icon as React.ReactElement, { fontSize: "medium" })}
                       </div>
                       
-                      {/* Название категории */}
+                      {/* Название категории - увеличиваем шрифт (пункт 2 ТЗ) */}
                       <span 
-                        className={`text-center transition-all duration-300 font-cinzel text-[11px] mt-[2px]
+                        className={`text-center transition-all duration-300 font-cinzel text-[13px] mt-[2px]
                           ${key === activeCategory ? 'font-medium' : 'font-normal'}`}
                         style={{
                           textShadow: key === activeCategory ? `0 0 4px ${getCategoryColor(category.color, 0.5)}` : 'none'
@@ -466,7 +469,8 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
                     initial={{ opacity: 0 }}
                     animate={{ opacity: key === activeCategory ? 1 : 0 }}
                     transition={{ duration: 0.5 }}
-                    className="text-gray-200 font-cormorant text-2xl leading-relaxed"
+                    // Уменьшаем размер шрифта (пункт 13 ТЗ) - меняем с text-2xl на text-lg
+                    className="text-gray-200 font-cormorant text-lg leading-relaxed"
                   >
                     {key === activeCategory ? horoscopeText : ""}
                   </motion.p>

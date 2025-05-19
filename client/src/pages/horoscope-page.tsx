@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/main-layout";
 import HoroscopeCard from "@/components/horoscope/horoscope-card";
 import FriendsSection from "@/components/horoscope/friends-section";
-import CompatibilityTest from "@/components/horoscope/compatibility-test";
+// Удаляем импорт CompatibilityTest
+// import CompatibilityTest from "@/components/horoscope/compatibility-test";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,28 @@ export default function HoroscopePage() {
   
   // Получение данных пользователя из localStorage при загрузке компонента
   useEffect(() => {
+    // Для локальной разработки используем тестовые данные
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      console.log("Режим локальной разработки: использование тестовых данных пользователя");
+      
+      // Создаем тестовый профиль
+      const testProfile = {
+        name: "Тестовый пользователь",
+        gender: "male" as "male" | "female",
+        birthDate: "1990-01-01",
+        birthTime: "12:00",
+        birthPlace: "Москва",
+        zodiacSign: "capricorn" // Козерог
+      };
+      
+      setUserProfile(testProfile);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
+      return;
+    }
+    
+    // Стандартная логика для не-локальной среды
     // Проверяем оба возможных ключа хранения профиля
     const storedProfile = localStorage.getItem('userProfile') || localStorage.getItem('lunaria_user');
     
@@ -121,9 +144,8 @@ export default function HoroscopePage() {
         )}
 
         <FriendsSection />
-        <CompatibilityTest />
+        {/* Удалили компонент CompatibilityTest согласно пункту 4 ТЗ */}
       </div>
     </MainLayout>
   );
 }
-
