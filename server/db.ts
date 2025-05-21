@@ -1,33 +1,41 @@
 import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from "@shared/schema";
 
 console.log('=== DATABASE CONFIGURATION ===');
-console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-console.log('DATABASE_URL starts with postgresql:', process.env.DATABASE_URL?.startsWith('postgresql:'));
+const dbUrl = process.env.DATABASE_URL;
+console.log('DATABASE_URL exists:', !!dbUrl);
+console.log('DATABASE_URL starts with postgresql:', dbUrl?.startsWith('postgresql:'));
 console.log('NODE_ENV:', process.env.NODE_ENV);
 
-// Объявление переменных db и pool
-let db: any;
-let pool: { end: () => Promise<void> };
+let db: PostgresJsDatabase<typeof schema>;
+let pool: postgres.Sql<{}>; // Тип для postgres-пула
 
-// ВРЕМЕННОЕ РЕШЕНИЕ: Всегда используем заглушку для локального запуска
-console.log('=== RUNNING WITH MOCK DATABASE ===');
+if (process.env.NODE_ENV === 'production' && dbUrl) {
+  console.log('=== RUNNING WITH PRODUCTION DATABASE ===');
+  // Конфигурация для production с SSL, если требуется вашим хостингом БД
+  // Пример: const client = postgres(dbUrl, { ssl: 'require' });
+  const client = postgres(dbUrl);
+  db = drizzle(client, { schema });
+  pool = client; // postgres клиент сам является пулом и имеет метод .end()
+} else {
+  // Оставляем заглушку для локальной разработки или если DATABASE_URL не задан
+  console.log('=== RUNNING WITH MOCK DATABASE (or DATABASE_URL not set) ===');
+  db = {
+    query: async () => [],
+    select: (() => ({ from: () => Promise.resolve([]) })) as any,
+    insert: (() => ({ values: () => ({ returning: () => Promise.resolve([]) }) })) as any,
+    update: (() => ({ set: () => ({ where: () => ({ returning: () => Promise.resolve([]) }) }) })) as any,
+    delete: (() => ({ where: () => ({ returning: () => Promise.resolve([]) }) })) as any,
+    // Добавьте другие методы, если они используются и нужны для мока
+  } as unknown as PostgresJsDatabase<typeof schema>; // Приведение типа для мока
 
-// Используем заглушки для работы без базы данных
-db = {
-  query: async () => [],
-  select: () => ({ from: () => [] }),
-  insert: () => ({ values: () => ({ returning: () => [] }) }),
-  update: () => ({ set: () => ({ where: () => ({ returning: () => [] }) }) }),
-  delete: () => ({ where: () => ({ returning: () => [] }) }),
-};
-
-pool = {
-  end: async () => {
-    console.log('Mock pool ended');
-  }
-};
+  pool = {
+    end: async () => {
+      console.log('Mock pool ended');
+    }
+  } as unknown as postgres.Sql<{}>; // Приведение типа для мока
+}
 
 // Экспортируем переменные
 export { db, pool };

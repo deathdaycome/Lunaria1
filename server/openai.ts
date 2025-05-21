@@ -2,33 +2,12 @@ import OpenAI from "openai";
 import { InsertApiUsage } from "@shared/schema";
 import { storage } from "./storage";
 
-// Заглушка для OpenAI API
-console.log('=== RUNNING WITH MOCK OPENAI API ===');
-let openai: any;
-
-// Проверяем наличие API-ключа
-if (!process.env.OPENAI_API_KEY) {
-  console.log('OPENAI_API_KEY is not set, using mock OpenAI client');
-  // Создаем заглушку для OpenAI
-  openai = {
-    chat: {
-      completions: {
-        create: async () => ({
-          choices: [
-            {
-              message: {
-                content: "Это ответ от заглушки OpenAI API. Настоящий API не используется в данный момент."
-              }
-            }
-          ],
-        })
-      }
-    }
-  };
-} else {
-  // Используем модель gpt-4o-mini согласно требованиям
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-}
+// Используем модель gpt-3.5-turbo (более доступную) с запасным вариантом
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 30000, // Увеличим тайм-аут до 30 секунд
+  maxRetries: 3 // Добавим автоматические повторные попытки
+});
 
 // Track OpenAI API usage with a database entry
 async function trackApiUsage(userId: number, requestSource: string, requestText: string, responseText: string, tokensIn: number, tokensOut: number) {
@@ -52,7 +31,7 @@ export async function generateHoroscope(userId: number, zodiacSign: string, peri
     Используй мистический и духовный тон. Пиши на русском языке.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 300,
     });
@@ -86,7 +65,7 @@ export async function generateTarotReading(userId: number, question: string, car
     Используй мистический и духовный тон. Пиши на русском языке.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 800,
     });
@@ -119,7 +98,7 @@ export async function generateNatalChartAnalysis(userId: number, name: string, b
     Используй мистический и духовный тон. Пиши на русском языке.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 800,
     });
@@ -156,7 +135,7 @@ export async function generateCompatibilityAnalysis(
       const scorePrompt = `Ты профессионально анализируешь совместимость людей. Посчитай мне процент совместимости для ${person1.name} день рождения ${person1.birthDate} знак зодиака ${person1.zodiacSign} и ${person2.name} день рождения ${person2.birthDate} знак зодиака ${person2.zodiacSign}. В ответе покажи только процент`;
       
       const scoreResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: scorePrompt }],
         max_tokens: 50,
       });
@@ -175,7 +154,7 @@ export async function generateCompatibilityAnalysis(
     const prompt = `Ты профессионально анализируешь совместимость людей, просчитай мне астрологическую, нумерологическую и психологическую любовную (дружескую, партнерскую) совместимость ${person1.name} день рождения ${person1.birthDate} знак зодиака ${person1.zodiacSign} и ${person2.name} день рождения ${person2.birthDate} знак зодиака ${person2.zodiacSign}. Сделай это понятным анализом с фактами и точками роста. В конце своего ответа не задавай вопросов`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 500,
     });

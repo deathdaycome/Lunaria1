@@ -2,11 +2,14 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { getZodiacSign } from "../client/src/lib/zodiac";
+import { Pool } from "pg";
+import { pool as slonikPool } from "./db"; // slonikPool is imported but not used; consider removing if unnecessary
 
 declare global {
   namespace Express {
@@ -29,26 +32,40 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-export function setupAuth(app: Express) {
+  const PgSessionStore = connectPgSimple(session);
+
+  // Create a pg.Pool instance for session store
+  const pgSessionPool = new Pool({
+    connectionString: process.env.DATABASE_URL, // or your connection config
+    // You can add more options as needed
+  });
+
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "космический-путь-секрет",
-    resave: true,
-    saveUninitialized: true,
-    store: storage.sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    store: new PgSessionStore({
+      pool: pgSessionPool,
+      tableName: "user_sessions",
+      createTableIfMissing: true,
+    }),
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: false, // Отключаем secure cookie для работы на HTTP
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      sameSite: 'lax',
-      // Устанавливаем домен для cookie, если он задан в переменных окружения
-      domain: process.env.COOKIE_DOMAIN || undefined
-    }
+      sameSite: "lax",
+      domain: process.env.COOKIE_DOMAIN || undefined,
+    },
   };
-
-  app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
-  app.use(passport.initialize());
-  app.use(passport.session());
+    // End of sessionSettings definition
+  
+  
+  
+  export function setupAuth(app: Express) {
+    app.set("trust proxy", 1);
+    app.use(session(sessionSettings));
+    app.use(passport.initialize());
+    app.use(passport.session());
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
@@ -144,15 +161,22 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).send(info?.message || "Неверное имя пользователя или пароль");
-      
-      req.login(user, (err) => {
+    passport.authenticate(
+      "local",
+      (
+        err: any,
+        user: Express.User | false | null,
+        info: { message?: string } | undefined
+      ) => {
         if (err) return next(err);
-        return res.status(200).json(user);
-      });
-    })(req, res, next);
+        if (!user) return res.status(401).send(info?.message || "Неверное имя пользователя или пароль");
+        
+        req.login(user, (err: any) => {
+          if (err) return next(err);
+          return res.status(200).json(user);
+        });
+      }
+    )(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {

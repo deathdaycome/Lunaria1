@@ -196,28 +196,21 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
       name: "Карьера", 
       icon: <Work fontSize="medium" className="text-blue-400" />, 
       color: "text-blue-400",
-      disabled: subscriptionType === "free"
+      disabled: false
     },
     health: { 
       name: "Здоровье", 
       icon: <LocalFlorist fontSize="medium" className="text-green-400" />, 
       color: "text-green-400",
-      disabled: subscriptionType === "free"
+      disabled: false
     },
     finance: { 
       name: "Финансы", 
       icon: <AttachMoney fontSize="medium" className="text-yellow-400" />, 
       color: "text-yellow-400",
-      disabled: subscriptionType === "free"
+      disabled: false
     }
   };
-
-  // Если выбрана премиум категория, а у пользователя бесплатная подписка, переключаемся на общую категорию
-  useEffect(() => {
-    if (categories[activeCategory].disabled) {
-      setActiveCategory("general");
-    }
-  }, [subscriptionType, activeCategory]);
 
   const formatDate = (date: Date) => {
     return format(date, "EEEE, d MMMM yyyy", { locale: ru });
