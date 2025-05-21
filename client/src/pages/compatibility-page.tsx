@@ -41,6 +41,7 @@ export default function CompatibilityPage() {
   const [partnerType, setPartnerType] = useState<"self" | "friend" | "custom">("friend");
   const [selectedFriendId, setSelectedFriendId] = useState<string>("");
   const [partnerDate, setPartnerDate] = useState<Date | undefined>(undefined);
+  const [partnerName, setPartnerName] = useState<string>(""); // Новое состояние для имени партнера
   const [compatibilityResult, setCompatibilityResult] = useState<CompatibilityResult | null>(null);
 
   const { data: friends = [] } = useQuery<Friend[]>({
@@ -97,6 +98,16 @@ export default function CompatibilityPage() {
       return;
     }
 
+    // Проверка на заполненное имя для "Другой человек" (пункт 6 ТЗ)
+    if (partnerType === "custom" && !partnerName.trim()) {
+      toast({
+        title: "Ошибка",
+        description: "Введите имя партнера",
+        variant: "destructive",
+      });
+      return;
+    }
+
     let partnerData;
     if (partnerType === "friend") {
       const friend = friends.find(f => f.id === selectedFriendId);
@@ -108,7 +119,8 @@ export default function CompatibilityPage() {
     } else {
       partnerData = {
         type: "custom",
-        birthDate: partnerDate
+        birthDate: partnerDate,
+        name: partnerName // Добавляем имя партнера в отправляемые данные
       };
     }
 
@@ -196,9 +208,7 @@ export default function CompatibilityPage() {
                   <button
                     key={friend.id}
                     type="button"
-                    className={`w-full p-2 my-1 text-left rounded-lg text-
-// TODO: оптимизировать позже
-white ${
+                    className={`w-full p-2 my-1 text-left rounded-lg text-white ${
                       selectedFriendId === friend.id.toString() 
                         ? "bg-amber-400/20 border-amber-400" 
                         : "hover:bg-[var(--background-tertiary)]"
@@ -213,16 +223,30 @@ white ${
           )}
 
           {partnerType === "custom" && (
-            <div className="space-y-2">
-              <label className="text-base font-cormorant font-medium text-white">Дата рождения партнера</label>
-              <div className="calendar-wrapper" style={{ position: 'relative', zIndex: 100 }}>
-                <DatePicker
-                  date={partnerDate}
-                  setDate={setPartnerDate}
-                  className="bg-[var(--background-secondary)] bg-opacity-50 rounded-xl border-[var(--border)]"
+            <>
+              {/* Поле ввода имени партнера (пункт 6 ТЗ) */}
+              <div className="space-y-2">
+                <label className="text-base font-cormorant font-medium text-white">Имя партнера</label>
+                <input
+                  type="text"
+                  placeholder="Введите имя партнера"
+                  value={partnerName}
+                  onChange={(e) => setPartnerName(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--background-secondary)]/50 text-white placeholder:text-white/50"
                 />
               </div>
-            </div>
+              
+              <div className="space-y-2">
+                <label className="text-base font-cormorant font-medium text-white">Дата рождения партнера</label>
+                <div className="calendar-wrapper" style={{ position: 'relative', zIndex: 100 }}>
+                  <DatePicker
+                    date={partnerDate}
+                    setDate={setPartnerDate}
+                    className="bg-[var(--background-secondary)] bg-opacity-50 rounded-xl border-[var(--border)]"
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           <Button 
@@ -264,7 +288,12 @@ white ${
           {/* Информация о партнере */}
           <Card className="bg-[var(--background-secondary)]/80 backdrop-blur-sm border border-[var(--border)]">
             <CardContent className="p-4">
-              <h3 className="text-lg font-connie text-center mb-2 text-white">Данные партнера</h3>
+              <h3 className="text-lg font-connie text-center mb-2 text-white">
+                {/* Показываем имя партнера, если оно доступно */}
+                {compatibilityResult.partnerData?.name ? 
+                  `${compatibilityResult.partnerData.name}` : 
+                  "Данные партнера"}
+              </h3>
               <p className="text-center font-medium text-base text-white">
                 {compatibilityResult.partnerData?.birthDate ? 
                   formatDate(new Date(compatibilityResult.partnerData.birthDate)) : 
@@ -419,7 +448,10 @@ white ${
         {/* Кнопка нового теста */}
         <Button 
           className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-connie rounded-xl transition-all shadow-[0_0_15px_var(--primary-opacity)]"
-          onClick={() => setCompatibilityResult(null)}
+          onClick={() => {
+            setCompatibilityResult(null);
+            setPartnerName(""); // Сбрасываем имя при начале нового теста
+          }}
         >
           Новый тест
         </Button>

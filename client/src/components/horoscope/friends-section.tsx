@@ -242,7 +242,7 @@ export default function FriendsSection() {
           <span className="text-xs text-center">Добавить</span>
         </div>
         
-        {!isLoading && friends?.map((friend: any, index: number) => (
+        {!isLoading && Array.isArray(friends) && friends.map((friend: any, index: number) => (
           <div key={index} className="flex-shrink-0 w-16 flex flex-col items-center">
             <div className="w-12 h-12 rounded-full bg-card-bg-light flex items-center justify-center mb-1">
               {friend.gender === "male" ? (

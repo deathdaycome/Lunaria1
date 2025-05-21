@@ -81,11 +81,17 @@ const demoLuckyNumbers: Record<string, number[]> = {
   pisces: [3, 7, 12]
 };
 
+// Типы для совместимых знаков с процентом совместимости
+type CompatibleSign = {
+  name: string;
+  compatibility: number;
+};
+
 // Тип данных для ответа от API гороскопа
 type HoroscopeResponse = {
   content: string;
   luckyNumbers: number[];
-  compatibleSigns: string[];
+  compatibleSigns: CompatibleSign[];
   lastUpdated: string;
 };
 
@@ -109,6 +115,12 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
       try {
         // Сначала пытаемся получить данные от защищенного API
         try {
+          // Для счастливых чисел используем наш промпт:
+          // "Ты профессиональный астролог. Определи 3 счастливых числа. Имя – [имя]. Дата рождения - [дата рождения]. В ответе покажи только числа"
+          
+          // Для совместимых знаков также используем наш промпт:
+          // "Ты профессиональный астролог. Определи 3 знака зодиака, наиболее совместимых с: имя – [имя], дата рождения - [дата рождения]. В ответе покажи только названия знаком зодиака и процент совместимости"
+          
           const authRes = await fetch(`/api/horoscope?period=${period}&category=${activeCategory}`);
           
           if (authRes.ok) {
@@ -130,10 +142,17 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
       } catch (err) {
         console.error("Ошибка при запросе гороскопа:", err);
         // В случае ошибки также возвращаем локальные демо-данные
+        
+        // Преобразуем обычные строковые совместимые знаки в объекты с процентом совместимости
+        const compatibleSignsWithPercent = getCompatibleSigns(zodiacSign).map(sign => ({
+          name: sign,
+          compatibility: Math.floor(Math.random() * 31) + 70 // Рандомное число от 70 до 100
+        }));
+        
         return {
           content: demoHoroscopes[activeCategory][period],
           luckyNumbers: demoLuckyNumbers[zodiacSign.toLowerCase()] || [7, 14, 21],
-          compatibleSigns: getCompatibleSigns(zodiacSign),
+          compatibleSigns: compatibleSignsWithPercent,
           lastUpdated: new Date().toISOString()
         };
       }
@@ -159,34 +178,35 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
     return `linear-gradient(135deg, ${color}, rgba(84,40,176,${alpha}))`;
   };
   
+  // Измененные иконки с увеличенным размером (пункт 2 ТЗ)
   const categories: Record<Category, CategoryInfo> = {
     general: { 
       name: "Общее", 
-      icon: <AutoAwesome fontSize="small" className="text-amber-300" />, 
+      icon: <AutoAwesome fontSize="medium" className="text-amber-300" />, 
       color: "text-amber-300",
       disabled: false
     },
     love: { 
       name: "Любовь", 
-      icon: <Favorite fontSize="small" className="text-red-400" />, 
+      icon: <Favorite fontSize="medium" className="text-red-400" />, 
       color: "text-red-400",
       disabled: false
     },
     career: { 
       name: "Карьера", 
-      icon: <Work fontSize="small" className="text-blue-400" />, 
+      icon: <Work fontSize="medium" className="text-blue-400" />, 
       color: "text-blue-400",
       disabled: subscriptionType === "free"
     },
     health: { 
       name: "Здоровье", 
-      icon: <LocalFlorist fontSize="small" className="text-green-400" />, 
+      icon: <LocalFlorist fontSize="medium" className="text-green-400" />, 
       color: "text-green-400",
       disabled: subscriptionType === "free"
     },
     finance: { 
       name: "Финансы", 
-      icon: <AttachMoney fontSize="small" className="text-yellow-400" />, 
+      icon: <AttachMoney fontSize="medium" className="text-yellow-400" />, 
       color: "text-yellow-400",
       disabled: subscriptionType === "free"
     }
@@ -271,8 +291,21 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
     [7, 14, 21];
   
   // Получаем совместимые знаки из данных API или используем метод из библиотеки зодиака
-  const compatibleSigns = horoscopeData?.compatibleSigns || 
-    getCompatibleSigns(zodiacSign);
+  let compatibleSigns = horoscopeData?.compatibleSigns;
+  if (!compatibleSigns || !Array.isArray(compatibleSigns) || compatibleSigns.length === 0) {
+    // fallback на демо-значения
+    compatibleSigns = getCompatibleSigns(zodiacSign).slice(0, 3).map(sign => ({
+      name: sign,
+      compatibility: Math.floor(Math.random() * 21) + 80 // 80-100%
+    }));
+  } else {
+    // если вдруг пришли строки, а не объекты
+    compatibleSigns = compatibleSigns.map(sign =>
+      typeof sign === "string"
+        ? { name: sign, compatibility: Math.floor(Math.random() * 21) + 80 }
+        : sign
+    );
+  }
   
   // Получаем символ для знака зодиака
   const getZodiacSymbol = (sign: string) => {
@@ -373,7 +406,7 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
         ) : (
           /* Категории и контент */
           <Tabs value={activeCategory} onValueChange={(value) => setActiveCategory(value as Category)}>
-            {/* Категории в стиле мистических плиток - увеличиваем шрифт иконок (пункт 2 ТЗ) */}
+            {/* Категории в стиле мистических плиток */}
             <div className="mb-2">
               {/* Новый дизайн категорий в стиле плиток */}
               <TabsList className="grid grid-cols-5 gap-1 p-1 mx-auto bg-transparent">
@@ -430,13 +463,12 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
                         </div>
                       )}
                       
-                      {/* Иконка категории - увеличиваем до medium (пункт 2 ТЗ) */}
-                      <div className={`text-base transition-all duration-300 ${key === activeCategory ? 'scale-110' : 'scale-100'}`}>
-                        {/* Заменяем fontSize="small" на fontSize="medium" */}
-                        {React.cloneElement(category.icon as React.ReactElement, { fontSize: "medium" })}
+                      {/* Иконка категории - используем иконки с увеличенным размером */}
+                      <div className={`text-lg transition-all duration-300 ${key === activeCategory ? 'scale-110' : 'scale-100'}`}>
+                        {category.icon}
                       </div>
                       
-                      {/* Название категории - увеличиваем шрифт (пункт 2 ТЗ) */}
+                      {/* Название категории - увеличиваем размер шрифта (пункт 2 ТЗ) */}
                       <span 
                         className={`text-center transition-all duration-300 font-cinzel text-[13px] mt-[2px]
                           ${key === activeCategory ? 'font-medium' : 'font-normal'}`}
@@ -461,15 +493,15 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
               </TabsList>
             </div>
 
-            {/* Контент гороскопа со свитком */}
-            <div className="scroll-container">
+            {/* Контент гороскопа без выделения в квадрат (пункт 7 ТЗ) */}
+            <div className="px-1 py-3">
               {Object.keys(categories).map((key) => (
                 <TabsContent key={key} value={key} className="mb-5 px-2 relative z-10">
                   <motion.p 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: key === activeCategory ? 1 : 0 }}
                     transition={{ duration: 0.5 }}
-                    // Уменьшаем размер шрифта (пункт 13 ТЗ) - меняем с text-2xl на text-lg
+                    // Уменьшаем размер шрифта (пункт 13 ТЗ)
                     className="text-gray-200 font-cormorant text-lg leading-relaxed"
                   >
                     {key === activeCategory ? horoscopeText : ""}
@@ -525,7 +557,7 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
           </motion.div>
         )}
 
-        {/* Совместимые знаки */}
+        {/* Совместимые знаки с процентом совместимости */}
         {!isLoading && (
           <motion.div 
             className="mb-5 fade-in-up delay-300"
@@ -536,7 +568,7 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
             <h4 className="section-title text-gold-gradient font-cinzel text-lg mb-3" data-text="Совместимые знаки">Совместимые знаки</h4>
             <div className="compatible-signs-container p-4 rounded-xl bg-[#1a1331]/70 border border-[#8a2be2]/20 backdrop-blur-sm">
               <div className="flex flex-wrap gap-5 justify-center">
-                {compatibleSigns.map((sign, index) => (
+                {compatibleSigns.length > 0 ? compatibleSigns.map((sign, index) => (
                   <motion.div 
                     key={index}
                     whileHover={{ scale: 1.05, y: -3 }}
@@ -560,18 +592,26 @@ export default function HoroscopeCard({ period, zodiacSign }: HoroscopeCardProps
                           fontWeight: 'bold'
                         }}
                       >
-                        {getZodiacSymbol(sign)}
+                        {getZodiacSymbol(sign.name)}
                       </span>
                     </div>
-                    
-                    {/* Название знака */}
-                    <span className="text-base font-cinzel font-medium text-white" style={{
-                      textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
-                    }}>
-                      {getZodiacRussianName(sign)}
-                    </span>
+                    {/* Название знака и процент совместимости */}
+                    <div className="flex flex-col">
+                      <span className="text-base font-cinzel font-medium text-white" style={{
+                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
+                      }}>
+                        {getZodiacRussianName(sign.name)}
+                      </span>
+                      <span className="text-sm font-medium text-amber-300" style={{
+                        textShadow: '0 2px 3px rgba(0, 0, 0, 0.5)'
+                      }}>
+                        {sign.compatibility}% совместимости
+                      </span>
+                    </div>
                   </motion.div>
-                ))}
+                )) : (
+                  <span className="text-gray-400">Нет данных</span>
+                )}
               </div>
             </div>
           </motion.div>
