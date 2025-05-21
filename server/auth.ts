@@ -8,7 +8,8 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { getZodiacSign } from "../client/src/lib/zodiac";
-import { Pool } from "pg";
+import pg from "pg";
+const { Pool } = pg; // Updated import for pg.Pool
 import { pool as slonikPool } from "./db"; // slonikPool is imported but not used; consider removing if unnecessary
 
 declare global {
@@ -32,40 +33,38 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-  const PgSessionStore = connectPgSimple(session);
+const PgSessionStore = connectPgSimple(session);
 
-  // Create a pg.Pool instance for session store
-  const pgSessionPool = new Pool({
-    connectionString: process.env.DATABASE_URL, // or your connection config
-    // You can add more options as needed
-  });
+// Create a pg.Pool instance for session store
+const sessionPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false, // Example for Render/Heroku
+});
 
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "космический-путь-секрет",
-    resave: false,
-    saveUninitialized: false,
-    store: new PgSessionStore({
-      pool: pgSessionPool,
-      tableName: "user_sessions",
-      createTableIfMissing: true,
-    }),
-    cookie: {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: "lax",
-      domain: process.env.COOKIE_DOMAIN || undefined,
-    },
-  };
-    // End of sessionSettings definition
-  
-  
-  
-  export function setupAuth(app: Express) {
-    app.set("trust proxy", 1);
-    app.use(session(sessionSettings));
-    app.use(passport.initialize());
-    app.use(passport.session());
+const sessionSettings: session.SessionOptions = {
+  secret: process.env.SESSION_SECRET || "космический-путь-секрет",
+  resave: false,
+  saveUninitialized: false,
+  store: new PgSessionStore({
+    pool: sessionPool, // Updated to use the new pg.Pool
+    tableName: "user_sessions",
+    createTableIfMissing: true,
+  }),
+  cookie: {
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "lax",
+    domain: process.env.COOKIE_DOMAIN || undefined,
+  },
+};
+// End of sessionSettings definition
+
+export function setupAuth(app: Express) {
+  app.set("trust proxy", 1);
+  app.use(session(sessionSettings));
+  app.use(passport.initialize());
+  app.use(passport.session());
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
