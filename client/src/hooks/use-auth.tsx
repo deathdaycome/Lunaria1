@@ -5,7 +5,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { LoginUser, User as SelectUser, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
@@ -25,9 +25,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
+  } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/user");
+
+        if (response.status === 401) {
+          return null;
+        }
+
+        if (!response.ok) {
+          console.error(
+            `API error on /api/user: ${response.status} ${response.statusText}`
+          );
+          throw new Error(`Failed to fetch user: ${response.status}`);
+        }
+
+        return (await response.json()) as SelectUser;
+      } catch (err) {
+        console.error("Network or processing error in /api/user queryFn:", err);
+        return null;
+      }
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const loginMutation = useMutation({
