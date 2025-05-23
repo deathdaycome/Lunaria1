@@ -50,5 +50,11 @@ EXPOSE 5000
 ENV PORT=5000
 ENV NODE_ENV=production
 
+# Проверяем синтаксис перед запуском
+RUN echo "=== SYNTAX CHECK ===" && \
+    node --check dist/index.js || \
+    (echo "Syntax error detected, showing first 50 lines of index.js:" && \
+     head -50 dist/index.js)
+
 # Start the application (только один CMD!)
 CMD ["node", "--max-old-space-size=512", "dist/index.js"]
