@@ -51,7 +51,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": "http://localhost:5000",
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        // secure: false, // Если бэкенд на HTTPS с самоподписанным сертификатом
+        // rewrite: (path) => path.replace(/^\/api/, '') // Если нужно убрать /api перед отправкой на бэкенд
+      }
     },
     host: true, // Разрешаем подключения извне
     port: 3000,

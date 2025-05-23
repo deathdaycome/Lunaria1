@@ -1,10 +1,13 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: "class",
+  darkMode: "class", // или 'media' если предпочитаете системную тему
   content: [
-    "./index.html",
-    "./src/**/*.{js,jsx,ts,tsx}",
-    "../shared/**/*.{js,jsx,ts,tsx}",
-    "../attached_assets/**/*.{js,jsx,ts,tsx}"
+    "./client/index.html", // Путь к вашему главному HTML-файлу в папке client
+    "./client/src/**/*.{js,jsx,ts,tsx}", // Пути ко всем файлам с JSX/TSX в client/src
+    // Если у вас есть классы Tailwind в папках shared или attached_assets,
+    // и эти папки находятся в корне проекта, то пути будут такими:
+    // "./shared/**/*.{js,jsx,ts,tsx}",
+    // "./attached_assets/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {

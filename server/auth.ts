@@ -186,7 +186,11 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+    if (!req.isAuthenticated()) {
+      // Возвращаем JSON с сообщением об ошибке
+      return res.status(401).json({ message: "Пользователь не авторизован" }); 
+    }
+    // Если авторизован, возвращаем JSON с данными пользователя
+    res.json(req.user); 
   });
 }

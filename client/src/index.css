@@ -3,6 +3,9 @@
 @import url('https://fonts.cdnfonts.com/css/connie');
 @import url('./styles/z-index-fixes.css');
 
+/* The following @tailwind directives require Tailwind CSS to be processed via PostCSS or the Tailwind CLI.
+   If you see "Unknown at rule @tailwind", make sure your build tool is set up to use Tailwind CSS.
+   See https://tailwindcss.com/docs/installation for setup instructions. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
