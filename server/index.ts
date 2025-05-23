@@ -40,7 +40,14 @@ import { format } from "date-fns";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { pool } from "./db";
-import { setupAuth } from "./auth"; // ДОБАВЛЕН ИМПОРТ
+import { setupAuth } from "./auth";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from 'url';
+
+// Получаем __dirname для ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('Modules loaded successfully');
 
@@ -212,15 +219,61 @@ let isShuttingDown = false;
     log(`📊 Process ID: ${process.pid}`);
     log(`📊 Node version: ${process.version}`);
     
-    // ИСПРАВЛЕНИЕ 2: Настройка Vite ДО регистрации маршрутов
-    console.log('Setting up Vite/Static files...');
-    if (process.env.NODE_ENV === "development") {
-      server = await setupVite(app, null);
+    // КРИТИЧНО: Настройка статических файлов для production
+    if (process.env.NODE_ENV === "production") {
+      console.log('Setting up static files for production...');
+      
+      // Правильный путь к статическим файлам
+      const staticPath = path.join(process.cwd(), 'dist', 'public');
+      
+      console.log('=== STATIC FILES SETUP ===');
+      console.log('Static path:', staticPath);
+      console.log('Directory exists:', fs.existsSync(staticPath));
+      
+      // Проверяем содержимое директории
+      if (fs.existsSync(staticPath)) {
+        const files = fs.readdirSync(staticPath);
+        console.log('Static directory contents:', files);
+        
+        // Проверяем наличие assets
+        const assetsPath = path.join(staticPath, 'assets');
+        if (fs.existsSync(assetsPath)) {
+          const assetFiles = fs.readdirSync(assetsPath);
+          console.log('Assets directory contents:', assetFiles.slice(0, 5), '...'); // Показываем первые 5 файлов
+        }
+      }
+      
+      // Раздача статических файлов с правильными заголовками
+      app.use(express.static(staticPath, {
+        etag: true,
+        lastModified: true,
+        setHeaders: (res, filePath) => {
+          // Устанавливаем правильный MIME тип для CSS файлов
+          if (filePath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+          }
+          // Кэширование для assets
+          if (filePath.includes('/assets/')) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          }
+        }
+      }));
+      
+      // Логирование всех запросов к статике для отладки
+      app.use((req, res, next) => {
+        if (req.path.startsWith('/assets/') || req.path.endsWith('.css') || req.path.endsWith('.js')) {
+          console.log(`Static request: ${req.method} ${req.path}`);
+        }
+        next();
+      });
+      
+      console.log('Static files setup complete');
     } else {
-      // Для production сразу подключаем статические файлы
-      serveStatic(app);
+      // Для development используем Vite
+      console.log('Setting up Vite for development...');
+      server = await setupVite(app, null);
+      console.log('Vite setup complete');
     }
-    console.log('Vite/Static setup complete');
     
     // ДОБАВЛЕНО: Настраиваем аутентификацию ПЕРЕД маршрутами
     console.log('Setting up authentication...');
@@ -245,6 +298,21 @@ let isShuttingDown = false;
       
       res.status(status).json({ message });
     });
+    
+    // Catch-all route для SPA в production - ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ
+    if (process.env.NODE_ENV === "production") {
+      app.get('*', (req, res) => {
+        const indexPath = path.join(process.cwd(), 'dist', 'public', 'index.html');
+        console.log(`SPA fallback: ${req.path} -> index.html`);
+        
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          console.error('index.html not found at:', indexPath);
+          res.status(404).send('Application not found');
+        }
+      });
+    }
     
     // ИСПРАВЛЕНИЕ 4: Создаем HTTP сервер правильно
     const port = parseInt(process.env.PORT || '5000');

@@ -20,6 +20,24 @@ COPY . .
 # Build the project
 RUN npm run build
 
+# ВАЖНО: Проверяем структуру после сборки
+RUN echo "=== BUILD VERIFICATION ===" && \
+    echo "Contents of /app/dist:" && \
+    ls -la /app/dist/ && \
+    echo "Contents of /app/dist/public:" && \
+    ls -la /app/dist/public/ && \
+    echo "Contents of /app/dist/public/assets (first 10 files):" && \
+    ls -la /app/dist/public/assets/ | head -20 && \
+    echo "Checking for CSS files:" && \
+    find /app/dist -name "*.css" -type f | head -10 && \
+    echo "Checking index.html:" && \
+    if [ -f /app/dist/public/index.html ]; then \
+        echo "index.html found, first 20 lines:" && \
+        head -20 /app/dist/public/index.html; \
+    else \
+        echo "ERROR: index.html not found!"; \
+    fi
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodeuser -u 1001
 RUN chown -R nodeuser:nodejs /app
@@ -30,10 +48,7 @@ EXPOSE 5000
 
 # Set environment variable for port
 ENV PORT=5000
-
-# Add health check (ИСПРАВЛЕНО - объединено в одну строку!)
-#HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
- # CMD curl -f http://localhost:5000/health || exit 1
+ENV NODE_ENV=production
 
 # Start the application (только один CMD!)
 CMD ["node", "--max-old-space-size=512", "dist/index.js"]
