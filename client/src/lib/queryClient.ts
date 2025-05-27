@@ -12,7 +12,17 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Принудительно используем относительные пути для API запросов
+  let apiUrl = url;
+  if (url.startsWith('http')) {
+    // Если передан абсолютный URL, извлекаем только путь
+    const urlObj = new URL(url);
+    apiUrl = urlObj.pathname + urlObj.search + urlObj.hash;
+  }
+  
+  console.log(`API Request: ${method} ${apiUrl}`);
+  
+  const res = await fetch(apiUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,9 +39,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, 
-// TODO: оптимизировать позже
-{
+    let url = queryKey[0] as string;
+    
+    // Принудительно используем относительные пути
+    if (url.startsWith('http')) {
+      const urlObj = new URL(url);
+      url = urlObj.pathname + urlObj.search + urlObj.hash;
+    }
+    
+    console.log(`Query Request: GET ${url}`);
+    
+    const res = await fetch(url, {
       credentials: "include",
     });
 

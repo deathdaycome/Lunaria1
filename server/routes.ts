@@ -10,6 +10,8 @@ import { generateHoroscope, generateTarotReading, generateNatalChartAnalysis, ge
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
+console.log("🚨🚨🚨 ROUTES.TS FILE LOADED! TIMESTAMP:", new Date().toISOString());
+
 // Middleware для проверки авторизации
 const isAuthenticated = (req: Request, res: Response, next: Function) => {
   if (req.isAuthenticated()) {
@@ -37,13 +39,39 @@ const getRandomNumbers = (count: number, min: number, max: number): number[] => 
 
 // Главная функция для регистрации маршрутов
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Настройка аутентификации
-  setupAuth(app);
+  // 🚀🚀🚀 КРИТИЧНЫЙ ЛОГ - ДОЛЖЕН ПОЯВИТЬСЯ В КОНСОЛИ!
+  console.log("🚀🚀🚀 REGISTERING ROUTES - COMPATIBILITY WILL BE ADDED!");
+  console.log("🚀🚀🚀 Routes.ts loaded at:", new Date().toISOString());
+
+  // 🧪 КРИТИЧНЫЙ ТЕСТ - ДОБАВИТЬ ПЕРВЫМ!
+  app.get("/api/test-simple", (req, res) => {
+    console.log("🧪 SIMPLE TEST ENDPOINT HIT!");
+    res.json({ message: "Simple test works!", time: new Date().toISOString() });
+  });
+
+  app.post("/api/test-simple", (req, res) => {
+    console.log("🧪 SIMPLE TEST POST ENDPOINT HIT!");
+    console.log("🧪 Body:", req.body);
+    res.json({ message: "Simple POST test works!", time: new Date().toISOString() });
+  });
   
+  // 🧪 ТЕСТОВЫЙ ENDPOINT - добавляем ПЕРВЫМ!
+  app.post("/api/test-compat", isAuthenticated, async (req, res) => {
+    console.log("🧪🧪🧪 TEST COMPAT ENDPOINT HIT!");
+    console.log("🧪 Request body:", JSON.stringify(req.body, null, 2));
+    res.json({ message: "Test compatibility endpoint works!", timestamp: new Date().toISOString() });
+  });
+
+  // 🚨 ТЕСТ БЕЗ АВТОРИЗАЦИИ!
+  app.post("/api/test-no-auth", async (req, res) => {
+    console.log("🚨 NO-AUTH TEST ENDPOINT HIT!");
+    console.log("🚨 Body:", JSON.stringify(req.body, null, 2));
+    res.json({ message: "No-auth test works!", data: req.body, timestamp: new Date().toISOString() });
+  });
+
   // API для администратора
   app.get("/api/admin/users", isAdmin, async (req, res) => {
     try {
-      // В настоящем приложении использовать ваш метод storage.getAllUsers()
       const allUsers = await db.query.users.findMany({
         orderBy: (users, { desc }) => [desc(users.createdAt)]
       });
@@ -58,9 +86,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/api-usage", isAdmin, async (req, res) => {
     try {
       const { timeframe = "week" } = req.query;
-      
-      // Получаем статистику использования API
-      // В настоящем приложении использовать ваш метод storage.getApiUsageStats()
       
       const currentDate = new Date();
       let fromDate = new Date();
@@ -94,14 +119,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalTokensIn += usage.tokensIn || 0;
         totalTokensOut += usage.tokensOut || 0;
         
-        // Группировка по дням
         const dateKey = format(new Date(usage.createdAt), 'd MMM', { locale: ru });
         if (!dailyUsageMap.has(dateKey)) {
           dailyUsageMap.set(dateKey, { date: dateKey, calls: 0 });
         }
         dailyUsageMap.get(dateKey).calls++;
         
-        // Группировка по конечным точкам
         if (!endpointStatsMap.has(usage.requestSource)) {
           endpointStatsMap.set(usage.requestSource, { 
             endpoint: usage.requestSource, 
@@ -115,7 +138,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endpointStat.tokensIn += usage.tokensIn;
         endpointStat.tokensOut += usage.tokensOut;
         
-        // Группировка по часам
         const hourKey = format(new Date(usage.createdAt), 'HH:00');
         if (!hourlyUsageMap.has(hourKey)) {
           hourlyUsageMap.set(hourKey, { hour: hourKey, calls: 0 });
@@ -123,23 +145,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hourlyUsageMap.get(hourKey).calls++;
       });
       
-      // Сортируем и находим наиболее часто используемую конечную точку
       const endpointStats = Array.from(endpointStatsMap.values())
         .sort((a, b) => b.calls - a.calls);
       
       const topEndpoint = endpointStats.length > 0 ? endpointStats[0].endpoint : 'Нет данных';
+      const avgResponseTime = Math.round((totalTokensOut / Math.max(1, totalCalls)) * 1.5);
       
-      // Расчет среднего времени ответа (фиктивно, так как у нас нет этих данных)
-      const avgResponseTime = Math.round((totalTokensOut / Math.max(1, totalCalls)) * 1.5); // Простая оценка
-      
-      // Находим количество вызовов за вчера
       const yesterdayDate = new Date();
       yesterdayDate.setDate(currentDate.getDate() - 1);
-      // TODO: оптимизировать позже
       const yesterdayKey = format(yesterdayDate, 'd MMM', { locale: ru });
       const yesterdayCalls = dailyUsageMap.has(yesterdayKey) ? dailyUsageMap.get(yesterdayKey).calls : 0;
       
-      // Формируем результат
       const result = {
         totalCalls,
         totalCallsYesterday: yesterdayCalls,
@@ -161,7 +177,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.body;
       
-      // В настоящем приложении использовать ваш метод storage.setUserRole()
       await db.update(users)
         .set({ role: "admin" })
         .where(eq(users.id, parseInt(userId)));
@@ -188,16 +203,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { birthDate, ...friendData } = req.body;
       
-      // Convert string date to Date object if needed
       const birthDateObj = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
-      
-      // Этот хак необходим из-за особенностей API
-      // Determine zodiac sign
       const zodiacSignData = getZodiacSign(new Date(birthDateObj));
       
       const newFriend = await storage.createFriend({
         name: friendData.name,
-        gender: friendData.gender, // Добавлено обязательное поле gender
+        gender: friendData.gender,
         email: friendData.email || '',
         userId: req.user!.id,
         birthDate: birthDateObj.toISOString().split('T')[0],
@@ -216,7 +227,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { period = "today", category = "general" } = req.query;
 
-      // Найдем последний актуальный гороскоп или сгенерируем новый
       const existingHoroscope = await storage.getActualHoroscope(
         req.user!.id, 
         period as string, 
@@ -232,7 +242,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Генерируем новый гороскоп, если нет существующего
       const content = await generateHoroscope(
         req.user!.id, 
         req.user!.zodiacSign, 
@@ -240,11 +249,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category as string
       );
       
-      // Генерируем счастливые числа и совместимые знаки
       const luckyNumbers = getRandomNumbers(3, 1, 99);
       const compatibleSigns = getCompatibleSigns(req.user!.zodiacSign);
       
-      // Сохраняем новый гороскоп
       const newHoroscope = await storage.createHoroscope({
         userId: req.user!.id,
         period: period as string,
@@ -271,7 +278,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { period = "today", category = "general" } = req.body;
       
-      // Проверяем, можно ли обновить гороскоп
       const canRefresh = await storage.canRefreshHoroscope(req.user!.id, period as string);
       
       if (!canRefresh) {
@@ -286,10 +292,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send(message);
       }
       
-      // Делаем все предыдущие гороскопы неактуальными
       await storage.deactivateHoroscopes(req.user!.id, period as string, category as string);
       
-      // Генерируем новый гороскоп
       const content = await generateHoroscope(
         req.user!.id, 
         req.user!.zodiacSign, 
@@ -297,11 +301,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category as string
       );
       
-      // Генерируем счастливые числа и совместимые знаки
       const luckyNumbers = getRandomNumbers(3, 1, 99);
       const compatibleSigns = getCompatibleSigns(req.user!.zodiacSign);
       
-      // Сохраняем новый гороскоп
       const newHoroscope = await storage.createHoroscope({
         userId: req.user!.id,
         period: period as string,
@@ -329,21 +331,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { question, cardCount, category, cardType } = req.body;
       
-      // Проверка на лимиты по подписке
       const subscriptionType = req.user!.subscriptionType;
       if (subscriptionType === "free") {
-        // Free users can only do 3-card readings
         if (cardCount > 3) {
           return res.status(403).send("Требуется подписка для раскладов из 5 карт");
         }
         
-        // Check API usage limits for free users
         const dailyUsage = await storage.getTodayApiUsageCount(req.user!.id, "tarot");
         if (dailyUsage >= 3) {
           return res.status(403).send("Достигнут дневной лимит раскладов для бесплатного аккаунта");
         }
       } else if (subscriptionType === "basic") {
-        // Basic users have limits on the number of readings
         const monthlyUsage = await storage.getMonthlyApiUsageCount(req.user!.id, "tarot");
         const limit = cardCount === 3 ? 10 : 5;
         if (monthlyUsage >= limit) {
@@ -351,7 +349,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Generate reading
       const reading = await generateTarotReading(
         req.user!.id, 
         question, 
@@ -381,7 +378,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.user!.birthPlace || undefined
         );
       } else {
-        // Для другого человека
         analysis = await generateNatalChartAnalysis(
           req.user!.id,
           name,
@@ -398,41 +394,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API для совместимости
+  // 🔥🔥🔥 API ДЛЯ СОВМЕСТИМОСТИ - ИСПРАВЛЕННАЯ ВЕРСИЯ!
   app.post("/api/compatibility", isAuthenticated, async (req, res) => {
+    console.log("🔍🔍🔍 COMPATIBILITY ENDPOINT HIT!!!");
+    console.log("🔍 Timestamp:", new Date().toISOString());
+    console.log("🔍 User ID:", req.user?.id);
+    console.log("🔍 Request body:", JSON.stringify(req.body, null, 2));
+    
     try {
-      const { type, friendId, birthDate } = req.body;
+      const { type, friendId, birthDate, name } = req.body;
+      
+      console.log("🔍 Parsed values:", { type, friendId, birthDate, name });
       
       const user = req.user!;
       let partnerData: any = {};
       
       if (type === "friend") {
+        console.log("🔍 Processing friend compatibility, friendId:", friendId);
         const friend = await storage.getFriendById(parseInt(friendId));
         if (!friend) {
+          console.log("❌ Friend not found:", friendId);
           return res.status(404).send("Друг не найден");
         }
         
+        console.log("✅ Friend found:", friend.name);
         partnerData = {
           name: friend.name,
           zodiacSign: friend.zodiacSign,
           birthDate: new Date(friend.birthDate).toISOString().split('T')[0]
         };
       } else {
-        // Custom partner with just a birthdate
+        console.log("🔍 Processing custom partner compatibility");
         const birthDateObj = new Date(birthDate);
         const zodiacSign = getZodiacSign(birthDateObj);
         
+        console.log("🔍 Partner zodiac sign:", zodiacSign.name);
+        
         partnerData = {
-          name: "Партнер",
+          name: name || "Партнер",
           zodiacSign: zodiacSign.name,
           birthDate: birthDateObj.toISOString().split('T')[0]
         };
       }
       
+      console.log("🔍 Final partner data:", partnerData);
+      
       // Calculate compatibility score
       const compatibilityScore = calculateCompatibility(user.zodiacSign, partnerData.zodiacSign);
+      console.log("🔍 Compatibility score:", compatibilityScore);
       
       // Generate analysis
+      console.log("🔍 Generating compatibility analysis...");
       const analysis = await generateCompatibilityAnalysis(
         user.id,
         {
@@ -444,13 +456,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         compatibilityScore
       );
       
-      res.json({
+      console.log("✅ Analysis generated successfully");
+      
+      const response = {
         compatibilityScore,
         analysis,
         partnerData
+      };
+      
+      console.log("🔍 Sending response:", { 
+        compatibilityScore, 
+        analysisLength: analysis.length,
+        partnerName: partnerData.name 
       });
+      
+      res.json(response);
     } catch (error) {
-      console.error("Error calculating compatibility:", error);
+      console.error("❌ Error calculating compatibility:", error);
+      console.error("❌ Error stack:", error instanceof Error ? error.stack : "No stack");
       res.status(500).send("Ошибка при расчёте совместимости");
     }
   });
@@ -460,9 +483,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { planType } = req.body;
       
-      // В реальном приложении здесь была бы интеграция с платежной системой
-      // Для тестового варианта просто меняем тип подписки
-      
       const updatedUser = await storage.updateUserSubscription(req.user!.id, planType);
       
       res.json(updatedUser);
@@ -471,6 +491,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).send("Ошибка при обновлении подписки");
     }
   });
+
+  console.log("🚀🚀🚀 ALL ROUTES REGISTERED SUCCESSFULLY!");
+  console.log("🚀🚀🚀 Total routes registered at:", new Date().toISOString());
 
   const httpServer = createServer(app);
   return httpServer;

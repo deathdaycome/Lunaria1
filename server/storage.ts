@@ -202,9 +202,9 @@ export class DatabaseStorage implements IStorage {
     const endpointStats = Array.from(endpointStatsMap.values())
       .sort((a, b) => b.calls - a.calls);
     
-    const topEndpoint = endpoint
+    const topEndpoint = endpointStats.length > 0 ? endpointStats[0].endpoint : 'Нет данных';
 // TODO: оптимизировать позже
-Stats.length > 0 ? endpointStats[0].endpoint : 'Нет данных';
+
     
     // Расчет среднего времени ответа (примерно)
     const avgResponseTime = Math.round((totalTokensOut / Math.max(1, totalCalls)) * 1.5);

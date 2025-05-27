@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
+    //runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
@@ -50,16 +50,67 @@ export default defineConfig({
     }
   },
   server: {
+    host: '0.0.0.0', // Слушаем все интерфейсы
+    port: 3000,
+    hmr: { overlay: false },
     proxy: {
+      // Проксируем API запросы к Express серверу
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        // secure: false, // Если бэкенд на HTTPS с самоподписанным сертификатом
-        // rewrite: (path) => path.replace(/^\/api/, '') // Если нужно убрать /api перед отправкой на бэкенд
+        secure: false,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('🔴 API Proxy error:', err.message);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('🔵 API Proxy request:', req.method, req.url, '-> http://localhost:8000' + req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('🟢 API Proxy response:', proxyRes.statusCode, req.url);
+          });
+        },
+      },
+      // Добавляем health check
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('🔴 Health Proxy error:', err.message);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('🔵 Health Proxy request:', req.method, req.url, '-> http://localhost:8000' + req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('🟢 Health Proxy response:', proxyRes.statusCode, req.url);
+          });
+        },
+      },
+      // Добавляем тестовый маршрут
+      '/test123': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('🔴 Test Proxy error:', err.message);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('🔵 Test Proxy request:', req.method, req.url, '-> http://localhost:8000' + req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('🟢 Test Proxy response:', proxyRes.statusCode, req.url);
+          });
+        },
       }
     },
-    host: true, // Разрешаем подключения извне
-    port: 3000,
+    allowedHosts: [
+      '.trycloudflare.com', // Разрешает все поддомены trycloudflare.com
+      'planners-several-marilyn-developmental.trycloudflare.com', // Новый туннельный хост
+      'statistical-flag-here-poor.trycloudflare.com' // Старый туннельный хост
+    ],
   },
   preview: {
     port: 3000,

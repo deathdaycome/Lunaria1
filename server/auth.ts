@@ -61,6 +61,8 @@ const sessionSettings: session.SessionOptions = {
 // End of sessionSettings definition
 
 export function setupAuth(app: Express) {
+  console.log("🔧 === SETTING UP AUTH ROUTES ===");
+  
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
@@ -69,38 +71,58 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log("🔑 Passport Local Strategy called for username:", username);
         const user = await storage.getUserByUsername(username);
         if (!user || !(await comparePasswords(password, user.password))) {
+          console.log("🔑 Authentication failed for username:", username);
           return done(null, false, { message: "Неверное имя пользователя или пароль" });
         } else {
+          console.log("🔑 Authentication successful for username:", username);
           return done(null, user);
         }
       } catch (error) {
+        console.error("🔑 Passport authentication error:", error);
         return done(error);
       }
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    console.log("🔑 Serializing user:", user.id);
+    done(null, user.id);
+  });
+  
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.log("🔑 Deserializing user ID:", id);
       const user = await storage.getUser(id);
+      console.log("🔑 User deserialized:", user ? user.username : 'not found');
       done(null, user);
     } catch (error) {
+      console.error("🔑 Deserialization error:", error);
       done(error);
     }
   });
 
+  console.log("🔧 REGISTERING /api/register ROUTE...");
   app.post("/api/register", async (req, res, next) => {
+    console.log("🔥🔥🔥 REGISTER ROUTE HIT! 🔥🔥🔥");
+    console.log("🔥 Request body:", JSON.stringify(req.body, null, 2));
+    console.log("🔥 Request headers:", JSON.stringify(req.headers, null, 2));
+    console.log("🔥 Request method:", req.method);
+    console.log("🔥 Request URL:", req.url);
+    console.log("🔥 Request path:", req.path);
+    
     try {
       console.log("Начало обработки запроса /api/register", { body: req.body });
       const { birthDate, ...userData } = req.body;
       
       // Check if user with username already exists
+      console.log("🔍 Checking if user exists:", req.body.username);
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
-        console.log("Пользователь с именем уже существует:", req.body.username);
-        return res.status(400).send("Пользователь с таким именем уже существует");
+        console.log("❌ Пользователь с именем уже существует:", req.body.username);
+        return res.status(400).json({ message: "Пользователь с таким именем уже существует" });
       }
 
       // Convert string date to Date object if needed
@@ -108,7 +130,7 @@ export function setupAuth(app: Express) {
       
       // Determine zodiac sign
       const zodiacSignData = getZodiacSign(new Date(birthDateObj));
-      console.log("Определен знак зодиака:", zodiacSignData.name);
+      console.log("✨ Определен знак зодиака:", zodiacSignData.name);
       
       // Create the user
       const userData2Save = {
@@ -125,23 +147,23 @@ export function setupAuth(app: Express) {
         role: 'user'
       };
       
-      console.log("Создаем пользователя с данными:", { 
+      console.log("👤 Создаем пользователя с данными:", { 
         ...userData2Save, 
         password: "СКРЫТ" 
       });
       
       const user = await storage.createUser(userData2Save);
-      console.log("Пользователь создан в БД:", { id: user.id, name: user.name });
+      console.log("✅ Пользователь создан в БД:", { id: user.id, name: user.name });
 
       // Более надежная обработка логина
       req.login(user, (err) => {
         if (err) {
-          console.error("Ошибка при входе после регистрации:", err);
+          console.error("❌ Ошибка при входе после регистрации:", err);
           return next(err);
         }
         
         // Проверяем, создалась ли сессия
-        console.log("Статус сессии после req.login:", { 
+        console.log("🔐 Статус сессии после req.login:", { 
           authenticated: req.isAuthenticated(), 
           sessionID: req.sessionID,
           user: req.user ? `ID: ${req.user.id}` : 'не найден'
@@ -150,16 +172,22 @@ export function setupAuth(app: Express) {
         // Устанавливаем заголовки, чтобы браузер сохранил куки сессии
         res.setHeader('Connection', 'keep-alive');
         
+        console.log("✅ Регистрация успешно завершена, отправляем ответ");
         // Возвращаем созданного пользователя
         res.status(201).json(user);
       });
     } catch (error) {
-      console.error("Ошибка при регистрации:", error);
-      next(error);
+      console.error("❌ Ошибка при регистрации:", error);
+      console.error("❌ Stack trace:", error instanceof Error ? error.stack : 'No stack');
+      res.status(500).json({ message: "Ошибка сервера при регистрации" });
     }
   });
 
+  console.log("🔧 REGISTERING /api/login ROUTE...");
   app.post("/api/login", (req, res, next) => {
+    console.log("🔥 LOGIN ROUTE HIT!");
+    console.log("🔥 Login request body:", JSON.stringify(req.body, null, 2));
+    
     passport.authenticate(
       "local",
       (
@@ -167,30 +195,59 @@ export function setupAuth(app: Express) {
         user: Express.User | false | null,
         info: { message?: string } | undefined
       ) => {
-        if (err) return next(err);
-        if (!user) return res.status(401).send(info?.message || "Неверное имя пользователя или пароль");
+        if (err) {
+          console.error("❌ Login authentication error:", err);
+          return next(err);
+        }
+        if (!user) {
+          console.log("❌ Login failed:", info?.message || "Неверное имя пользователя или пароль");
+          return res.status(401).json({ message: info?.message || "Неверное имя пользователя или пароль" });
+        }
         
+        console.log("✅ User authenticated, logging in:", user.username);
         req.login(user, (err: any) => {
-          if (err) return next(err);
+          if (err) {
+            console.error("❌ req.login error:", err);
+            return next(err);
+          }
+          console.log("✅ Login successful for user:", user.username);
           return res.status(200).json(user);
         });
       }
     )(req, res, next);
   });
 
+  console.log("🔧 REGISTERING /api/logout ROUTE...");
   app.post("/api/logout", (req, res, next) => {
+    console.log("🔥 LOGOUT ROUTE HIT!");
+    console.log("🔥 User before logout:", req.user ? req.user.username : 'not authenticated');
+    
     req.logout((err) => {
-      if (err) return next(err);
+      if (err) {
+        console.error("❌ Logout error:", err);
+        return next(err);
+      }
+      console.log("✅ Logout successful");
       res.sendStatus(200);
     });
   });
 
+  console.log("🔧 REGISTERING /api/user ROUTE...");
   app.get("/api/user", (req, res) => {
+    console.log("🔥 USER ROUTE HIT!");
+    console.log("🔥 Is authenticated:", req.isAuthenticated());
+    console.log("🔥 Session ID:", req.sessionID);
+    console.log("🔥 User:", req.user ? `${req.user.username} (ID: ${req.user.id})` : 'not authenticated');
+    
     if (!req.isAuthenticated()) {
+      console.log("❌ User not authenticated, returning 401");
       // Возвращаем JSON с сообщением об ошибке
       return res.status(401).json({ message: "Пользователь не авторизован" }); 
     }
+    console.log("✅ User authenticated, returning user data");
     // Если авторизован, возвращаем JSON с данными пользователя
     res.json(req.user); 
   });
+  
+  console.log("✅ === AUTH SETUP COMPLETE ===");
 }
