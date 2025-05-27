@@ -60,4 +60,4 @@ RUN echo "=== PRODUCTION VERIFICATION ===" && \
     echo "✅ Production build ready"
 
 # Use npm start (which runs: NODE_ENV=production node dist/index.js)
-CMD ["npm", "start"]
+CMD ["sleep", "infinity"]
