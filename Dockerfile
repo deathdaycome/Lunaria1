@@ -53,10 +53,10 @@ EXPOSE 5000
 ENV PORT=5000
 ENV NODE_ENV=production
 
-# Verify production setup
+# Verify production setup (БЕЗ команды file!)
 RUN echo "=== PRODUCTION VERIFICATION ===" && \
     echo "Node version:" && node --version && \
-    echo "Built server file:" && file dist/index.js && \
+    echo "Built server file size:" && ls -lh dist/index.js && \
     echo "✅ Production build ready"
 
 # Use npm start (which runs: NODE_ENV=production node dist/index.js)
