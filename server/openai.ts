@@ -1,6 +1,6 @@
 
 import OpenAI from "openai";
-import { InsertApiUsage } from "@shared/schema";
+import { InsertApiUsage } from "../shared/schema";
 import { storage } from "./storage";
 
 // Простой OpenAI клиент для production (без прокси)

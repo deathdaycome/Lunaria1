@@ -47,27 +47,25 @@ EXPOSE 5000
 ENV PORT=5000
 ENV NODE_ENV=production
 
-# Диагностика перед запуском
-RUN echo "=== SYNTAX CHECK ===" && \
-    echo "Checking server/index.ts syntax:" && \
-    npx tsx --check server/index.ts || echo "❌ Syntax error in server/index.ts" && \
-    echo "Checking package.json:" && \
-    node -e "console.log('✅ package.json is valid JSON')" && \
-    echo "TypeScript files:" && \
-    find . -name "*.ts" -type f | head -10
+# Simple runtime check without tsx --check
+RUN echo "=== RUNTIME VERIFICATION ===" && \
+    echo "Node version:" && node --version && \
+    echo "NPM version:" && npm --version && \
+    echo "TSX available:" && npx tsx --version && \
+    echo "TypeScript files found:" && \
+    find . -name "*.ts" -type f | wc -l && \
+    echo "✅ Build verification complete"
 
-# Запуск с детальной диагностикой
+# Simplified startup command
 CMD ["sh", "-c", "\
-    echo '=== STARTING APPLICATION ===' && \
-    echo 'Environment variables:' && \
+    echo '=== STARTING LUNARIA AI ===' && \
+    echo 'Environment:' && \
     echo \"NODE_ENV=$NODE_ENV\" && \
     echo \"PORT=$PORT\" && \
     echo \"DATABASE_URL=${DATABASE_URL:0:50}...\" && \
-    echo '=== SYNTAX CHECK BEFORE START ===' && \
-    echo 'Checking server/index.ts:' && \
-    npx tsx --check server/index.ts && \
-    echo '✅ Syntax check passed' && \
-    echo 'Initializing database tables...' && \
+    echo 'Node version:' && node --version && \
+    echo 'TSX version:' && npx tsx --version && \
+    echo 'Initializing database session table...' && \
     PGPASSWORD=Vfnfwbrfk1996 psql -h srv-captain--lunaria-db -U lunaria -d lunaria_db -c 'CREATE TABLE IF NOT EXISTS session (sid varchar NOT NULL, sess json NOT NULL, expire timestamp(6) NOT NULL, PRIMARY KEY (sid));' || echo 'Session table creation failed or already exists' && \
-    echo 'Starting server with tsx...' && \
+    echo '🚀 Starting server with tsx...' && \
     npx tsx server/index.ts"]

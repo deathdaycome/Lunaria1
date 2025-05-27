@@ -1,6 +1,6 @@
 import postgres from 'postgres';
 import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema";
 
 console.log('=== DATABASE CONFIGURATION ===');
 const dbUrl = process.env.DATABASE_URL;

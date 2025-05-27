@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser, friends, type Friend, type InsertFriend, apiUsage, type ApiUsage, type InsertApiUsage, horoscopes, type Horoscope, type InsertHoroscope } from "@shared/schema";
+import { users, type User, type InsertUser, friends, type Friend, type InsertFriend, apiUsage, type ApiUsage, type InsertApiUsage, horoscopes, type Horoscope, type InsertHoroscope } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, lt, gte, asc } from "drizzle-orm";
 import session from "express-session";
