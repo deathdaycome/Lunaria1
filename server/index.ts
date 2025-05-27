@@ -581,7 +581,7 @@ let isShuttingDown = false;
     }
     
     // ПРИНУДИТЕЛЬНОЕ СОЗДАНИЕ СЕРВЕРА
-    const port = parseInt(process.env.PORT || '8000');
+    const port = parseInt(process.env.PORT || '5000');
     const host = '0.0.0.0';
 
     console.log(`🔍 Forcing server creation on ${host}:${port}...`);
