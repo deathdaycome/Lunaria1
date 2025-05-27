@@ -31,7 +31,6 @@ console.log('Available memory:', Math.round(process.memoryUsage().rss / 1024 / 1
 // Логируем каждый этап загрузки
 console.log('Loading modules...');
 
-
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
@@ -39,7 +38,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage"; // ИСПОЛЬЗУЕМ РЕАЛЬНЫЙ STORAGE
 import { format } from "date-fns";
 import { db } from "./db";
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema"; // ИСПРАВЛЕНО: убрали @shared
 import { pool } from "./db";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -111,6 +110,7 @@ function getZodiacSign(birthDate: Date) {
 console.log("🔥🔥🔥 CREATING EXPRESS APP!");
 const app = express();
 console.log("🔥🔥🔥 EXPRESS APP CREATED!");
+
 // 🧪 ТЕСТ OPENAI ПОДКЛЮЧЕНИЯ
 async function testOpenAI() {
   try {
@@ -126,7 +126,7 @@ async function testOpenAI() {
     
     console.log("✅ OpenAI connection SUCCESS!");
     console.log("🤖 Response:", response.choices[0].message.content);
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ OpenAI connection FAILED:", error.message);
   }
 }
@@ -134,8 +134,6 @@ async function testOpenAI() {
 // Вызываем тест при запуске
 testOpenAI();
 console.log("🔥🔥🔥 App object ID:", app.toString());
-// Создаем и настраиваем Express приложение
-
 
 // ОСНОВНЫЕ MIDDLEWARE (ОБЯЗАТЕЛЬНЫЕ)
 app.use(express.json());
@@ -249,9 +247,6 @@ app.get('/test', (req, res) => {
   console.log('🧪 TEST ROUTE HIT - сервер работает!');
   res.json({ message: 'TEST WORKS!' });
 });
-
-
-
 
 app.get('/', (req: Request, res: Response) => {
   console.log('=== ROOT PATH REQUESTED ===');
@@ -451,23 +446,22 @@ app.post('/api/compatibility', async (req: any, res) => {
     }
     
     // Реальный расчет совместимости
-    // Реальный расчет совместимости
-const compatibilityScore = Math.floor(Math.random() * 40) + 60; // 60-100%
+    const compatibilityScore = Math.floor(Math.random() * 40) + 60; // 60-100%
 
-// Генерируем РЕАЛЬНЫЙ AI анализ через OpenAI
-const { generateCompatibilityAnalysis } = await import("./openai");
-const analysis = await generateCompatibilityAnalysis(
-  user.id,
-  {
-    name: user.name,
-    zodiacSign: user.zodiacSign,
-    birthDate: new Date(user.birthDate).toISOString().split('T')[0]
-  },
-  partnerData,
-  compatibilityScore
-);
+    // Генерируем РЕАЛЬНЫЙ AI анализ через OpenAI
+    const { generateCompatibilityAnalysis } = await import("./openai");
+    const analysis = await generateCompatibilityAnalysis(
+      user.id,
+      {
+        name: user.name,
+        zodiacSign: user.zodiacSign,
+        birthDate: new Date(user.birthDate).toISOString().split('T')[0]
+      },
+      partnerData,
+      compatibilityScore
+    );
 
-console.log("🤖 AI analysis generated successfully!");
+    console.log("🤖 AI analysis generated successfully!");
 
     res.json({
       compatibilityScore,
@@ -543,7 +537,6 @@ let isShuttingDown = false;
         console.log('Static files setup complete');
       }
     } else {
-       
       console.log('Setting up Vite for development...');
       server = await setupVite(app, null);
       console.log('Vite setup complete');
@@ -587,8 +580,6 @@ let isShuttingDown = false;
       });
     }
     
-    // СОЗДАЕМ HTTP СЕРВЕР
-    // ПРИНУДИТЕЛЬНОЕ СОЗДАНИЕ СЕРВЕРА
     // ПРИНУДИТЕЛЬНОЕ СОЗДАНИЕ СЕРВЕРА
     const port = parseInt(process.env.PORT || '8000');
     const host = '0.0.0.0';
