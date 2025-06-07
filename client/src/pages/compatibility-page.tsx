@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+
+import { formatDisplayDate, calculateAge, parseLocalDate, getDaysOld, getNumericCode, formatDateForDB } from "../../../dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,250 @@ import { DatePicker } from "@/components/shared/date-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import CosmicLoader from "@/components/shared/cosmic-loader";
+
+const CompatibilityText = ({ text }: { text: string | any }) => {
+  if (!text) {
+    return (
+      <div className="text-center py-8 text-white/60">
+        <p>Информация о совместимости недоступна</p>
+      </div>
+    );
+  }
+  
+  let sections: Array<{title: string, content: string}> = [];
+  
+  // Обрабатываем разные форматы данных
+  try {
+    if (typeof text === 'string') {
+      // Если строка - пробуем распарсить как JSON
+      try {
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed)) {
+          sections = parsed;
+        } else {
+          // Если не массив, создаем один раздел
+          sections = [{ title: "Анализ совместимости", content: text }];
+        }
+      } catch {
+        // Если не JSON, обрабатываем как обычный текст
+        sections = [{ title: "Анализ совместимости", content: text }];
+      }
+    } else if (Array.isArray(text)) {
+      // Если уже массив - используем как есть
+      sections = text;
+    } else if (typeof text === 'object') {
+      // Если объект - извлекаем данные
+      if (text.analysis) {
+        sections = [{ title: "Анализ совместимости", content: text.analysis }];
+      } else {
+        sections = [{ title: "Анализ совместимости", content: JSON.stringify(text) }];
+      }
+    }
+  } catch (error) {
+    console.error("Ошибка при обработке данных:", error);
+    return (
+      <div className="text-center py-8 text-white/60">
+        <p>Ошибка при загрузке данных совместимости</p>
+      </div>
+    );
+  }
+
+  // Фильтруем и группируем секции
+  const validSections = sections.filter(section => 
+    section.content && 
+    section.content.trim().length > 10 &&
+    !section.content.includes('[object Object]')
+  );
+
+  if (validSections.length === 0) {
+    return (
+      <div className="text-center py-8 text-white/60">
+        <p>Данные совместимости не найдены</p>
+      </div>
+    );
+  }
+
+  // Умное группирование в 3 основных раздела
+  const astroSections: string[] = [];
+  const numeroSections: string[] = [];
+  const recomSections: string[] = [];
+
+  validSections.forEach(section => {
+    const title = section.title.toLowerCase().trim();
+    const content = section.content.trim();
+    
+    if (title.includes('астрологическ') || title.includes('общий прогноз') || title.includes('знаки')) {
+      astroSections.push(content);
+    } else if (title.includes('нумерологическ') || title.includes('числа') || title.includes('психологическ')) {
+      numeroSections.push(content);
+    } else if (title.includes('рекомендаци') || title.includes('точки роста') || title.includes('заключение') || title.includes('совместимость')) {
+      recomSections.push(content);
+    } else {
+      // Добавляем в соответствующий раздел по содержанию
+      if (content.includes('Рак') || content.includes('Близнецы') || content.includes('элемент')) {
+        astroSections.push(content);
+      } else if (content.includes('число') || content.includes('цифра')) {
+        numeroSections.push(content);
+      } else {
+        recomSections.push(content);
+      }
+    }
+  });
+
+  const finalSections = [
+    { 
+      title: "Астрологическая совместимость", 
+      icon: "⭐",
+      content: astroSections.join('\n\n')
+    },
+    { 
+      title: "Нумерологический анализ", 
+      icon: "🔢",
+      content: numeroSections.join('\n\n')
+    },
+    { 
+      title: "Рекомендации и выводы", 
+      icon: "💡",
+      content: recomSections.join('\n\n')
+    }
+  ].filter(section => section.content.trim().length > 20);
+
+  // Функция для выделения ключевых слов
+  const highlightKeywords = (text: string): string => {
+    if (!text || typeof text !== 'string') return text;
+    
+    const keywords = [
+      'Близнецы', 'Рак', 'Лев', 'Дева', 'Весы', 'Скорпион', 'Стрелец', 'Козерог', 
+      'Водолей', 'Рыбы', 'Овен', 'Телец', 'Cancer', 'Gemini',
+      'совместимость', 'гармония', 'конфликт', 'энергия', 'эмоциональный', 'чувствительный',
+      'число', 'числа', 'партнер', 'отношения', 'любовь', 'дружба', 'семья', 'брак',
+      'интуиция', 'духовность', 'баланс', 'понимание', 'доверие', 'поддержка',
+      'Иван', 'Кирилл', 'амбиции', 'лидерство', 'гуманизм', 'идеализм'
+    ];
+    
+    let result = text;
+    keywords.forEach(keyword => {
+      const regex = new RegExp(`\\b(${keyword})\\b`, 'gi');
+      result = result.replace(regex, '<strong class="text-amber-300 font-medium">$1</strong>');
+    });
+    
+    return result;
+  };
+
+  // Функция для форматирования контента
+  const formatContent = (content: string) => {
+    if (!content) return null;
+
+    const paragraphs = content
+      .split('\n')
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+
+    return paragraphs.map((paragraph, idx) => {
+      // Если это заголовок раздела
+      if (paragraph.match(/^[А-ЯЁ][А-Яа-яёЁ\s]+:?$/) && paragraph.length < 50) {
+        return (
+          <h5 key={idx} className="text-amber-300 font-bold text-lg mt-6 mb-3 flex items-center">
+            <span className="mr-2">🔸</span>
+            {paragraph.replace(':', '')}
+          </h5>
+        );
+      }
+
+      // Если содержит двоеточие - это характеристика
+      if (paragraph.includes(':') && paragraph.split(':').length === 2) {
+        const [label, description] = paragraph.split(':');
+        return (
+          <div key={idx} className="mb-4 p-4 bg-amber-400/5 rounded-lg border-l-4 border-amber-400">
+            <div className="flex flex-col">
+              <span className="text-amber-300 font-bold text-base mb-2">
+                {highlightKeywords(label.trim())}
+              </span>
+              <span 
+                className="text-white font-cormorant text-base leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: highlightKeywords(description.trim()) }}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      // Если это список (начинается с большой буквы и содержит важные слова)
+      if (paragraph.match(/^[А-ЯЁ]/) && 
+          (paragraph.includes('стоит') || paragraph.includes('следует') || 
+           paragraph.includes('важно') || paragraph.includes('рекомендуется'))) {
+        return (
+          <div key={idx} className="mb-4 p-3 bg-blue-500/10 rounded-lg border-l-2 border-blue-400">
+            <p 
+              className="text-blue-100 font-cormorant text-base leading-relaxed font-medium"
+              dangerouslySetInnerHTML={{ __html: highlightKeywords(paragraph) }}
+            />
+          </div>
+        );
+      }
+
+      // Если содержит формулы или вычисления
+      if (paragraph.includes('→') || paragraph.includes('=') || paragraph.includes('+')) {
+        return (
+          <div key={idx} className="mb-4 p-3 bg-purple-500/10 rounded-lg border border-purple-400/30">
+            <p 
+              className="text-purple-100 font-mono text-sm leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: highlightKeywords(paragraph) }}
+            />
+          </div>
+        );
+      }
+
+      // Обычный абзац
+      return (
+        <p 
+          key={idx}
+          className="text-white font-cormorant text-base leading-relaxed mb-3"
+          dangerouslySetInnerHTML={{ __html: highlightKeywords(paragraph) }}
+        />
+      );
+    }).filter(Boolean);
+  };
+
+  return (
+    <div className="space-y-8 max-w-none">
+      {finalSections.map((section, index) => (
+        <div key={index} className="mb-10">
+          {index > 0 && (
+            <div className="border-t border-amber-400/30 my-8"></div>
+          )}
+          
+          <div className="mb-6">
+            <h4 className="text-2xl font-bold text-amber-400 mb-3 flex items-center">
+              <span className="mr-4 text-3xl">
+                {section.icon}
+              </span>
+              <span className="font-connie leading-tight">
+                {section.title}
+              </span>
+            </h4>
+            <div className="ml-16 h-0.5 bg-gradient-to-r from-amber-400/60 to-transparent"></div>
+          </div>
+          
+          <div className="text-white leading-relaxed space-y-4 pl-4">
+            {formatContent(section.content)}
+          </div>
+        </div>
+      ))}
+
+      {/* Красивое завершение */}
+      <div className="text-center py-8 border-t border-amber-400/20 mt-12">
+        <div className="flex justify-center items-center space-x-3 text-amber-400/70">
+          <span className="text-xl">✨</span>
+          <span className="font-cormorant text-base italic">
+            Звёзды указывают путь, но выбор всегда за вами
+          </span>
+          <span className="text-xl">✨</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface Friend {
   id: string;
@@ -41,14 +285,14 @@ export default function CompatibilityPage() {
   const [partnerType, setPartnerType] = useState<"self" | "friend" | "custom">("friend");
   const [selectedFriendId, setSelectedFriendId] = useState<string>("");
   const [partnerDate, setPartnerDate] = useState<Date | undefined>(undefined);
-  const [partnerName, setPartnerName] = useState<string>(""); // Новое состояние для имени партнера
+  const [partnerName, setPartnerName] = useState<string>("");
   const [compatibilityResult, setCompatibilityResult] = useState<CompatibilityResult | null>(null);
 
   const { data: friends = [] } = useQuery<Friend[]>({
     queryKey: ["/api/friends"],
     enabled: !!user,
-    staleTime: 60000, // Обновлять данные не чаще чем раз в минуту
-    refetchOnWindowFocus: false, // Не обновлять при фокусе окна
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const compatibilityMutation = useMutation({
@@ -57,11 +301,12 @@ export default function CompatibilityPage() {
       return await res.json();
     },
     onSuccess: (data) => {
+      console.log("🔍 Полученные данные совместимости:", data);
       setCompatibilityResult(data);
-      // Скролл наверх после получения результата
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     onError: (error: Error) => {
+      console.error("❌ Ошибка запроса совместимости:", error);
       toast({
         title: "Ошибка",
         description: error.message,
@@ -98,7 +343,6 @@ export default function CompatibilityPage() {
       return;
     }
 
-    // Проверка на заполненное имя для "Другой человек" (пункт 6 ТЗ)
     if (partnerType === "custom" && !partnerName.trim()) {
       toast({
         title: "Ошибка",
@@ -119,43 +363,24 @@ export default function CompatibilityPage() {
     } else {
       partnerData = {
         type: "custom",
-        birthDate: partnerDate,
-        name: partnerName // Добавляем имя партнера в отправляемые данные
+        birthDate: partnerDate ? formatDateForDB(partnerDate) : "",
+        name: partnerName
       };
     }
 
+    console.log("🔍 Отправляем данные для расчета:", partnerData);
     compatibilityMutation.mutate(partnerData);
   };
 
-  const formatDate = (date: Date) => {
-    return format(date, "d MMMM yyyy", { locale: ru });
-  };
-
-  const calculateAge = (birthDate: Date) => {
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+  const getNumericCodeLocal = (birthDate: Date | string): number => {
+    const dateObj = typeof birthDate === 'string' ? parseLocalDate(birthDate) : birthDate;
     
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
+    if (!dateObj || !(dateObj instanceof Date)) return 0;
     
-    return age;
-  };
-
-  const getDaysOld = (birthDate: Date): number => {
-    const today = new Date();
-    const diffInTime = today.getTime() - birthDate.getTime();
-    const diffInDays = Math.floor(diffInTime / (1000 * 3600 * 24));
-    return diffInDays;
-  };
-
-  const getNumericCode = (birthDate: Date): number => {
-    const day = birthDate.getDate();
-    const month = birthDate.getMonth() + 1;
-    const year = birthDate.getFullYear();
+    const day = dateObj.getDate();
+    const month = dateObj.getMonth() + 1;
+    const year = dateObj.getFullYear();
     
-    // Пример простого расчета нумерологической цифры
     let sum = day + month + year;
     while (sum > 9) {
       sum = sum.toString().split('').reduce((a, b) => a + parseInt(b), 0);
@@ -164,7 +389,6 @@ export default function CompatibilityPage() {
     return sum;
   };
 
-  // Содержимое выбора партнера
   const renderPartnerSelection = () => (
     <Card className="bg-[var(--background-secondary)]/50 backdrop-blur-sm border border-[var(--border)]">
       <CardContent className="p-5 space-y-4">
@@ -224,7 +448,6 @@ export default function CompatibilityPage() {
 
           {partnerType === "custom" && (
             <>
-              {/* Поле ввода имени партнера (пункт 6 ТЗ) */}
               <div className="space-y-2">
                 <label className="text-base font-cormorant font-medium text-white">Имя партнера</label>
                 <input
@@ -233,12 +456,13 @@ export default function CompatibilityPage() {
                   value={partnerName}
                   onChange={(e) => setPartnerName(e.target.value)}
                   className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--background-secondary)]/50 text-white placeholder:text-white/50"
+                  style={{ marginBottom: '2rem' }}
                 />
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-2 mb-8">
                 <label className="text-base font-cormorant font-medium text-white">Дата рождения партнера</label>
-                <div className="calendar-wrapper" style={{ position: 'relative', zIndex: 100 }}>
+                <div className="calendar-wrapper" style={{ position: 'relative', zIndex: 100, marginBottom: '3rem' }}>
                   <DatePicker
                     date={partnerDate}
                     setDate={setPartnerDate}
@@ -265,58 +489,49 @@ export default function CompatibilityPage() {
     </Card>
   );
 
-  // Содержимое результатов совместимости
   const renderCompatibilityResult = () => {
     if (!compatibilityResult || !user) return null;
 
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Информация о пользователе */}
           <Card className="bg-[var(--background-secondary)]/80 backdrop-blur-sm border border-[var(--border)]">
             <CardContent className="p-4">
               <h3 className="text-lg font-connie text-center mb-2 text-white">Ваши данные</h3>
-              <p className="text-center font-medium text-base text-white">{formatDate(new Date(user?.birthDate || ""))}</p>
-              <div className="flex flex-col sm:flex-row sm:justify-between text-sm mt-2 text-white">
-                <p className="truncate">Возраст: {calculateAge(new Date(user?.birthDate || ""))}</p>
-                <p className="truncate">{getDaysOld(new Date(user?.birthDate || ""))} дней</p>
+              <p className="text-center font-medium text-base text-white">
+                {formatDisplayDate(user?.birthDate || "")}
+              </p>
+              <div className="flex justify-between text-sm mt-2 text-white">
+                <p>Возраст: {calculateAge(user?.birthDate || "")}</p>
+                <p>Главная цифра: {getNumericCodeLocal(user?.birthDate || "")}</p>
               </div>
-              <p className="text-sm mt-1 text-white">Главная цифра: {getNumericCode(new Date(user?.birthDate || ""))}</p>
             </CardContent>
           </Card>
           
-          {/* Информация о партнере */}
           <Card className="bg-[var(--background-secondary)]/80 backdrop-blur-sm border border-[var(--border)]">
             <CardContent className="p-4">
               <h3 className="text-lg font-connie text-center mb-2 text-white">
-                {/* Показываем имя партнера, если оно доступно */}
                 {compatibilityResult.partnerData?.name ? 
                   `${compatibilityResult.partnerData.name}` : 
                   "Данные партнера"}
               </h3>
               <p className="text-center font-medium text-base text-white">
                 {compatibilityResult.partnerData?.birthDate ? 
-                  formatDate(new Date(compatibilityResult.partnerData.birthDate)) : 
+                  formatDisplayDate(compatibilityResult.partnerData.birthDate) : 
                   "Дата не указана"}
               </p>
-              <div className="flex flex-col sm:flex-row sm:justify-between text-sm mt-2 text-white">
+              <div className="flex justify-between text-sm mt-2 text-white">
                 {compatibilityResult.partnerData?.birthDate && (
                   <>
-                    <p className="truncate">Возраст: {calculateAge(new Date(compatibilityResult.partnerData.birthDate))}</p>
-                    <p className="truncate">{getDaysOld(new Date(compatibilityResult.partnerData.birthDate))} дней</p>
+                    <p>Возраст: {calculateAge(compatibilityResult.partnerData.birthDate)}</p>
+                    <p>Главная цифра: {getNumericCodeLocal(compatibilityResult.partnerData.birthDate)}</p>
                   </>
                 )}
               </div>
-              <p className="text-sm text-white">
-                {compatibilityResult.partnerData?.birthDate ?
-                  `Главная цифра: ${getNumericCode(new Date(compatibilityResult.partnerData.birthDate))}` :
-                  ""}
-              </p>
             </CardContent>
           </Card>
         </div>
         
-        {/* Прогресс бар совместимости - более заметный */}
         <div className="mb-6">
           <h3 className="text-xl font-connie text-center mb-4 text-white">Совместимость: {compatibilityResult.compatibilityScore}%</h3>
           <div className="relative">
@@ -335,122 +550,21 @@ export default function CompatibilityPage() {
           </div>
         </div>
         
-        {/* Совместимые знаки и числа - новый дизайн */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {/* Знаки зодиака */}
-          <Card className="bg-[#1a1331]/70 backdrop-blur-sm border border-[#8a2be2]/20 overflow-hidden">
-            <CardContent className="p-4">
-              <h3 className="section-title text-gold-gradient font-cinzel text-lg mb-3 text-center" data-text="Знаки зодиака">Знаки зодиака</h3>
-              <div className="flex gap-3 justify-center">
-                <motion.div 
-                  className="flex items-center bg-[#2a1a4a] px-3 py-2 rounded-lg space-x-2 border-2 border-[#8a2be2]/30"
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <div className="w-9 h-9 rounded-md bg-[#1a1331] flex items-center justify-center"
-                    style={{
-                      border: '1px solid rgba(255, 215, 0, 0.6)',
-                      boxShadow: '0 0 10px rgba(255, 215, 0, 0.3)'
-                    }}
-                  >
-                    <span className="text-xl" style={{ color: '#FFD700', textShadow: '0 0 6px rgba(255, 215, 0, 0.8)' }}>
-                      {getZodiacSymbol(user?.zodiacSign || "")}
-                    </span>
-                  </div>
-                  <span className="text-sm font-medium text-white">
-                    {user?.zodiacSign || ""}
-                  </span>
-                </motion.div>
-
-                <motion.div 
-                  className="flex items-center bg-[#2a1a4a] px-3 py-2 rounded-lg space-x-2 border-2 border-[#8a2be2]/30"
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <div className="w-9 h-9 rounded-md bg-[#1a1331] flex items-center justify-center"
-                    style={{
-                      border: '1px solid rgba(255, 215, 0, 0.6)',
-                      boxShadow: '0 0 10px rgba(255, 215, 0, 0.3)'
-                    }}
-                  >
-                    <span className="text-xl" style={{ color: '#FFD700', textShadow: '0 0 6px rgba(255, 215, 0, 0.8)' }}>
-                      {getZodiacSymbol(compatibilityResult.partnerData?.zodiacSign || "")}
-                    </span>
-                  </div>
-                  <span className="text-sm font-medium text-white">
-                    {compatibilityResult.partnerData?.zodiacSign || ""}
-                  </span>
-                </motion.div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Счастливые числа */}
-          <Card className="bg-[#1a1331]/70 backdrop-blur-sm border border-[#8a2be2]/20 overflow-hidden">
-            <CardContent className="p-4">
-              <h3 className="section-title text-gold-gradient font-cinzel text-lg mb-3 text-center" data-text="Числа совместимости">Числа совместимости</h3>
-              <div className="flex justify-center gap-4">
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="w-12 h-12 text-xl font-bold flex items-center justify-center relative"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #2a1a4a 0%, #1a1331 100%)',
-                    borderRadius: '10px',
-                    border: '2px solid rgba(255, 215, 0, 0.5)',
-                    boxShadow: '0 4px 15px rgba(138, 43, 226, 0.3)'
-                  }}
-                >
-                  <span style={{
-                    background: 'linear-gradient(to bottom, #ffffff, #ffd700)',
-                    WebkitBackgroundClip: 'text',
-                    backgroundClip: 'text',
-                    color: 'transparent',
-                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
-                  }}>
-                    {getNumericCode(new Date(user?.birthDate || ""))}
-                  </span>
-                </motion.div>
-                
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="w-12 h-12 text-xl font-bold flex items-center justify-center relative"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #2a1a4a 0%, #1a1331 100%)',
-                    borderRadius: '10px',
-                    border: '2px solid rgba(255, 215, 0, 0.5)',
-                    boxShadow: '0 4px 15px rgba(138, 43, 226, 0.3)'
-                  }}
-                >
-                  <span style={{
-                    background: 'linear-gradient(to bottom, #ffffff, #ffd700)',
-                    WebkitBackgroundClip: 'text',
-                    backgroundClip: 'text',
-                    color: 'transparent',
-                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
-                  }}>
-                    {compatibilityResult.partnerData?.birthDate ? 
-                      getNumericCode(new Date(compatibilityResult.partnerData.birthDate)) : "-"}
-                  </span>
-                </motion.div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Текст анализа - основная часть страницы */}
+        {/* Форматированный текст анализа */}
         <Card className="bg-[var(--background-secondary)]/50 backdrop-blur-sm border border-[var(--border)]">
           <CardContent className="p-5">
             <h3 className="text-xl font-connie text-center mb-4 text-white">Анализ совместимости</h3>
-            <div className="custom-scrollbar pr-2 text-white">
-              <p className="font-cormorant text-base leading-relaxed whitespace-pre-line">{compatibilityResult.analysis}</p>
+            <div className="pr-2">
+              <CompatibilityText text={compatibilityResult.analysis} />
             </div>
           </CardContent>
         </Card>
         
-        {/* Кнопка нового теста */}
         <Button 
           className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-connie rounded-xl transition-all shadow-[0_0_15px_var(--primary-opacity)]"
           onClick={() => {
             setCompatibilityResult(null);
-            setPartnerName(""); // Сбрасываем имя при начале нового теста
+            setPartnerName("");
           }}
         >
           Новый тест
@@ -461,8 +575,7 @@ export default function CompatibilityPage() {
 
   return (
     <MainLayout title="Совместимость" activeTab="compatibility">
-      <div className="relative p-4">
-        {/* Полноэкранный прелоадер при расчете совместимости */}
+      <div className="relative p-4 pb-safe">
         {compatibilityMutation.isPending && (
           <CosmicLoader 
             fullScreen 
@@ -471,21 +584,19 @@ export default function CompatibilityPage() {
           />
         )}
         
-        {/* Декоративные элементы */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <DecorativeSymbols type="astrology" />
         </div>
         
         <div className="mt-2 mb-6 text-center">
-          <h1 className="text-2xl font-connie mb-3 text-center w-full">Астрологическая совместимость</h1>
-          <p className="text-sm opacity-90 font-cormorant text-base mx-auto max-w-md text-[var(--foreground-secondary)]">
-            Узнайте, насколько хорошо ваши звёзды сочетаются с близкими людьми
-          </p>
-        </div>
-        
-        {/* Основное содержимое - форма выбора или результат */}
-        {compatibilityResult ? renderCompatibilityResult() : renderPartnerSelection()}
-      </div>
-    </MainLayout>
-  );
+         <h1 className="text-2xl font-connie mb-3 text-center w-full">Астрологическая совместимость</h1>
+         <p className="text-sm opacity-90 font-cormorant text-base mx-auto max-w-md text-[var(--foreground-secondary)]">
+           Узнайте, насколько хорошо ваши звёзды сочетаются с близкими людьми
+         </p>
+       </div>
+       
+       {compatibilityResult ? renderCompatibilityResult() : renderPartnerSelection()}
+     </div>
+   </MainLayout>
+ );
 }

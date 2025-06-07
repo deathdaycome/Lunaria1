@@ -1527,3 +1527,275 @@
     animation: mysticalShimmer 5s ease infinite;
   }
 }
+/* Поддержка safe area для полноэкранного режима */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+
+
+/* Исправление для полноэкранного Telegram WebApp */
+.telegram-webapp {
+  height: 100vh;
+  height: 100dvh; /* Для современных браузеров */
+}
+
+/* Дополнительная поддержка для страницы совместимости */
+.compatibility-form input,
+.compatibility-form .calendar-wrapper {
+  scroll-margin-bottom: 8rem !important;
+}
+
+/* Специальные отступы для полей с клавиатурой */
+input:focus,
+textarea:focus {
+  scroll-margin-bottom: 8rem !important;
+  margin-bottom: 2rem !important;
+}
+
+/* Адаптация контейнеров при фокусе */
+.form-container:focus-within {
+  padding-bottom: 4rem !important;
+  margin-bottom: 2rem !important;
+}
+
+/* Добавьте эти стили в ваш основной CSS файл (src/index.css или src/globals.css) */
+
+/* ✅ ИСПРАВЛЕНИЕ ПУНКТА 15: Поддержка безопасных зон iOS */
+
+/* Добавляем поддержку CSS переменных для безопасных зон */
+:root {
+  /* Определяем переменные для безопасных зон */
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+}
+
+/* Tailwind утилиты для безопасных зон */
+.pt-safe-area-inset-top {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.pb-safe-area-inset-bottom {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.pl-safe-area-inset-left {
+  padding-left: var(--safe-area-inset-left);
+}
+
+.pr-safe-area-inset-right {
+  padding-right: var(--safe-area-inset-right);
+}
+
+/* Специальная настройка для уведомлений на iOS */
+[data-radix-toast-viewport] {
+  /* Для устройств с выемкой/Dynamic Island - дополнительный отступ сверху */
+  padding-top: max(env(safe-area-inset-top), 64px) !important;
+}
+
+/* Для больших экранов (desktop) возвращаем обычное поведение */
+@media (min-width: 640px) {
+  [data-radix-toast-viewport] {
+    padding-top: 1rem !important;
+  }
+}
+
+/* Дополнительная защита для очень высоких safe-area (например, iPhone с Dynamic Island) */
+@media (max-width: 640px) {
+  [data-radix-toast-viewport] {
+    /* Минимум 64px сверху для статус бара + Dynamic Island */
+    padding-top: max(env(safe-area-inset-top), 64px) !important;
+    /* Небольшой отступ снизу для gesture bar */
+    padding-bottom: max(env(safe-area-inset-bottom), 16px) !important;
+  }
+}
+
+/* Для старых iOS устройств без safe-area-inset поддержки */
+@supports not (padding-top: env(safe-area-inset-top)) {
+  [data-radix-toast-viewport] {
+    padding-top: 64px !important; /* Фиксированный отступ для старых устройств */
+  }
+}
+
+/* Анимация появления с учетом новой позиции */
+@keyframes slide-in-from-top-safe {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Применяем анимацию к toast элементам */
+[data-state="open"][data-radix-toast-root] {
+  animation: slide-in-from-top-safe 0.3s ease-out;
+}
+
+/* ================================= */
+/* 🚀 ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ */
+/* ================================= */
+
+/* Базовые правила для режима сниженных анимаций */
+.reduced-animations *,
+.reduced-animations *::before,
+.reduced-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Отключаем сложные фоновые анимации на мобильных */
+.reduced-animations body::before {
+  animation: none !important;
+  opacity: 0.3 !important; /* Оставляем звезды, но без анимации */
+}
+
+.reduced-animations body::after {
+  animation: none !important;
+  opacity: 0.2 !important; /* Оставляем созвездия, но без движения */
+}
+
+/* Убираем падающие звезды на мобильных */
+.reduced-animations .falling-star {
+  display: none !important;
+}
+
+/* Упрощаем backdrop-filter для производительности */
+.reduced-animations .card,
+.reduced-animations .crystal-tab,
+.reduced-animations .bottom-nav {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(47, 30, 94, 0.9) !important; /* Заменяем на обычный фон */
+}
+
+/* Отключаем вращения и сложные трансформации */
+.reduced-animations .zodiac-symbol {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Упрощаем эффекты свечения */
+.reduced-animations .lucky-number::after,
+.reduced-animations .crystal-tab::before,
+.reduced-animations .crystal-tab::after {
+  display: none !important;
+}
+
+/* Отключаем магические частицы */
+.reduced-animations .magic-particles::before {
+  display: none !important;
+}
+
+/* Упрощаем карточки */
+.reduced-animations .card::before,
+.reduced-animations .card::after {
+  display: none !important;
+}
+
+.reduced-animations .card:hover {
+  transform: translateY(-2px) !important; /* Минимальное движение */
+  transition: transform 0.1s ease !important;
+}
+
+/* Отключаем сложные градиенты и эффекты для кнопок */
+.reduced-animations button::before,
+.reduced-animations button::after {
+  display: none !important;
+}
+
+/* ================================= */
+/* 📱 TELEGRAM WEBAPP ОПТИМИЗАЦИИ   */
+/* ================================= */
+
+/* Специальные правила для Telegram WebApp */
+.tg-viewport {
+  --animation-duration: 0ms;
+  --transition-duration: 50ms;
+}
+
+.tg-viewport .falling-star,
+.tg-viewport .magic-particles::before {
+  display: none !important;
+}
+
+.tg-viewport body::before,
+.tg-viewport body::after {
+  animation: none !important;
+  opacity: 0.2 !important;
+}
+
+/* Упрощенные эффекты только для Telegram */
+.tg-viewport .card {
+  background: rgba(47, 30, 94, 0.8) !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ================================= */
+/* 🔧 УЛЬТРА-ПРОИЗВОДИТЕЛЬНОСТЬ      */
+/* ================================= */
+
+/* Режим ультра-производительности (для очень слабых устройств) */
+.ultra-performance * {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+.ultra-performance body::before,
+.ultra-performance body::after {
+  display: none !important;
+}
+
+.ultra-performance .card,
+.ultra-performance .crystal-tab {
+  background: rgba(47, 30, 94, 0.9) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+/* ================================= */
+/* 🎯 ДОПОЛНИТЕЛЬНЫЕ ОПТИМИЗАЦИИ    */
+/* ================================= */
+
+/* Для очень маленьких экранов */
+@media (max-width: 375px) {
+  body::before {
+    opacity: 0.2 !important;
+    animation-duration: 20s !important; /* Замедляем анимацию */
+  }
+  
+  body::after {
+    display: none !important; /* Убираем созвездия на маленьких экранах */
+  }
+}
+
+/* Для устройств с батареей менее 20% */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  body::before,
+  body::after,
+  .falling-star {
+    display: none !important;
+  }
+}

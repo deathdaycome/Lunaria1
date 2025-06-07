@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/shared/date-picker";
 import { TimePicker } from "@/components/shared/time-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { X, ArrowLeft } from "lucide-react";
+import NatalChartWheel from "@/components/natal-chart/natal-chart-wheel";
 
 const natalChartSchema = z.object({
   name: z.string().min(1, "Введите имя"),
@@ -78,6 +80,16 @@ export default function NatalChart() {
     }
   };
 
+  const handleClose = () => {
+    setIsDialogOpen(false);
+    setChartResult(null);
+    form.reset();
+  };
+
+  const handleBack = () => {
+    setChartResult(null);
+  };
+
   return (
     <>
       <Card className="card rounded-xl p-5 mb-4">
@@ -92,177 +104,218 @@ export default function NatalChart() {
         </Button>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={handleClose}>
         <DialogContent 
-          className="card border-accent/20 max-w-md"
+          className="card border-accent/20 max-w-5xl max-h-[95vh] overflow-hidden p-0 gap-0"
           aria-describedby="natal-chart-description"
         >
-          <DialogHeader>
-            <DialogTitle>Натальная карта</DialogTitle>
-          </DialogHeader>
+          {/* ✅ ИСПРАВЛЕНО: Добавлена кнопка закрытия всегда видимая */}
+          <div className="sticky top-0 z-50 bg-[var(--background)] border-b border-[var(--border)] p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {chartResult && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBack}
+                  className="text-white hover:bg-white/10"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Назад
+                </Button>
+              )}
+              <DialogTitle className="text-xl font-connie text-white">
+                {chartResult ? "Ваша натальная карта" : "Натальная карта"}
+              </DialogTitle>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="text-white hover:bg-white/10 rounded-full h-8 w-8 p-0"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
           <div id="natal-chart-description" className="sr-only">
             Создайте натальную карту, указав данные рождения
           </div>
 
-          {!chartResult ? (
-            <div className="space-y-4">
-              <Tabs defaultValue="self" value={chartType} onValueChange={(val) => setChartType(val as "self" | "other")}>
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="self">Для себя</TabsTrigger>
-                  <TabsTrigger value="other">Для другого человека</TabsTrigger>
-                </TabsList>
+          <div className="overflow-y-auto max-h-[calc(95vh-80px)] p-6">
+            {!chartResult ? (
+              <div className="space-y-6">
+                <Tabs defaultValue="self" value={chartType} onValueChange={(val) => setChartType(val as "self" | "other")}>
+                  <TabsList className="grid w-full grid-cols-2 mb-6 bg-[var(--background-secondary)]">
+                    <TabsTrigger value="self" className="text-white data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white">
+                      Для себя
+                    </TabsTrigger>
+                    <TabsTrigger value="other" className="text-white data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white">
+                      Для другого человека
+                    </TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="self">
-                  <p className="text-sm text-gray-300 mb-4">
-                    Будет использована информация из вашего профиля:
-                  </p>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Имя:</span>
-                      <span>{user?.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Дата рождения:</span>
-                      <span>{new Date(user?.birthDate || "").toLocaleDateString()}</span>
-                    </div>
-                    {user?.birthTime && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Время рождения:</span>
-                        <span>{user.birthTime}</span>
+                  <TabsContent value="self" className="space-y-4">
+                    <div className="bg-[var(--background-secondary)]/50 rounded-lg p-4 border border-[var(--border)]">
+                      <p className="text-base font-cormorant text-white mb-4">
+                        Будет использована информация из вашего профиля:
+                      </p>
+                      <div className="space-y-3 text-base">
+                        <div className="flex justify-between items-center py-2 border-b border-[var(--border)]/30">
+                          <span className="text-white/70 font-cormorant">Имя:</span>
+                          <span className="text-white font-medium">{user?.name}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-[var(--border)]/30">
+                          <span className="text-white/70 font-cormorant">Дата рождения:</span>
+                          <span className="text-white font-medium">
+                            {new Date(user?.birthDate || "").toLocaleDateString('ru-RU')}
+                          </span>
+                        </div>
+                        {user?.birthTime && (
+                          <div className="flex justify-between items-center py-2 border-b border-[var(--border)]/30">
+                            <span className="text-white/70 font-cormorant">Время рождения:</span>
+                            <span className="text-white font-medium">{user.birthTime}</span>
+                          </div>
+                        )}
+                        {user?.birthPlace && (
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-white/70 font-cormorant">Место рождения:</span>
+                            <span className="text-white font-medium">{user.birthPlace}</span>
+                          </div>
+                        )}
+                        
+                        {(!user?.birthTime || !user?.birthPlace) && (
+                          <div className="mt-4 p-3 bg-amber-400/10 border border-amber-400/20 rounded-lg">
+                            <p className="text-amber-400 text-sm font-cormorant">
+                              ⚠️ Для точной натальной карты рекомендуется указать время и место рождения в настройках профиля
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {user?.birthPlace && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Место рождения:</span>
-                        <span>{user.birthPlace}</span>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
+                    </div>
+                  </TabsContent>
 
-                <TabsContent value="other">
-                  <Form {...form}>
-                    <form className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Имя</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Имя" {...field} className="bg-card-bg" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <TabsContent value="other" className="space-y-4">
+                    <div className="bg-[var(--background-secondary)]/50 rounded-lg p-4 border border-[var(--border)]">
+                      <Form {...form}>
+                        <form className="space-y-5">
+                          <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-white font-cormorant text-base">Имя</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Введите имя" 
+                                    {...field} 
+                                    className="bg-[var(--background-secondary)] border-[var(--border)] text-white placeholder:text-white/50 h-12 text-base"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={form.control}
-                        name="birthDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Дата рождения</FormLabel>
-                            <FormControl>
-                              <DatePicker
-                                date={field.value}
-                                setDate={field.onChange}
-                                className="bg-card-bg"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          <FormField
+                            control={form.control}
+                            name="birthDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-white font-cormorant text-base">Дата рождения</FormLabel>
+                                <FormControl>
+                                  <DatePicker
+                                    date={field.value}
+                                    setDate={field.onChange}
+                                    className="bg-[var(--background-secondary)] border-[var(--border)] h-12"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={form.control}
-                        name="birthTime"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Время рождения (необязательно)</FormLabel>
-                            <FormControl>
-                              <TimePicker
-                                value={field.value}
-                                onChange={field.onChange}
-                                className="bg-card-bg"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                          {/* ✅ ИСПРАВЛЕНО: TimePicker теперь работает корректно */}
+                          <FormField
+                            control={form.control}
+                            name="birthTime"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-white font-cormorant text-base">
+                                  Время рождения (необязательно)
+                                </FormLabel>
+                                <FormControl>
+                                  <TimePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    className="bg-[var(--background-secondary)] border-[var(--border)] h-12"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={form.control}
-                        name="birthPlace"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Место рождения (необязательно)</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Город, Страна"
-                                {...field}
-                                className="bg-card-bg"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </form>
-                  </Form>
-                </TabsContent>
-              </Tabs>
+                          <FormField
+                            control={form.control}
+                            name="birthPlace"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-white font-cormorant text-base">
+                                  Место рождения (необязательно)
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Город, Страна"
+                                    {...field}
+                                    className="bg-[var(--background-secondary)] border-[var(--border)] text-white placeholder:text-white/50 h-12 text-base"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </form>
+                      </Form>
+                    </div>
+                  </TabsContent>
+                </Tabs>
 
-              <Button 
-                className="w-full py-6 bg-primary hover:bg-accent transition-all rounded-lg"
-                onClick={buildChart}
-                disabled={natalChartMutation.isPending}
-              >
-                {natalChartMutation.isPending ? "Построение..." : "Построить натальную карту"}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="mb-4 flex justify-center">
-                {/* Simplified natal chart visualization */}
-                <div className="w-64 h-64 rounded-full border-2 border-accent relative">
-                  <div className="absolute inset-2 rounded-full border border-gray-600"></div>
-                  <div className="absolute inset-8 rounded-full border border-gray-600"></div>
-                  <div className="absolute inset-14 rounded-full border border-gray-600"></div>
-                  
-                  {/* Zodiac symbols positioned around the circle */}
-                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-lg">♈</div>
-                  <div className="absolute top-1/4 right-6 text-lg">♉</div>
-                  <div className="absolute top-1/2 right-2 text-lg">♊</div>
-                  <div className="absolute bottom-1/4 right-6 text-lg">♋</div>
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-lg">♌</div>
-                  <div className="absolute bottom-1/4 left-6 text-lg">♍</div>
-                  <div className="absolute top-1/2 left-2 text-lg">♎</div>
-                  <div className="absolute top-1/4 left-6 text-lg">♏</div>
-                  
-                  {/* Planet positions */}
-                  <div className="absolute top-1/3 right-1/3 text-yellow-400 text-lg">☉</div>
-                  <div className="absolute bottom-1/3 left-1/3 text-blue-400 text-lg">☽</div>
-                  <div className="absolute top-1/4 left-1/4 text-red-400 text-lg">♂</div>
-                  <div className="absolute bottom-1/4 right-1/4 text-green-400 text-lg">♀</div>
+                <Button 
+                  className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-connie text-lg rounded-xl transition-all shadow-[0_0_15px_var(--primary-opacity)]"
+                  onClick={buildChart}
+                  disabled={natalChartMutation.isPending}
+                >
+                  {natalChartMutation.isPending ? "Построение карты..." : "✨ Построить натальную карту"}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* ✅ ИСПРАВЛЕНО: Контейнер для натальной карты с правильным позиционированием */}
+                <div className="w-full overflow-hidden">
+                  <NatalChartWheel 
+                    chartData={chartResult.chartData} 
+                    analysis={chartResult.analysis} 
+                  />
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <Button 
+                    variant="outline"
+                    className="flex-1 py-4 border-[var(--border)] text-white hover:bg-white/10 font-connie rounded-xl"
+                    onClick={handleBack}
+                  >
+                    Назад к настройкам
+                  </Button>
+                  <Button 
+                    className="flex-1 py-4 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-connie rounded-xl"
+                    onClick={handleClose}
+                  >
+                    Закрыть
+                  </Button>
                 </div>
               </div>
-
-              <Card className="bg-card-bg-light p-4 text-sm">
-                <h4 className="font-medium mb-2">Анализ натальной карты</h4>
-                <div className="space-y-2">
-                  <p className="whitespace-pre-line">{chartResult.analysis}</p>
-                </div>
-              </Card>
-
-              <Button 
-                className="w-full py-6 bg-primary hover:bg-accent transition-all rounded-lg"
-                onClick={() => setChartResult(null)}
-              >
-                Изменить данные
-              </Button>
-            </div>
-          )}
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

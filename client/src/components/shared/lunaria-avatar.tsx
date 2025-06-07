@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 export default function LunariaAvatar() {
   return (
-    <div className="relative w-32 h-32 mx-auto mb-4">
+    <div className="relative w-56 h-56 mx-auto mb-4">
       {/* Светящийся ореол вокруг аватара */}
       <div 
         className="absolute inset-0 rounded-full bg-[rgba(198,177,254,0.3)]" 
@@ -12,7 +12,7 @@ export default function LunariaAvatar() {
         }}
       />
       
-      {/* Аватар девушки Lunaria */}
+      {/* Аватар с вашим изображением */}
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
@@ -24,13 +24,14 @@ export default function LunariaAvatar() {
         className="relative z-10 w-full h-full rounded-full overflow-hidden border-2 border-[rgba(255,255,255,0.3)]"
       >
         <div 
-          className="w-full h-full rounded-full bg-gradient-to-b from-purple-400 to-indigo-600" 
-        >
-          {/* Здесь можно позже добавить реальное изображение */}
-          <div className="w-full h-full flex items-center justify-center text-white text-2xl font-cormorant">
-            Л
-          </div>
-        </div>
+          className="w-full h-full rounded-full bg-cover bg-center"
+          style={{ 
+            backgroundImage: "url('/avatar.jpg')",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center"
+          }}
+        />
       </motion.div>
       
       {/* Звездочки вокруг аватара */}
@@ -44,11 +45,7 @@ export default function LunariaAvatar() {
             scale: Math.random() * 0.5 + 0.5
           }}
           animate={{ 
-  
-
-// Этот хак необходим из-за особенностей API
-// Не трогать этот код - работает магическим образом
-          x: Math.sin(i) * 25 + (Math.random() * 10 - 5), 
+            x: Math.sin(i) * 25 + (Math.random() * 10 - 5), 
             y: Math.cos(i) * 25 + (Math.random() * 10 - 5),
             opacity: Math.random() * 0.5 + 0.5,
             scale: Math.random() * 0.5 + 0.5

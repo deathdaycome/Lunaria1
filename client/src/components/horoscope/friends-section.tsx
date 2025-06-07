@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,7 +14,7 @@ import { TimePicker } from "@/components/shared/time-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { PersonAddAlt, Person } from "@mui/icons-material";
+import { PersonAddAlt, Person, DeleteOutline } from "@mui/icons-material";
 import { Label } from "@/components/ui/label";
 
 const friendSchema = z.object({
@@ -29,6 +30,15 @@ const friendSchema = z.object({
 });
 
 type FriendFormValues = z.infer<typeof friendSchema>;
+
+interface Friend {
+  id: string;
+  name: string;
+  gender: "male" | "female";
+  birthDate: string;
+  birthTime?: string;
+  birthPlace?: string;
+}
 
 export default function FriendsSection() {
   const { user } = useAuth();
@@ -82,8 +92,54 @@ export default function FriendsSection() {
     },
   });
 
+  const deleteFriendMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      const response = await fetch(`/api/friends/${friendId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Ошибка удаления: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      }
+      
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      toast({
+        title: "Друг удален",
+        description: "Друг успешно удален из списка",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: FriendFormValues) => {
     addFriendMutation.mutate(data);
+  };
+
+  const handleDeleteFriend = (friendId: string) => {
+    deleteFriendMutation.mutate(friendId);
+  };
+
+  // ✅ ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ ДИАЛОГА ДОБАВЛЕНИЯ ДРУГА
+  const handleAddFriendClick = () => {
+    setIsDialogOpen(true);
   };
 
   return (
@@ -179,7 +235,6 @@ export default function FriendsSection() {
                         <DatePicker
                           date={field.value}
                           setDate={field.onChange}
-                          className="bg-card-bg"
                         />
                       </FormControl>
                       <FormMessage />
@@ -196,10 +251,14 @@ export default function FriendsSection() {
                       <FormControl>
                         <TimePicker
                           value={field.value}
-                          onChange={field.onChange}
+                          onChange={(date) => {
+                            console.log('🔍 TimePicker onChange called with:', date);
+                            field.onChange(date);
+                          }}
                           className="bg-card-bg"
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -235,15 +294,49 @@ export default function FriendsSection() {
       </div>
       
       <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar">
-        <div className="flex-shrink-0 w-16 flex flex-col items-center">
-          <div className="w-12 h-12 rounded-full bg-primary-light flex items-center justify-center mb-1">
+        {/* ✅ ИСПРАВЛЕННАЯ ИКОНКА "+" - ДОБАВЛЕН onClick */}
+        <div 
+          className="flex-shrink-0 w-16 flex flex-col items-center cursor-pointer"
+          onClick={handleAddFriendClick}
+        >
+          <div className="w-12 h-12 rounded-full bg-primary-light flex items-center justify-center mb-1 hover:bg-primary transition-colors">
             <PersonAddAlt className="text-white" />
           </div>
           <span className="text-xs text-center">Добавить</span>
         </div>
         
-        {!isLoading && Array.isArray(friends) && friends.map((friend: any, index: number) => (
-          <div key={index} className="flex-shrink-0 w-16 flex flex-col items-center">
+        {!isLoading && Array.isArray(friends) && friends.map((friend: Friend, index: number) => (
+          <div key={friend.id || index} className="flex-shrink-0 w-16 flex flex-col items-center relative group">
+            {/* Кнопка удаления - появляется при наведении */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  disabled={deleteFriendMutation.isPending}
+                >
+                  <DeleteOutline className="text-white text-xs" style={{ fontSize: '12px' }} />
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Удалить друга?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Вы уверены, что хотите удалить <strong>{friend.name}</strong> из списка друзей? 
+                    Это действие нельзя отменить.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Отмена</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDeleteFriend(friend.id)}
+                    className="bg-red-500 hover:bg-red-600"
+                  >
+                    Удалить
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
             <div className="w-12 h-12 rounded-full bg-card-bg-light flex items-center justify-center mb-1">
               {friend.gender === "male" ? (
                 <Person className="text-blue-300" />

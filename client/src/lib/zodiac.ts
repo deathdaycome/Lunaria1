@@ -113,16 +113,22 @@ export function getZodiacSign(date: Date): ZodiacSign {
   const month = date.getMonth() + 1; // JS месяцы начинаются с 0
   const day = date.getDate();
 
-  return zodiacSigns.find(sign => {
-    // Особый случай для Козерога (переход между годами)
-    if (sign.name === "Козерог") {
-      return (month === 12 && day >= 22) || (month === 1 && day <= 19);
-    }
-    
-    // Для всех остальных знаков
-    return (month === sign.startDate.month && day >= sign.startDate.day) || 
-           (month === sign.endDate.month && day <= sign.endDate.day);
-  }) || zodiacSigns[0]; // Возвращаем Овен как дефолт если что-то пошло не так
+  // Проверяем каждый знак по порядку
+  if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return zodiacSigns[0]; // Овен
+  if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return zodiacSigns[1]; // Телец  
+  if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return zodiacSigns[2]; // Близнецы
+  if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return zodiacSigns[3]; // Рак
+  if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return zodiacSigns[4]; // Лев
+  if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return zodiacSigns[5]; // Дева
+  if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return zodiacSigns[6]; // Весы
+  if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return zodiacSigns[7]; // Скорпион
+  if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return zodiacSigns[8]; // Стрелец
+  if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return zodiacSigns[9]; // Козерог
+  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return zodiacSigns[10]; // Водолей
+  if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return zodiacSigns[11]; // Рыбы
+
+  // Возвращаем Овен как дефолт
+  return zodiacSigns[0];
 }
 
 // Функция для получения совместимых знаков

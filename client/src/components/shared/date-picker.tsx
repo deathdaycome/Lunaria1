@@ -24,9 +24,10 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
   ];
   
-  // Диапазон лет от 1900 до текущего года + 1
+  // ✨ ОГРАНИЧИВАЕМ ДИАПАЗОН ЛЕТ - только последние 100 лет
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => currentYear - i);
+  const startYear = currentYear - 100; // с 1924 по текущий год
+  const years = Array.from({ length: 101 }, (_, i) => currentYear - i);
   
   // Обновление даты в календаре при изменении месяца или года
   const updateCalendarDate = (newMonth: number, newYear: number) => {
@@ -68,18 +69,23 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-4 card border-[#6366f1]/30 bg-[#1a1a2e] text-white shadow-xl" 
-        align="center"
+        className="w-[300px] p-3 card border-[#6366f1]/30 bg-[#1a1a2e] text-white shadow-xl"
+        align="start"
         side="bottom"
-        sideOffset={5}
+        sideOffset={8}
         forceMount
-        style={{ zIndex: 9999 }}
+        style={{ 
+          zIndex: 9999,
+          // ✨ ОГРАНИЧИВАЕМ МАКСИМАЛЬНУЮ ВЫСОТУ КОНТЕЙНЕРА
+          maxHeight: '400px',
+          overflow: 'hidden'
+        }}
       >
         <div className="mt-0 pt-2">
-          <div className="grid grid-cols-1 gap-4">
-            {/* Меняем порядок полей: День, Месяц, Год */}
+          <div className="grid grid-cols-1 gap-2 space-y-1">
+            {/* День */}
             <div>
-              <label className="text-sm font-medium mb-1 block">День</label>
+              <label className="text-xs font-medium mb-1 block">День</label>
               <Select
                 value={date ? date.getDate().toString() : "1"}
                 onValueChange={(val) => {
@@ -94,15 +100,19 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                   }
                 }}
               >
-                <SelectTrigger className="border-[#6366f1]/30 bg-[#252240] text-white">
-                  <SelectValue placeholder="Выберите день" />
+                <SelectTrigger className="h-9 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
+                  <SelectValue placeholder="День" />
                 </SelectTrigger>
-                <SelectContent className="border-[#6366f1]/30 bg-[#252240] text-white">
+                <SelectContent 
+                  className="border-[#6366f1]/30 bg-[#252240] text-white max-h-[150px]"
+                  // ✨ ОГРАНИЧИВАЕМ ВЫСОТУ И ДОБАВЛЯЕМ ПРОКРУТКУ
+                  style={{ maxHeight: '150px', overflowY: 'auto' }}
+                >
                   {Array.from({ length: new Date(year, month, 0).getDate() }, (_, i) => i + 1).map((day) => (
                     <SelectItem 
                       key={day} 
                       value={day.toString()}
-                      className="hover:bg-[#32304d] focus:bg-[#32304d]"
+                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm"
                     >
                       {day}
                     </SelectItem>
@@ -111,8 +121,9 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
               </Select>
             </div>
 
+            {/* Месяц */}
             <div>
-              <label className="text-sm font-medium mb-1 block">Месяц</label>
+              <label className="text-xs font-medium mb-1 block">Месяц</label>
               <Select
                 value={month.toString()}
                 onValueChange={(val) => {
@@ -121,15 +132,19 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                   updateCalendarDate(newMonth, year); 
                 }}
               >
-                <SelectTrigger className="border-[#6366f1]/30 bg-[#252240] text-white">
-                  <SelectValue placeholder="Выберите месяц" />
+                <SelectTrigger className="h-9 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
+                  <SelectValue placeholder="Месяц" />
                 </SelectTrigger>
-                <SelectContent className="border-[#6366f1]/30 bg-[#252240] text-white">
+                <SelectContent 
+                  className="border-[#6366f1]/30 bg-[#252240] text-white max-h-[200px]"
+                  // ✨ ОГРАНИЧИВАЕМ ВЫСОТУ ДЛЯ МЕСЯЦЕВ
+                  style={{ maxHeight: '200px', overflowY: 'auto' }}
+                >
                   {monthNames.map((name, index) => (
                     <SelectItem 
                       key={index} 
                       value={(index + 1).toString()}
-                      className="hover:bg-[#32304d] focus:bg-[#32304d]"
+                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm"
                     >
                       {name}
                     </SelectItem>
@@ -138,8 +153,9 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
               </Select>
             </div>
             
+            {/* Год */}
             <div>
-              <label className="text-sm font-medium mb-1 block">Год</label>
+              <label className="text-xs font-medium mb-1 block">Год</label>
               <Select
                 value={year.toString()}
                 onValueChange={(val) => {
@@ -148,15 +164,24 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                   updateCalendarDate(month, newYear);
                 }}
               >
-                <SelectTrigger className="border-[#6366f1]/30 bg-[#252240] text-white">
-                  <SelectValue placeholder="Выберите год" />
+                <SelectTrigger className="h-9 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
+                  <SelectValue placeholder="Год" />
                 </SelectTrigger>
-                <SelectContent className="h-60 border-[#6366f1]/30 bg-[#252240] text-white">
+                <SelectContent 
+                  className="border-[#6366f1]/30 bg-[#252240] text-white"
+                  // ✨ СТРОГО ОГРАНИЧИВАЕМ ВЫСОТУ ДЛЯ ЛЕТ
+                  style={{ 
+                    maxHeight: '180px', 
+                    overflowY: 'auto',
+                    // ✨ ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ПРЕДОТВРАЩЕНИЯ ВЫХОДА ЗА ЭКРАН
+                    position: 'relative'
+                  }}
+                >
                   {years.map((y) => (
                     <SelectItem 
                       key={y} 
                       value={y.toString()}
-                      className="hover:bg-[#32304d] focus:bg-[#32304d]"
+                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm py-1"
                     >
                       {y}
                     </SelectItem>
@@ -168,7 +193,7 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
           
           <Button 
             onClick={() => setOpen(false)}
-            className="mt-4 w-full border-[#6366f1]/50 bg-[#32304d] hover:bg-[#42405d] text-white"
+            className="mt-3 w-full h-9 border-[#6366f1]/50 bg-[#32304d] hover:bg-[#42405d] text-white text-sm"
           >
             Выбрать
           </Button>

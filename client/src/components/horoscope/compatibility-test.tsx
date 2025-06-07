@@ -9,8 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/shared/date-picker";
 import { Progress } from "@/components/ui/progress";
-import { format, differenceInDays } from "date-fns";
-import { ru } from "date-fns/locale";
+import { formatDisplayDate, calculateAge, parseLocalDate, getDaysOld, getNumericCode } from "../../../../dateUtils";
+import { format } from "date-fns";
 import { ChevronRight, RefreshCcw } from "lucide-react";
 
 interface Friend {
@@ -122,7 +122,7 @@ export default function CompatibilityTest() {
   };
 
   const formatDate = (date: Date) => {
-    return format(date, "d MMMM yyyy", { locale: ru });
+    return formatDisplayDate(date);
   };
 
   const calculateAge = (birthDate: Date) => {

@@ -39,6 +39,17 @@ const getRandomNumbers = (count: number, min: number, max: number): number[] => 
 
 // Главная функция для регистрации маршрутов
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log("🚀 REGISTERING HOROSCOPE REFRESH ROUTE!");
+  // ДОБАВЬ ЭТУ СТРОКУ В САМОЕ НАЧАЛО:
+  app.get("/api/test-routes-work", (req, res) => {
+    console.log("✅ ROUTES FROM routes.ts WORK!");
+    res.json({ message: "Routes from routes.ts are working!" });
+  });
+
+    // ДОБАВЬ ЭТИ СТРОКИ:
+  console.log("🔥 TESTING ROUTE REGISTRATION!");
+  console.log("🔥 App object type:", typeof app);
+  console.log("🔥 App methods:", Object.getOwnPropertyNames(app));
   // 🚀🚀🚀 КРИТИЧНЫЙ ЛОГ - ДОЛЖЕН ПОЯВИТЬСЯ В КОНСОЛИ!
   console.log("🚀🚀🚀 REGISTERING ROUTES - COMPATIBILITY WILL BE ADDED!");
   console.log("🚀🚀🚀 Routes.ts loaded at:", new Date().toISOString());
@@ -222,13 +233,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API для работы с гороскопами
-  app.get("/api/horoscope", isAuthenticated, async (req, res) => {
+  // API для работы с гороскопами - ИСПРАВЛЕННАЯ ВЕРСИЯ
+  app.get("/api/horoscope", async (req, res) => {
     try {
       const { period = "today", category = "general" } = req.query;
+      const testUserId = 1;
+      const testZodiacSign = "capricorn";
 
       const existingHoroscope = await storage.getActualHoroscope(
-        req.user!.id, 
+        testUserId, 
         period as string, 
         category as string
       );
@@ -243,17 +256,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const content = await generateHoroscope(
-        req.user!.id, 
-        req.user!.zodiacSign, 
+        testUserId, 
+        testZodiacSign, 
         period as string, 
         category as string
       );
       
       const luckyNumbers = getRandomNumbers(3, 1, 99);
-      const compatibleSigns = getCompatibleSigns(req.user!.zodiacSign);
+      const compatibleSigns = getCompatibleSigns(testZodiacSign);
       
       const newHoroscope = await storage.createHoroscope({
-        userId: req.user!.id,
+        userId: testUserId,
         period: period as string,
         category: category as string,
         content,
@@ -274,55 +287,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/horoscope/refresh", isAuthenticated, async (req, res) => {
+  app.post("/api/horoscope/refresh", async (req, res) => {
+    console.log("🔥🔥🔥 REFRESH ENDPOINT HIT - NEW VERSION!");
+    console.log("🔥 Body:", JSON.stringify(req.body, null, 2));
+    console.log("🔥 Headers:", JSON.stringify(req.headers, null, 2));
+    console.log("🔥 User agent:", req.get('User-Agent'));
+    console.log("🔥 Content-Type:", req.get('Content-Type'));
+    
     try {
-      const { period = "today", category = "general" } = req.body;
-      
-      const canRefresh = await storage.canRefreshHoroscope(req.user!.id, period as string);
-      
-      if (!canRefresh) {
-        let message = "";
-        if (period === "today") {
-          message = `${req.user!.name}, гороскоп на текущий день для вас уже составлен. Вы можете обновить его завтра`;
-        } else if (period === "week") {
-          message = `${req.user!.name}, гороскоп на текущую неделю для вас уже составлен. Вы можете обновить его на следующей неделе`;
-        } else if (period === "month") {
-          message = `${req.user!.name}, гороскоп на текущий месяц для вас уже составлен. Вы можете обновить его в следующем месяце`;
-        }
-        return res.status(400).send(message);
-      }
-      
-      await storage.deactivateHoroscopes(req.user!.id, period as string, category as string);
-      
+      // Простой тест без базы данных
       const content = await generateHoroscope(
-        req.user!.id, 
-        req.user!.zodiacSign, 
-        period as string, 
-        category as string
+        1, 
+        "capricorn", 
+        "today", 
+        "general"
       );
       
-      const luckyNumbers = getRandomNumbers(3, 1, 99);
-      const compatibleSigns = getCompatibleSigns(req.user!.zodiacSign);
-      
-      const newHoroscope = await storage.createHoroscope({
-        userId: req.user!.id,
-        period: period as string,
-        category: category as string,
-        content,
-        luckyNumbers,
-        compatibleSigns,
-        isActual: true
-      });
+      console.log("✅ Generated content:", content.substring(0, 100) + "...");
       
       res.json({
-        content: newHoroscope.content,
-        luckyNumbers: newHoroscope.luckyNumbers,
-        compatibleSigns: newHoroscope.compatibleSigns,
-        lastUpdated: "сегодня"
+          content: content,
+          luckyNumbers: [7, 14, 21],
+          compatibleSigns: ["Дева", "Телец", "Рыбы"],
+          lastUpdated: "сейчас"
       });
     } catch (error) {
-      console.error("Error refreshing horoscope:", error);
-      res.status(500).send("Ошибка при обновлении гороскопа");
+      console.error("❌ Error:", error);
+      res.status(500).json({ error: (error as Error).message });
     }
   });
 

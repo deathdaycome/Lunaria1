@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getZodiacSign } from "@/lib/zodiac";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { formatDateForDB } from "../../../dateUtils";
 
 // Упрощенная схема регистрации без username и password
 const registerSchema = z.object({
@@ -86,17 +87,17 @@ export default function AuthPage() {
 
       // Регистрируем пользователя через мутацию
       const formData = {
-        username,
-        password,
-        name: data.name,
-        gender: data.gender,
-        birthDate: data.birthDate.toISOString().split('T')[0],
-        birthTime: data.birthTime ? 
-          data.birthTime.toTimeString().split(' ')[0] : 
-          null,
-        birthPlace: data.birthPlace || "",
-        zodiacSign: getZodiacSign(data.birthDate).name
-      };
+      username,
+      password,
+      name: data.name,
+      gender: data.gender,
+      birthDate: formatDateForDB(data.birthDate), // ← ИСПРАВЛЕНО!
+      birthTime: data.birthTime ? 
+        data.birthTime.toTimeString().split(' ')[0] : 
+        null,
+      birthPlace: data.birthPlace || "",
+      zodiacSign: getZodiacSign(data.birthDate).name
+    };
       
       console.log("Регистрируем пользователя:", formData);
       console.log("registerMutation:", registerMutation);
@@ -220,18 +221,22 @@ export default function AuthPage() {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                         className="grid grid-cols-2 gap-4 w-full"
                       >
                         <div className="relative">
                           <RadioGroupItem
                             value="male"
                             id="male"
-                            className="peer absolute invisible"
+                            className="peer sr-only"
                           />
                           <Label
                             htmlFor="male"
-                            className="font-cormorant flex flex-col items-center justify-center p-4 h-full rounded-xl text-center border-2 border-[var(--border)] bg-[var(--background-secondary)] bg-opacity-50 text-[var(--foreground)] peer-data-[state=checked]:bg-[var(--primary)] peer-data-[state=checked]:text-white peer-data-[state=checked]:border-[var(--primary)] cursor-pointer transition-all hover:bg-[var(--primary-hover)] hover:bg-opacity-20"
+                            className={`font-cormorant flex flex-col items-center justify-center p-4 h-full rounded-xl text-center border-2 cursor-pointer transition-all duration-200 ${
+                              field.value === 'male' 
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-lg' 
+                                : 'border-gray-600 bg-gray-800 bg-opacity-50 text-white hover:bg-purple-600 hover:bg-opacity-30 hover:border-purple-500'
+                            }`}
                           >
                             <span className="text-2xl mb-1">♂</span>
                             <span className="font-medium">Мужчина</span>
@@ -241,11 +246,15 @@ export default function AuthPage() {
                           <RadioGroupItem
                             value="female"
                             id="female"
-                            className="peer absolute invisible"
+                            className="peer sr-only"
                           />
                           <Label
                             htmlFor="female"
-                            className="font-cormorant flex flex-col items-center justify-center p-4 h-full rounded-xl text-center border-2 border-[var(--border)] bg-[var(--background-secondary)] bg-opacity-50 text-[var(--foreground)] peer-data-[state=checked]:bg-[var(--primary)] peer-data-[state=checked]:text-white peer-data-[state=checked]:border-[var(--primary)] cursor-pointer transition-all hover:bg-[var(--primary-hover)] hover:bg-opacity-20"
+                            className={`font-cormorant flex flex-col items-center justify-center p-4 h-full rounded-xl text-center border-2 cursor-pointer transition-all duration-200 ${
+                              field.value === 'female' 
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-lg' 
+                                : 'border-gray-600 bg-gray-800 bg-opacity-50 text-white hover:bg-purple-600 hover:bg-opacity-30 hover:border-purple-500'
+                            }`}
                           >
                             <span className="text-2xl mb-1">♀</span>
                             <span className="font-medium">Женщина</span>

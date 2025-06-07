@@ -7,14 +7,20 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import HoroscopePage from "@/pages/horoscope-page";
 import TarotPage from "@/pages/tarot-page";
+import NatalChartPage from "@/pages/natal-chart-page";
 import CompatibilityPage from "@/pages/compatibility-page";
 import SubscriptionPage from "@/pages/subscription-page";
 import SettingsPage from "@/pages/settings-page";
 import HomePage from "@/pages/home-page";
-import { AuthProvider, useAuth } from "@/hooks/use-auth"; // Добавлен импорт useAuth
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ProtectedRoute } from "./lib/protected-route";
-import { Loader2 } from "lucide-react"; // Добавлен импорт Loader2
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
+
+// НОВЫЕ ИМПОРТЫ для оптимизации производительности
+import { usePerformanceMode } from "@hooks/use-performance-mode";
+import { PerformanceIndicator } from "@components/PerformanceIndicator";
 
 import AdminPanelPage from "@/pages/admin/admin-panel-page";
 
@@ -40,7 +46,7 @@ function RootRedirect() {
   }
 }
 
-// Добавляем компонент для страницы успешной регистрации
+// Компонент для страницы успешной регистрации
 function SuccessPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-[#1a1a2e] to-[#16213e]">
@@ -82,6 +88,7 @@ function Router() {
       <ProtectedRoute path="/home" component={HomePage} />
       <ProtectedRoute path="/horoscope" component={HoroscopePage} />
       <ProtectedRoute path="/tarot" component={TarotPage} />
+      <ProtectedRoute path="/natal-chart" component={NatalChartPage} />
       <ProtectedRoute path="/compatibility" component={CompatibilityPage} />
       <ProtectedRoute path="/subscription" component={SubscriptionPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
@@ -91,17 +98,54 @@ function Router() {
   );
 }
 
-function App() { // оптимизировал дважды
+// НОВЫЙ компонент для условных падающих звезд
+function ConditionalFallingStars() {
+  const { shouldReduceAnimations } = usePerformanceMode();
+  
+  // Не рендерим звезды на мобильных/слабых устройствах
+  if (shouldReduceAnimations) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="falling-star"></div>
+      <div className="falling-star"></div>
+      <div className="falling-star"></div>
+    </>
+  );
+}
+
+function App() {
+  const { shouldReduceAnimations, isMobile, isTelegramWebApp } = usePerformanceMode();
+
+  useEffect(() => {
+    console.log('🚀 Режим производительности:', {
+      shouldReduceAnimations,
+      isMobile,
+      isTelegramWebApp
+    });
+
+    // Добавляем класс для ультра-производительности на очень слабых устройствах
+    if (isMobile && (navigator as any).deviceMemory && (navigator as any).deviceMemory <= 2) {
+      document.documentElement.classList.add('ultra-performance');
+      console.log('🔥 Включен ультра-режим производительности');
+    }
+  }, [isMobile, shouldReduceAnimations, isTelegramWebApp]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
-            {/* Добавляем падающие звезды */}
-            <div className="falling-star"></div>
-            <div className="falling-star"></div>
-            <div className="falling-star"></div>
+            
+            {/* НОВЫЙ индикатор производительности */}
+            <PerformanceIndicator />
+            
+            {/* ОБНОВЛЕННЫЕ падающие звезды - теперь условные */}
+            <ConditionalFallingStars />
+            
             <Router />
           </TooltipProvider>
         </AuthProvider>

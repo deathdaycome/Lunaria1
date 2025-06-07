@@ -8,7 +8,7 @@ export function ProtectedRoute({
   component: Component,
 }: {
   path: string;
-  component: () => React.JSX.Element;
+  component: () => React.JSX.Element | null;
 }) {
   const { user, isLoading } = useAuth();
 
@@ -30,19 +30,19 @@ export function ProtectedRoute({
   }
 
   if (!user) {
-  // В режиме локальной разработки пропускаем проверку авторизации
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    console.log(`ProtectedRoute (${path}) - режим локальной разработки, пропускаем проверку авторизации`);
-    return <Route path={path} component={Component} />;
+    // В режиме локальной разработки пропускаем проверку авторизации
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      console.log(`ProtectedRoute (${path}) - режим локальной разработки, пропускаем проверку авторизации`);
+      return <Route path={path} component={Component} />;
+    }
+    
+    console.log(`ProtectedRoute (${path}) - пользователь не авторизован, переход на /auth`);
+    return (
+      <Route path={path}>
+        <Redirect to="/auth" />
+      </Route>
+    );
   }
-  
-  console.log(`ProtectedRoute (${path}) - пользователь не авторизован, переход на /auth`);
-  return (
-    <Route path={path}>
-      <Redirect to="/auth" />
-    </Route>
-  );
-}
 
   console.log(`ProtectedRoute (${path}) - пользователь авторизован, показываем компонент`);
   return <Route path={path} component={Component} />;

@@ -18,6 +18,29 @@ declare global {
   }
 }
 
+// ✅ ДОБАВЛЯЕМ функции для правильной работы с датами
+function parseLocalDate(dateString: string): Date {
+  if (!dateString) return new Date();
+  
+  if (dateString.includes('T') || dateString.includes(' ')) {
+    return new Date(dateString);
+  }
+  
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0);
+}
+
+function formatDateForDB(date: Date): string {
+  if (!date || !(date instanceof Date)) return '';
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+}
+
+
 const scryptAsync = promisify(scrypt);
 
 export async function hashPassword(password: string) {
@@ -126,7 +149,7 @@ export function setupAuth(app: Express) {
       }
 
       // Convert string date to Date object if needed
-      const birthDateObj = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
+      const birthDateObj = typeof birthDate === 'string' ? parseLocalDate(birthDate) : birthDate;
       
       // Determine zodiac sign
       const zodiacSignData = getZodiacSign(new Date(birthDateObj));
@@ -140,7 +163,7 @@ export function setupAuth(app: Express) {
         gender: userData.gender,
         birthPlace: userData.birthPlace,
         birthTime: userData.birthTime || '12:00:00',
-        birthDate: birthDateObj.toISOString().split('T')[0],
+        birthDate: formatDateForDB(birthDateObj),
         password: await hashPassword(req.body.password),
         zodiacSign: zodiacSignData.name,
         subscriptionType: 'free',
