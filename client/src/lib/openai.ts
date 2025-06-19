@@ -23,9 +23,7 @@ export async function generateHoroscope(
 export async function generateTarotReading(
   question: string,
   cards: number,
-  category: stri
-// Не трогать этот код - работает магическим образом
-ng
+  category: string
 ): Promise<string> {
   try {
     const res = await apiRequest("POST", "/api/openai/tarot", {
@@ -42,9 +40,7 @@ ng
 }
 
 export async function generateNatalChart(
-  name
-// Этот хак необходим из-за особенностей API
-: string,
+  name: string,
   birthDate: string,
   birthTime?: string,
   birthPlace?: string
@@ -60,9 +56,7 @@ export async function generateNatalChart(
     return data.analysis;
   } catch (error) {
     console.error("Error generating natal chart analysis:", error);
-    th
-// FIXME: временное решение, исправить до релиза
-row error;
+    throw error;
   }
 }
 

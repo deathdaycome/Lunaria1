@@ -3,7 +3,7 @@ import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -15,24 +15,39 @@ import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/shared/date-picker";
 import { TimePicker } from "@/components/shared/time-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import NatalChartWheel from "@/components/natal-chart/natal-chart-wheel";
 
+// ✨ НОВАЯ СХЕМА с поддержкой всех типов
 const natalChartSchema = z.object({
-  name: z.string().min(1, "Введите имя"),
+  name: z.string().min(1, "Введите имя").optional(),
   birthDate: z.date({
     required_error: "Введите дату рождения",
-  }),
+  }).optional(),
   birthTime: z.date().optional(),
   birthPlace: z.string().optional(),
+  birthCountry: z.string().optional(),
+  friendId: z.string().optional(),
 });
 
 type NatalChartFormValues = z.infer<typeof natalChartSchema>;
+
+// ✨ СПИСОК СТРАН
+const COUNTRIES = [
+  "Россия", "США", "Германия", "Франция", "Италия", "Испания", 
+  "Великобритания", "Канада", "Австралия", "Япония", "Китай", 
+  "Индия", "Бразилия", "Мексика", "Аргентина", "Турция", 
+  "Южная Корея", "Польша", "Нидерланды", "Швеция", "Норвегия", 
+  "Дания", "Финляндия", "Чехия", "Венгрия", "Португалия", 
+  "Греция", "Швейцария", "Австрия", "Бельгия", "Украина", 
+  "Беларусь", "Казахстан"
+];
 
 export default function NatalChartPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [chartType, setChartType] = useState<"self" | "other">("self");
+  const [chartType, setChartType] = useState<"self" | "friend" | "other">("self");
   const [chartResult, setChartResult] = useState<any>(null);
 
   const form = useForm<NatalChartFormValues>({
@@ -40,7 +55,18 @@ export default function NatalChartPage() {
     defaultValues: {
       name: "",
       birthPlace: "",
+      birthCountry: "Россия",
     },
+  });
+
+  // ✨ ЗАПРОС СПИСКА ДРУЗЕЙ
+  const { data: friends = [] } = useQuery({
+    queryKey: ['friends'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/friends");
+      return await res.json();
+    },
+    enabled: chartType === "friend"
   });
 
   const natalChartMutation = useMutation({
@@ -49,6 +75,8 @@ export default function NatalChartPage() {
       return await res.json();
     },
     onSuccess: (data) => {
+      console.log("🌌 API Response received:", data); // ✅ ДОБАВЬ ЭТУ СТРОКУ
+      console.log("🌌 SVG filename in response:", data.svgFileName); // ✅ И ЭТУ
       setChartResult(data);
     },
     onError: (error: Error) => {
@@ -62,8 +90,27 @@ export default function NatalChartPage() {
 
   const buildChart = () => {
     if (chartType === "self") {
+      // ✨ ДЛЯ СЕБЯ
       natalChartMutation.mutate({ type: "self" });
+      
+    } else if (chartType === "friend") {
+      // ✨ ДЛЯ ДРУГА
+      const friendId = form.getValues("friendId");
+      if (!friendId) {
+        toast({
+          title: "Ошибка",
+          description: "Выберите друга из списка",
+          variant: "destructive",
+        });
+        return;
+      }
+      natalChartMutation.mutate({ 
+        type: "friend", 
+        friendId: parseInt(friendId) 
+      });
+      
     } else {
+      // ✨ ДЛЯ ДРУГОГО ЧЕЛОВЕКА
       form.handleSubmit((data) => {
         const birthTimeFormatted = data.birthTime
           ? `${data.birthTime.getHours().toString().padStart(2, '0')}:${data.birthTime.getMinutes().toString().padStart(2, '0')}`
@@ -75,14 +122,15 @@ export default function NatalChartPage() {
           birthDate: data.birthDate,
           birthTime: birthTimeFormatted,
           birthPlace: data.birthPlace || undefined,
+          birthCountry: data.birthCountry || "Россия",
         });
       })();
     }
   };
 
   return (
-    <MainLayout title="Натальная карта" activeTab="natal-chart">
-      <div className="space-y-6 mb-20 px-4">
+    <MainLayout title="Натальная карта" activeTab="natal-chart" showHeader={false}>
+      <div className="space-y-6 mb-20 px-4" style={{ paddingTop: 'max(120px, env(safe-area-inset-top, 120px))' }}>
         <h2 className="page-heading font-gilroy">Натальная карта</h2>
         <p className="text-[var(--foreground-secondary)] font-cormorant text-lg">
           Раскройте глубокие тайны вашего рождения и личности через древнее искусство астрологии
@@ -144,9 +192,11 @@ export default function NatalChartPage() {
 
             {!chartResult ? (
               <div className="space-y-6">
-                <Tabs defaultValue="self" value={chartType} onValueChange={(val) => setChartType(val as "self" | "other")}>
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                {/* ✨ НОВЫЕ ТАБЫ: Для себя, Для друга, Для другого человека */}
+                <Tabs defaultValue="self" value={chartType} onValueChange={(val) => setChartType(val as "self" | "friend" | "other")}>
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
                     <TabsTrigger value="self">Для себя</TabsTrigger>
+                    <TabsTrigger value="friend">Для друга</TabsTrigger>
                     <TabsTrigger value="other">Для другого человека</TabsTrigger>
                   </TabsList>
 
@@ -174,6 +224,53 @@ export default function NatalChartPage() {
                           <span className="text-gray-400">Место рождения:</span>
                           <span className="font-medium">{user.birthPlace}</span>
                         </div>
+                      )}
+                      {user?.birthCountry && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Страна рождения:</span>
+                          <span className="font-medium">{user.birthCountry}</span>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  {/* ✨ НОВАЯ ВКЛАДКА: ДЛЯ ДРУГА */}
+                  <TabsContent value="friend" className="space-y-4">
+                    <p className="text-sm text-gray-300 mb-4 font-cormorant text-center">
+                      Выберите друга из вашего списка:
+                    </p>
+                    <div className="bg-[var(--background-tertiary)] rounded-lg p-4">
+                      <Form {...form}>
+                        <FormField
+                          control={form.control}
+                          name="friendId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Выберите друга</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger className="bg-card-bg">
+                                    <SelectValue placeholder="Выберите друга из списка" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {friends.map((friend: any) => (
+                                    <SelectItem key={friend.id} value={friend.id.toString()}>
+                                      {friend.name} ({friend.zodiacSign})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </Form>
+                      
+                      {friends.length === 0 && (
+                        <p className="text-center text-gray-400 mt-4">
+                          У вас пока нет друзей в списке. Добавьте друзей в разделе "Совместимость".
+                        </p>
                       )}
                     </div>
                   </TabsContent>
@@ -230,15 +327,41 @@ export default function NatalChartPage() {
                           )}
                         />
 
+                        {/* ✨ НОВОЕ ПОЛЕ: СТРАНА РОЖДЕНИЯ */}
+                        <FormField
+                          control={form.control}
+                          name="birthCountry"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Страна рождения</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value || "Россия"}>
+                                <FormControl>
+                                  <SelectTrigger className="bg-card-bg">
+                                    <SelectValue placeholder="Выберите страну" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {COUNTRIES.map((country) => (
+                                    <SelectItem key={country} value={country}>
+                                      {country}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
                         <FormField
                           control={form.control}
                           name="birthPlace"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Место рождения (необязательно)</FormLabel>
+                              <FormLabel>Город рождения (необязательно)</FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Город, Страна"
+                                  placeholder="Город"
                                   {...field}
                                   className="bg-card-bg"
                                 />
@@ -261,10 +384,18 @@ export default function NatalChartPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                <NatalChartWheel 
-                  chartData={chartResult.chartData} 
-                  analysis={chartResult.analysis} 
-                />
+                // ✅ ДОЛЖНО БЫТЬ:
+                {(() => {
+                  console.log("🌌 Rendering NatalChartWheel with:", chartResult);
+                  console.log("🌌 svgFileName prop:", chartResult.svgFileName);
+                  return (
+                    <NatalChartWheel 
+                      chartData={chartResult.chartData} 
+                      analysis={chartResult.analysis}
+                      svgFileName={chartResult.svgFileName}
+                    />
+                  );
+                })()}
 
                 <Button 
                   className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-all rounded-xl font-connie"

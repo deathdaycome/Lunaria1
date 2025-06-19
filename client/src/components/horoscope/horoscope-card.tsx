@@ -2,6 +2,7 @@ import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -29,6 +30,7 @@ export type HoroscopeCardRef = {
 
 type HoroscopeCardProps = {
   period: "today" | "week" | "month";
+  setPeriod: (period: "today" | "week" | "month") => void;
   zodiacSign: string;
   userId: number;
   userName: string;
@@ -55,7 +57,7 @@ type HoroscopeResponse = {
 };
 
 const HoroscopeCard = forwardRef<{ handleRefresh: () => void }, HoroscopeCardProps>(
-  ({ period, zodiacSign, userId, userName, userBirthDate, subscriptionType }, ref) => {
+  ({ period, setPeriod, zodiacSign, userId, userName, userBirthDate, subscriptionType }, ref) => {
     const { toast } = useToast();
     const [activeCategory, setActiveCategory] = useState<Category>("general");
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -246,35 +248,6 @@ const HoroscopeCard = forwardRef<{ handleRefresh: () => void }, HoroscopeCardPro
       return names[sign.toLowerCase()] || "Телец";
     };
 
-    // if (isMonthlyDisabled) {
-    //   return (
-    //     <motion.div
-    //       initial={{ opacity: 0, y: 20 }}
-    //       animate={{ opacity: 1, y: 0 }}
-    //       transition={{ duration: 0.5 }}
-    //     >
-    //       <Card className="card rounded-xl p-6 mb-6 relative overflow-hidden">
-    //         <DecorativeSymbols type="astrology" />
-            
-    //         <div className="text-center py-8">
-    //           <h3 className="text-2xl font-cinzel font-bold text-gold-gradient mb-4">
-    //             Месячный гороскоп
-    //           </h3>
-    //           <p className="text-gray-300 mb-4">
-    //             Месячные гороскопы доступны только в платной версии
-    //           </p>
-    //           <Button 
-    //             variant="outline" 
-    //             className="rounded-full border-[rgba(255,215,0,0.6)] bg-gradient-to-r from-[rgba(255,215,0,0.2)] to-[rgba(255,215,0,0.1)] text-[#FFD700]"
-    //           >
-    //             Улучшить подписку
-    //           </Button>
-    //         </div>
-    //       </Card>
-    //     </motion.div>
-    //   );
-    // }
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -284,37 +257,90 @@ const HoroscopeCard = forwardRef<{ handleRefresh: () => void }, HoroscopeCardPro
         <Card className="card rounded-xl p-6 mb-6 relative overflow-hidden">
           <DecorativeSymbols type="astrology" />
           
-          <div className="flex justify-between mb-5 relative">
+          {/* ✅ НОВОЕ РАСПОЛОЖЕНИЕ: все элементы выровнены по центру */}
+          <div className="flex justify-between items-center mb-5 relative">
+            {/* Левая часть: название знака + уменьшенный символ зодиака рядом */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, duration: 0.4 }}
-              className="relative"
+              className="relative flex items-start gap-3"
             >
-              <h3 className="text-4xl font-cinzel font-bold text-gold-gradient title-glow">
-                {getZodiacSign(new Date(userBirthDate)).name}
-              </h3>
-              <div className="h-px w-3/4 bg-gradient-to-r from-[#FFD700] to-transparent mt-1 cosmic-pulse"></div>
-              <p className="text-base text-gray-300 font-cormorant mt-1">{getPeriodLabel()}</p>
-              {horoscopeData?.lastUpdated && (
-                <p className="text-xs text-gray-400 font-cormorant mt-1">
-                  Обновлено: {horoscopeData.lastUpdated}
-                </p>
-              )}
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="flex items-center gap-2"
-            >
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[rgba(155,89,182,0.3)] to-[rgba(84,40,176,0.5)] backdrop-blur-sm border border-[rgba(255,215,0,0.4)] flex items-center justify-center">
-                  <span className="text-4xl text-[#FFD700] drop-shadow-lg">
+              <div>
+                <h3 className="text-4xl font-cinzel font-bold text-gold-gradient title-glow">
+                  {getZodiacSign(new Date(userBirthDate)).name}
+                </h3>
+                <div className="h-px w-3/4 bg-gradient-to-r from-[#FFD700] to-transparent mt-1 cosmic-pulse"></div>
+                
+                {/* ✅ ФИКСИРОВАННАЯ ВЫСОТА для предотвращения скачков */}
+                <div className="h-4 mt-1">
+                  {horoscopeData?.lastUpdated && (
+                    <p className="text-xs text-gray-400 font-cormorant">
+                      Обновлено: {horoscopeData.lastUpdated}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {/* ✅ ПЕРЕМЕЩЕННЫЙ И УМЕНЬШЕННЫЙ символ зодиака */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[rgba(155,89,182,0.3)] to-[rgba(84,40,176,0.5)] backdrop-blur-sm border border-[rgba(255,215,0,0.4)] flex items-center justify-center">
+                  <span className="text-2xl text-[#FFD700] drop-shadow-lg">
                     {getZodiacSign(new Date(userBirthDate)).symbol}
                   </span>
                 </div>
+              </motion.div>
+            </motion.div>
+            
+            {/* Правая часть: только Select с периодами */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+            >
+              {/* Select с периодами - точно выровнен по центру */}
+              <div className="relative">
+                <Select
+                  value={period}
+                  onValueChange={(value) => setPeriod(value as "today" | "week" | "month")}
+                >
+                  <SelectTrigger 
+                    className="w-[140px] glass-effect border-accent/20 font-gilroy text-white"
+                    style={{ 
+                      position: 'relative',
+                      zIndex: 50,
+                      backgroundColor: 'rgba(42, 29, 81, 0.9)',
+                      backdropFilter: 'blur(10px)'
+                    }}
+                  >
+                    <SelectValue placeholder="Выберите период" />
+                  </SelectTrigger>
+                  <SelectContent 
+                    className="bg-[#2a1d51] border-[#583e8b]"
+                    style={{ 
+                      zIndex: 99999,
+                      backgroundColor: '#2a1d51',
+                      border: '1px solid #583e8b'
+                    }}
+                    sideOffset={5}
+                    align="center"
+                    alignOffset={0}
+                  >
+                    <SelectItem value="today" className="font-gilroy text-white hover:bg-[#3a2d61] focus:bg-[#3a2d61]">
+                      Сегодня
+                    </SelectItem>
+                    <SelectItem value="week" className="font-gilroy text-white hover:bg-[#3a2d61] focus:bg-[#3a2d61]">
+                      Неделя
+                    </SelectItem>
+                    <SelectItem value="month" className="font-gilroy text-white hover:bg-[#3a2d61] focus:bg-[#3a2d61]">
+                      Месяц
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </motion.div>
           </div>
@@ -332,7 +358,7 @@ const HoroscopeCard = forwardRef<{ handleRefresh: () => void }, HoroscopeCardPro
                       key={key}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 + index * 0.1, duration: 0.4 }}
+                      transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
                       className="relative"
                     >
                       <TabsTrigger

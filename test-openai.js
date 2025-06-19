@@ -1,36 +1,36 @@
 import OpenAI from 'openai';
-import 'dotenv/config';
-import { HttpsProxyAgent } from 'https-proxy-agent';
 
-// Используем смешанный порт из Hiddify
-const proxyAgent = new HttpsProxyAgent('http://127.0.0.1:12334');
-
+// Настройка для OpenRouter с вшитым API ключом
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  httpAgent: proxyAgent,
+  apiKey: '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',
+  baseURL: 'https://openrouter.ai/api/v1',
   timeout: 30000,
   defaultHeaders: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    'HTTP-Referer': 'http://89.169.47.164:5000',
+    'X-Title': 'Lunaria AI Test'
   }
 });
 
-async function testOpenAI() {
+async function testOpenRouter() {
   try {
-    console.log('🔧 Using Hiddify proxy: 127.0.0.1:12334');
-    console.log('🤖 Тестируем OpenAI через системный прокси...');
+    console.log('🤖 Тестируем OpenRouter API с вшитым ключом...');
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: 'Привет из России через VPN!' }],
-      max_tokens: 30,
+      model: 'meta-llama/llama-3.2-3b-instruct:free',
+      messages: [{ role: 'user', content: 'Привет! Как дела?' }],
+      max_tokens: 50,
     });
     
-    console.log('✅ SUCCESS! OpenAI работает через прокси!');
+    console.log('✅ SUCCESS! OpenRouter работает!');
     console.log('🤖 Ответ:', response.choices[0].message.content);
+    console.log('📊 Использовано токенов:', response.usage);
   } catch (error) {
     console.error('❌ Ошибка:', error.message);
     console.error('❌ Status:', error.status);
+    if (error.response) {
+      console.error('❌ Response:', error.response.data);
+    }
   }
 }
 
-testOpenAI();
+testOpenRouter();

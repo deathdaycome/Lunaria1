@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Пользователи
+// Обновленная таблица пользователей с персональными счастливыми числами и знаками
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -11,18 +11,23 @@ export const users = pgTable("users", {
   gender: text("gender").notNull(),
   birthDate: date("birth_date").notNull(),
   birthTime: time("birth_time"),
+  birthCountry: text("birth_country"), // ✨ НОВОЕ ПОЛЕ для страны рождения
   birthPlace: text("birth_place"),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   zodiacSign: text("zodiac_sign").notNull(),
   role: text("role").default("user").notNull(),
   subscriptionType: text("subscription_type").default("free").notNull(),
+  // ✨ НОВЫЕ ПОЛЯ для персональных данных
+  luckyNumbers: jsonb("lucky_numbers"), // Персональные счастливые числа [1, 7, 9]
+  compatibleSigns: jsonb("compatible_signs"), // Персональные совместимые знаки
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
   friends: many(friends),
   apiUsage: many(apiUsage),
+  natalCharts: many(natalCharts), // ✨ НОВАЯ СВЯЗЬ
 }));
 
 // Друзья пользователей
@@ -34,6 +39,7 @@ export const friends = pgTable("friends", {
   gender: text("gender").notNull(),
   birthDate: date("birth_date").notNull(),
   birthTime: time("birth_time"),
+  birthCountry: text("birth_country"), // ✨ НОВОЕ ПОЛЕ для страны рождения друга
   birthPlace: text("birth_place"),
   zodiacSign: text("zodiac_sign").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -42,6 +48,39 @@ export const friends = pgTable("friends", {
 export const friendsRelations = relations(friends, ({ one }) => ({
   user: one(users, {
     fields: [friends.userId],
+    references: [users.id],
+  }),
+}));
+
+// ✨ НОВАЯ ТАБЛИЦА для кеширования натальных карт
+export const natalCharts = pgTable("natal_charts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  
+  // Данные для расчета (для создания ключа кеша)
+  targetType: text("target_type").notNull(), // "self", "friend", "other"
+  targetId: integer("target_id"), // ID друга (если targetType = "friend")
+  
+  // Входные данные
+  name: text("name").notNull(),
+  birthDate: date("birth_date").notNull(),
+  birthTime: time("birth_time"),
+  birthPlace: text("birth_place"),
+  birthCountry: text("birth_country"),
+  
+  // Результаты
+  svgFileName: text("svg_file_name"), // Имя SVG файла
+  aiAnalysis: text("ai_analysis").notNull(), // Анализ от ИИ
+  
+  // Дополнительные данные
+  cacheKey: text("cache_key").notNull().unique(), // Уникальный ключ для кеширования
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const natalChartsRelations = relations(natalCharts, ({ one }) => ({
+  user: one(users, {
+    fields: [natalCharts.userId],
     references: [users.id],
   }),
 }));
@@ -107,9 +146,26 @@ export const insertHoroscopeSchema = createInsertSchema(horoscopes).omit({
   createdAt: true,
 });
 
+// ✨ НОВАЯ СХЕМА для натальных карт
+export const insertNatalChartSchema = createInsertSchema(natalCharts).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const loginSchema = z.object({
   username: z.string().min(1, "Введите имя пользователя"),
   password: z.string().min(1, "Введите пароль"),
+});
+
+// ✨ НОВЫЕ СХЕМЫ для натальной карты API
+export const natalChartRequestSchema = z.object({
+  type: z.enum(["self", "friend", "other"]),
+  friendId: z.number().optional(),
+  name: z.string().optional(),
+  birthDate: z.date().optional(),
+  birthTime: z.string().optional(),
+  birthPlace: z.string().optional(),
+  birthCountry: z.string().optional(),
 });
 
 // Типы для использования в приложении
@@ -127,3 +183,8 @@ export type Horoscope = typeof horoscopes.$inferSelect;
 export type InsertHoroscope = z.infer<typeof insertHoroscopeSchema>;
 
 export type ZodiacSign = typeof zodiacSigns.$inferSelect;
+
+// ✨ НОВЫЕ ТИПЫ для натальных карт
+export type NatalChart = typeof natalCharts.$inferSelect;
+export type InsertNatalChart = z.infer<typeof insertNatalChartSchema>;
+export type NatalChartRequest = z.infer<typeof natalChartRequestSchema>;

@@ -129,87 +129,110 @@ export function cleanRussianText(text: string): string {
     .trim();
 }
 
-/**
- * Специальная функция для структурированной очистки русского текста
- * Комбинирует парсинг структуры и очистку русского текста
- */
-export function cleanStructuredRussianText(rawContent: string): Array<{title: string, content: string}> {
-  if (!rawContent || typeof rawContent !== 'string') {
+export function cleanStructuredRussianText(
+  text: string, 
+  maxSections?: number
+): Array<{title: string, content: string}> {
+  if (!text || typeof text !== 'string') {
     return [];
   }
 
-  // Очищаем markdown
-  let cleanedText = rawContent
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    .replace(/__(.*?)__/g, '$1')
-    .replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '$1')
-    .replace(/(?<!_)_([^_\n]+?)_(?!_)/g, '$1')
-    .replace(/^#{1,6}\s+(.*)$/gm, '$1')
-    .replace(/^\s*[-*+]\s+/gm, '')
-    .replace(/^\s*\d+\.\s+/gm, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`([^`]+)`/g, '$1');
-
-  // Разбиваем на параграфы
+  // Очищаем от markdown
+  const cleanedText = cleanRussianText(text);
+  
+  // Разбиваем на абзацы
   const paragraphs = cleanedText
     .split(/\n\s*\n/)
     .map(p => p.trim())
-    .filter(p => p.length > 0);
-
-  if (paragraphs.length === 0) {
-    return [];
-  }
+    .filter(p => p.length > 20);
 
   const sections: Array<{title: string, content: string}> = [];
   
-  // Первый параграф всегда "Общий прогноз"
-  if (paragraphs[0]) {
-    sections.push({
-      title: "### Общий прогноз ###",
-      content: paragraphs[0]
-    });
+  // ✅ СТРОГОЕ ОГРАНИЧЕНИЕ ПО КОЛИЧЕСТВУ СЕКЦИЙ
+  const limitedParagraphs = maxSections 
+    ? paragraphs.slice(0, maxSections + 2) // +2 для буфера
+    : paragraphs;
+  
+  for (let i = 0; i < limitedParagraphs.length && (!maxSections || sections.length < maxSections); i++) {
+    const paragraph = limitedParagraphs[i];
+    
+    // Пытаемся найти заголовок в начале абзаца
+    const titleMatch = paragraph.match(/^([^.!?]+)[:.]?\s*([\s\S]+)/);
+    
+    if (titleMatch && titleMatch[1].length < 100) {
+      sections.push({
+        title: titleMatch[1].trim(),
+        content: titleMatch[2].trim()
+      });
+    } else {
+      sections.push({
+        title: `Раздел ${sections.length + 1}`,
+        content: paragraph
+      });
+    }
   }
-
-  // Определяем типы секций в зависимости от контекста
-  const sectionTitles = [
-    "### Астрологическая совместимость ###",
-    "### Нумерологическая совместимость ###", 
-    "### Психологическая совместимость ###",
-    "### Рекомендации ###",
-    "### Заключение ###"
-  ];
-
-  // Для расклада Таро используем другие заголовки
-  const tarotTitles = [
-    "### Причина конфликта: **Сила** ###",
-    "### Ваши эмоции: **Влюбленные** ###",
-    "### Исход ситуации: **Мир** ###",
-    "### Рекомендации ###",
-    "### Заключение ###"
-  ];
-
-  // Проверяем, это Таро или совместимость
-  const isTarot = rawContent.toLowerCase().includes('карт') || 
-                  rawContent.toLowerCase().includes('расклад') ||
-                  rawContent.toLowerCase().includes('таро');
-
-  const titles = isTarot ? tarotTitles : sectionTitles;
-
-  // Добавляем остальные параграфы с соответствующими заголовками
-  for (let i = 1; i < paragraphs.length && i - 1 < titles.length; i++) {
-    sections.push({
-      title: titles[i - 1],
-      content: paragraphs[i]
-    });
+  
+  // ✅ ДОБАВЛЯЕМ ОБЩИЙ СОВЕТ ЕСЛИ ЕСТЬ ОСТАВШИЙСЯ ТЕКСТ
+  if (maxSections && sections.length === maxSections) {
+    const remainingParagraphs = limitedParagraphs.slice(maxSections);
+    if (remainingParagraphs.length > 0) {
+      sections.push({
+        title: "Общие рекомендации",
+        content: remainingParagraphs.join('\n\n')
+      });
+    } else {
+      // Если нет оставшегося текста, добавляем базовый совет
+      sections.push({
+        title: "Общие рекомендации",
+        content: "Карты показывают важные аспекты вашей ситуации. Прислушайтесь к их мудрости."
+      });
+    }
   }
-
-  // Если параграфов больше чем заголовков, добавляем с базовым заголовком
-  for (let i = titles.length + 1; i < paragraphs.length; i++) {
-    sections.push({
-      title: "### Дополнительная информация ###",
-      content: paragraphs[i]
-    });
+  
+  // ✅ ФИНАЛЬНАЯ ПРОВЕРКА: не больше maxSections + 1
+  if (maxSections && sections.length > maxSections + 1) {
+    return sections.slice(0, maxSections + 1);
   }
-
+  
   return sections;
+}
+
+
+
+// ✅ ДОБАВИТЬ НОВУЮ ФУНКЦИЮ СТРОГОЙ ВАЛИДАЦИИ РЕЗУЛЬТАТА
+export function validateTarotReadingResult(
+  reading: any, 
+  expectedCardCount: number
+): { isValid: boolean, errors: string[] } {
+  const errors: string[] = [];
+  
+  if (!Array.isArray(reading)) {
+    errors.push("Результат не является массивом");
+    return { isValid: false, errors };
+  }
+  
+  const expectedTotal = expectedCardCount + 1;
+  if (reading.length !== expectedTotal) {
+    errors.push(`Неверное количество секций: получено ${reading.length}, ожидается ${expectedTotal}`);
+  }
+  
+  reading.forEach((section, index) => {
+    if (!section || typeof section !== 'object') {
+      errors.push(`Секция ${index + 1} не является объектом`);
+      return;
+    }
+    
+    if (!section.title || typeof section.title !== 'string') {
+      errors.push(`Секция ${index + 1} не имеет корректного заголовка`);
+    }
+    
+    if (!section.content || typeof section.content !== 'string' || section.content.length < 10) {
+      errors.push(`Секция ${index + 1} не имеет корректного содержимого`);
+    }
+  });
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 }

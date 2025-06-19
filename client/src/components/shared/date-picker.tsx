@@ -69,23 +69,24 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[300px] p-3 card border-[#6366f1]/30 bg-[#1a1a2e] text-white shadow-xl"
+        className="w-[320px] p-4 card border-[#6366f1]/30 bg-[#1a1a2e] text-white shadow-xl"
         align="start"
-        side="bottom"
-        sideOffset={8}
+        side="top"
+        sideOffset={12}
         forceMount
         style={{ 
           zIndex: 9999,
-          // ✨ ОГРАНИЧИВАЕМ МАКСИМАЛЬНУЮ ВЫСОТУ КОНТЕЙНЕРА
           maxHeight: '400px',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          // Дополнительное позиционирование для поднятия окна
+          transform: 'translateY(-20px)'
         }}
       >
         <div className="mt-0 pt-2">
-          <div className="grid grid-cols-1 gap-2 space-y-1">
+          <div className="grid grid-cols-1 gap-3 space-y-2">
             {/* День */}
             <div>
-              <label className="text-xs font-medium mb-1 block">День</label>
+              <label className="text-sm font-medium mb-2 block">День</label>
               <Select
                 value={date ? date.getDate().toString() : "1"}
                 onValueChange={(val) => {
@@ -100,19 +101,18 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                   }
                 }}
               >
-                <SelectTrigger className="h-9 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
+                <SelectTrigger className="h-10 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
                   <SelectValue placeholder="День" />
                 </SelectTrigger>
                 <SelectContent 
-                  className="border-[#6366f1]/30 bg-[#252240] text-white max-h-[150px]"
-                  // ✨ ОГРАНИЧИВАЕМ ВЫСОТУ И ДОБАВЛЯЕМ ПРОКРУТКУ
-                  style={{ maxHeight: '150px', overflowY: 'auto' }}
+                  className="border-[#6366f1]/30 bg-[#252240] text-white"
+                  style={{ maxHeight: '180px', overflowY: 'auto' }}
                 >
                   {Array.from({ length: new Date(year, month, 0).getDate() }, (_, i) => i + 1).map((day) => (
                     <SelectItem 
                       key={day} 
                       value={day.toString()}
-                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm"
+                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm py-2"
                     >
                       {day}
                     </SelectItem>
@@ -123,7 +123,7 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
 
             {/* Месяц */}
             <div>
-              <label className="text-xs font-medium mb-1 block">Месяц</label>
+              <label className="text-sm font-medium mb-2 block">Месяц</label>
               <Select
                 value={month.toString()}
                 onValueChange={(val) => {
@@ -132,19 +132,18 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                   updateCalendarDate(newMonth, year); 
                 }}
               >
-                <SelectTrigger className="h-9 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
+                <SelectTrigger className="h-10 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
                   <SelectValue placeholder="Месяц" />
                 </SelectTrigger>
                 <SelectContent 
-                  className="border-[#6366f1]/30 bg-[#252240] text-white max-h-[200px]"
-                  // ✨ ОГРАНИЧИВАЕМ ВЫСОТУ ДЛЯ МЕСЯЦЕВ
-                  style={{ maxHeight: '200px', overflowY: 'auto' }}
+                  className="border-[#6366f1]/30 bg-[#252240] text-white"
+                  style={{ maxHeight: '180px', overflowY: 'auto' }}
                 >
                   {monthNames.map((name, index) => (
                     <SelectItem 
                       key={index} 
                       value={(index + 1).toString()}
-                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm"
+                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm py-2"
                     >
                       {name}
                     </SelectItem>
@@ -155,7 +154,7 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
             
             {/* Год */}
             <div>
-              <label className="text-xs font-medium mb-1 block">Год</label>
+              <label className="text-sm font-medium mb-2 block">Год</label>
               <Select
                 value={year.toString()}
                 onValueChange={(val) => {
@@ -164,16 +163,14 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                   updateCalendarDate(month, newYear);
                 }}
               >
-                <SelectTrigger className="h-9 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
+                <SelectTrigger className="h-10 border-[#6366f1]/30 bg-[#252240] text-white text-sm">
                   <SelectValue placeholder="Год" />
                 </SelectTrigger>
                 <SelectContent 
                   className="border-[#6366f1]/30 bg-[#252240] text-white"
-                  // ✨ СТРОГО ОГРАНИЧИВАЕМ ВЫСОТУ ДЛЯ ЛЕТ
                   style={{ 
                     maxHeight: '180px', 
                     overflowY: 'auto',
-                    // ✨ ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ПРЕДОТВРАЩЕНИЯ ВЫХОДА ЗА ЭКРАН
                     position: 'relative'
                   }}
                 >
@@ -181,7 +178,7 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                     <SelectItem 
                       key={y} 
                       value={y.toString()}
-                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm py-1"
+                      className="hover:bg-[#32304d] focus:bg-[#32304d] text-sm py-2"
                     >
                       {y}
                     </SelectItem>
@@ -193,7 +190,7 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
           
           <Button 
             onClick={() => setOpen(false)}
-            className="mt-3 w-full h-9 border-[#6366f1]/50 bg-[#32304d] hover:bg-[#42405d] text-white text-sm"
+            className="mt-4 w-full h-10 border-[#6366f1]/50 bg-[#32304d] hover:bg-[#42405d] text-white text-sm"
           >
             Выбрать
           </Button>

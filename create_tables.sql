@@ -44,3 +44,40 @@ CREATE TABLE IF NOT EXISTS friends (
 SELECT table_name FROM information_schema.tables 
 WHERE table_schema = 'public' 
 ORDER BY table_name;
+
+-- Добавляем персональные поля в таблицу users
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS lucky_numbers JSONB,
+ADD COLUMN IF NOT EXISTS compatible_signs JSONB;
+
+-- Заполняем данные для существующих пользователей
+UPDATE users 
+SET 
+  lucky_numbers = (
+    SELECT jsonb_build_array(
+      (random() * 9 + 1)::int,
+      (random() * 9 + 1)::int,
+      (random() * 9 + 1)::int
+    )
+  ),
+  compatible_signs = (
+    CASE zodiac_sign
+      WHEN 'Овен' THEN '["leo", "sagittarius", "gemini"]'::jsonb
+      WHEN 'Телец' THEN '["virgo", "capricorn", "cancer"]'::jsonb
+      WHEN 'Близнецы' THEN '["libra", "aquarius", "aries"]'::jsonb
+      WHEN 'Рак' THEN '["scorpio", "pisces", "taurus"]'::jsonb
+      WHEN 'Лев' THEN '["aries", "sagittarius", "gemini"]'::jsonb
+      WHEN 'Дева' THEN '["taurus", "capricorn", "cancer"]'::jsonb
+      WHEN 'Весы' THEN '["gemini", "aquarius", "leo"]'::jsonb
+      WHEN 'Скорпион' THEN '["cancer", "pisces", "virgo"]'::jsonb
+      WHEN 'Стрелец' THEN '["aries", "leo", "libra"]'::jsonb
+      WHEN 'Козерог' THEN '["taurus", "virgo", "scorpio"]'::jsonb
+      WHEN 'Водолей' THEN '["gemini", "libra", "sagittarius"]'::jsonb
+      WHEN 'Рыбы' THEN '["cancer", "scorpio", "capricorn"]'::jsonb
+      ELSE '["taurus", "cancer", "virgo"]'::jsonb
+    END
+  )
+WHERE lucky_numbers IS NULL OR compatible_signs IS NULL;
+
+-- Проверяем результат
+SELECT 'Migration completed: added lucky_numbers and compatible_signs to users table' as status;

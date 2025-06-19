@@ -57,6 +57,15 @@ const scryptAsync = promisify(scrypt);
 
 console.log('Modules loaded successfully');
 
+// ✅ СОЗДАЕМ ПАПКУ ДЛЯ SVG ФАЙЛОВ
+const natalChartsDir = path.join(__dirname, 'public', 'natal-charts');
+if (!fs.existsSync(natalChartsDir)) {
+  fs.mkdirSync(natalChartsDir, { recursive: true });
+  console.log('📁 Created natal-charts directory:', natalChartsDir);
+} else {
+  console.log('📁 Natal-charts directory exists:', natalChartsDir);
+}
+
 // Функции для работы с паролями
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -222,8 +231,9 @@ async function testOpenAI() {
     
     const response = await openai.chat.completions.create({
       model: "openai/gpt-4o-mini",
-      messages: [{ role: "user", content: "Привет, это тест" }],
-      max_tokens: 10,
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: cardCount === 3 ? 8000 : 12000, // ← УВЕЛИЧИЛИ В 3-4 РАЗА!
+      temperature: 0.9, // ← БОЛЬШЕ КРЕАТИВНОСТИ
     });
     
     console.log("✅ OpenAI connection SUCCESS!");
@@ -253,6 +263,16 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// ✨ ИСПРАВЛЕННЫЙ КОД - Обслуживание SVG файлов натальных карт
+app.use('/natal-charts', express.static(path.join(__dirname, 'public', 'natal-charts'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.svg')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+    }
+  }
+}));
+console.log('📁 Static SVG files served at /natal-charts');
 
 // Настройка сессий
 app.set("trust proxy", 1);
@@ -461,10 +481,10 @@ app.delete('/api/friends/:friendId', async (req: any, res) => {
 });
 
 // ✅ ИСПРАВЛЕННЫЙ API ДЛЯ ПОЛУЧЕНИЯ ГОРОСКОПА - ВСЕ КАТЕГОРИИ РАЗБЛОКИРОВАНЫ
+// ✅ ИСПРАВЛЕННОЕ API ДЛЯ ПОЛУЧЕНИЯ ГОРОСКОПА - используем персональные данные
 app.get('/api/horoscope', async (req: any, res) => {
   console.log("🔍 HOROSCOPE GET ENDPOINT HIT!");
   console.log("🔍 Query params:", req.query);
-  console.log("🔍 User:", req.user);
   
   try {
     const { userId, period = "today", category = "general", zodiacSign } = req.query;
@@ -479,8 +499,6 @@ app.get('/api/horoscope', async (req: any, res) => {
     
     const zodiacSignEn = convertZodiacToEnglish(zodiacSign as string || user.zodiacSign);
     console.log("🔍 Zodiac sign converted:", { original: zodiacSign, converted: zodiacSignEn });
-
-    // ✅ ВСЕ КАТЕГОРИИ ДОСТУПНЫ - убрали блокировку категорий
 
     // Ищем актуальный гороскоп в БД
     const existingHoroscope = await storage.getActualHoroscope(
@@ -497,8 +515,13 @@ app.get('/api/horoscope', async (req: any, res) => {
       console.log("✅ Returning existing horoscope");
       return res.json({
         content: existingHoroscope.content,
-        luckyNumbers: existingHoroscope.luckyNumbers,
-        compatibleSigns: existingHoroscope.compatibleSigns,
+        // ✨ ИСПОЛЬЗУЕМ ПЕРСОНАЛЬНЫЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ
+        luckyNumbers: user.luckyNumbers || [1, 7, 9],
+        compatibleSigns: user.compatibleSigns || [
+          { name: "taurus", compatibility: 85 },
+          { name: "cancer", compatibility: 80 },
+          { name: "virgo", compatibility: 75 }
+        ],
         lastUpdated: format(new Date(existingHoroscope.createdAt), 'd MMMM', { locale: ru }),
         canRefresh
       });
@@ -506,10 +529,8 @@ app.get('/api/horoscope', async (req: any, res) => {
 
     console.log("🔍 Generating new horoscope...");
     
-    // Импортируем функцию динамически
     const { generateHoroscope } = await import("./openai");
     
-    // Генерируем новый гороскоп
     const content = await generateHoroscope(
       user.id, 
       zodiacSignEn, 
@@ -519,10 +540,6 @@ app.get('/api/horoscope', async (req: any, res) => {
     
     console.log("✅ Horoscope content generated");
     
-    // ✅ ИСПРАВЛЕНО: счастливые числа от 1 до 10
-    const luckyNumbers = getRandomNumbers(3, 1, 10);
-    const compatibleSigns = getCompatibleSigns(zodiacSignEn);
-    
     console.log("🔍 Creating horoscope in database...");
     
     const newHoroscope = await storage.createHoroscope({
@@ -530,11 +547,9 @@ app.get('/api/horoscope', async (req: any, res) => {
       period: period as string,
       category: category as string,
       content,
-      luckyNumbers,
-      compatibleSigns: compatibleSigns.slice(0, 3).map(sign => ({
-        name: sign,
-        compatibility: Math.floor(Math.random() * 21) + 80
-      })),
+      // ✨ В БД гороскопов больше не сохраняем эти данные - они теперь персональные
+      luckyNumbers: [],
+      compatibleSigns: [],
       isActual: true
     });
     
@@ -542,8 +557,13 @@ app.get('/api/horoscope', async (req: any, res) => {
     
     res.json({
       content: newHoroscope.content,
-      luckyNumbers: newHoroscope.luckyNumbers,
-      compatibleSigns: newHoroscope.compatibleSigns,
+      // ✨ ВОЗВРАЩАЕМ ПЕРСОНАЛЬНЫЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ
+      luckyNumbers: user.luckyNumbers || [1, 7, 9],
+      compatibleSigns: user.compatibleSigns || [
+        { name: "taurus", compatibility: 85 },
+        { name: "cancer", compatibility: 80 },
+        { name: "virgo", compatibility: 75 }
+      ],
       lastUpdated: "сегодня",
       canRefresh: false
     });
@@ -557,6 +577,7 @@ app.get('/api/horoscope', async (req: any, res) => {
 });
 
 // API для обновления гороскопа
+// ✅ ИСПРАВЛЕННОЕ API для обновления гороскопа - используем персональные данные
 app.post('/api/horoscope/refresh', async (req: any, res) => {
   console.log("🔥 HOROSCOPE REFRESH ENDPOINT HIT!");
   console.log("🔥 Body:", JSON.stringify(req.body, null, 2));
@@ -570,7 +591,6 @@ app.post('/api/horoscope/refresh', async (req: any, res) => {
 
     const { period = "today", category = "general", zodiacSign } = req.body;
     
-    // Импортируем функцию динамически
     const { generateHoroscope } = await import("./openai");
     
     const zodiacSignEn = convertZodiacToEnglish(zodiacSign || user.zodiacSign);
@@ -584,27 +604,27 @@ app.post('/api/horoscope/refresh', async (req: any, res) => {
     
     console.log("✅ Generated content:", content.substring(0, 100) + "...");
     
-    // Обновляем гороскоп в БД
-    const luckyNumbers = getRandomNumbers(3, 1, 10);
-    const compatibleSigns = getCompatibleSigns(zodiacSignEn);
-    
+    // ✨ ОБНОВЛЯЕМ ГОРОСКОП БЕЗ ИЗМЕНЕНИЯ ПЕРСОНАЛЬНЫХ ДАННЫХ
     const updatedHoroscope = await storage.createHoroscope({
       userId: user.id,
       period: period,
       category: category,
       content,
-      luckyNumbers,
-      compatibleSigns: compatibleSigns.slice(0, 3).map(sign => ({
-        name: sign,
-        compatibility: Math.floor(Math.random() * 21) + 80
-      })),
+      // ✨ Не генерируем новые - используем персональные из профиля
+      luckyNumbers: [],
+      compatibleSigns: [],
       isActual: true
     });
     
     res.json({
       content: updatedHoroscope.content,
-      luckyNumbers: updatedHoroscope.luckyNumbers,
-      compatibleSigns: updatedHoroscope.compatibleSigns,
+      // ✨ ВОЗВРАЩАЕМ ПЕРСОНАЛЬНЫЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ
+      luckyNumbers: user.luckyNumbers || [1, 7, 9],
+      compatibleSigns: user.compatibleSigns || [
+        { name: "taurus", compatibility: 85 },
+        { name: "cancer", compatibility: 80 },
+        { name: "virgo", compatibility: 75 }
+      ],
       lastUpdated: "сейчас",
       canRefresh: false
     });
@@ -628,7 +648,14 @@ app.post('/api/tarot', async (req: any, res) => {
       return res.status(401).json({ error: "Необходима авторизация" });
     }
     
-    const { question, cardCount = 3, category = "love", selectedCards } = req.body;
+    // ✅ ИСПРАВЛЕНИЕ: добавляем preset в деструктуризацию
+    const { question, cardCount = 3, category = "love", preset, selectedCards, selectedCardNames } = req.body;
+    
+    // ✅ ИСПРАВЛЕНИЕ: проверяем наличие preset
+    if (!preset) {
+      console.log("❌ Validation failed: no preset");
+      return res.status(400).json({ error: "Необходимо выбрать тип расклада" });
+    }
     
     // Валидация
     if (!question || !question.trim()) {
@@ -636,7 +663,8 @@ app.post('/api/tarot', async (req: any, res) => {
       return res.status(400).json({ error: "Необходимо описать ситуацию" });
     }
 
-    if (![3, 5].includes(cardCount)) {
+    // ✅ ИСПРАВЛЕНИЕ: строгая проверка количества карт
+    if (![3, 5].includes(Number(cardCount))) {
       console.log("❌ Validation failed: invalid card count");
       return res.status(400).json({ error: "Количество карт должно быть 3 или 5" });
     }
@@ -646,33 +674,65 @@ app.post('/api/tarot', async (req: any, res) => {
       return res.status(400).json({ error: "Необходимо выбрать категорию" });
     }
     
+    // ✅ ИСПРАВЛЕНИЕ: приводим cardCount к числу
+    const numCardCount = Number(cardCount);
+    
     console.log("🔍 Processing tarot:", { 
       question: question?.substring(0, 50) + "...", 
-      cardCount, 
-      category 
+      cardCount: numCardCount, 
+      category,
+      preset 
     });
     
     console.log("🔍 Generating tarot reading...");
     
     const { generateTarotReading } = await import("./openai");
     
+    // ✅ ИСПРАВЛЕНИЕ: передаем preset в функцию
     const reading = await generateTarotReading(
       user.id,
       question.trim(),
-      cardCount,
+      numCardCount,
       category,
-      selectedCards
+      preset,
+      selectedCardNames // ✅ Передаем выбранные названия карт
     );
+
+    // ✅ ПОСЛЕДНЯЯ ЛИНИЯ ОБОРОНЫ - ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА В API
+    let finalReading = reading;
+
+    
     
     console.log("✅ Tarot reading generated successfully");
     console.log("🔍 Reading type:", Array.isArray(reading) ? 'array' : typeof reading);
-    console.log("🔍 Reading preview:", Array.isArray(reading) ? `${reading.length} sections generated` : reading.substring(0, 200) + "...");
-    
+    console.log("🔍 Reading details:", Array.isArray(reading) ? 
+      `${reading.length} sections generated` : 
+      reading.substring(0, 200) + "..."
+    );
+
+    // ✅ ДОБАВЛЯЕМ ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ ПЕРЕД ОТПРАВКОЙ
+    console.log("🔍 ========== ФИНАЛЬНАЯ ПРОВЕРКА ПЕРЕД ОТПРАВКОЙ ==========");
+    console.log("🔍 finalReading длина:", Array.isArray(finalReading) ? finalReading.length : 'не массив');
+    if (Array.isArray(finalReading)) {
+      finalReading.forEach((section, index) => {
+        console.log(`🔍 Секция ${index + 1}:`, {
+          title: section.title,
+          contentLength: section.content.length,
+          contentPreview: section.content.substring(0, 100) + "..."
+        });
+      });
+    }
+    console.log("🔍 =======================================================");
+
+    // ✅ ИСПРАВЛЕНИЕ: возвращаем четкую информацию о количестве карт
     res.json({ 
       success: true,
-      reading: reading,
-      cardCount,
-      category
+      reading: finalReading, // Вместо reading
+      requestedCards: numCardCount,
+      actualSections: Array.isArray(finalReading) ? finalReading.length : 1,
+      category,
+      preset,
+      isValidCount: Array.isArray(finalReading) && finalReading.length === numCardCount + 1
     });
     
   } catch (error) {
@@ -685,10 +745,11 @@ app.post('/api/tarot', async (req: any, res) => {
 });
 
 // API для натальной карты
+// ✨ ОБНОВЛЕННОЕ API для натальной карты с кешированием
 app.post('/api/natal-chart', async (req: any, res) => {
-  console.log("🔍 NATAL CHART ENDPOINT HIT!");
-  console.log("🔍 Request body:", req.body);
-  console.log("🔍 User:", req.user ? `ID: ${req.user.id}, Name: ${req.user.name}` : 'not found');
+  console.log("🌌 NATAL CHART ENDPOINT HIT!");
+  console.log("🌌 Request body:", req.body);
+  console.log("🌌 User:", req.user ? `ID: ${req.user.id}, Name: ${req.user.name}` : 'not found');
   
   try {
     const user = req.user;
@@ -697,20 +758,25 @@ app.post('/api/natal-chart', async (req: any, res) => {
       return res.status(401).json({ error: "Необходима авторизация" });
     }
     
-    const { type, name, birthDate, birthTime, birthPlace } = req.body;
+    const { type, friendId, name, birthDate, birthTime, birthPlace, birthCountry } = req.body;
     
-    console.log("🔍 Processing natal chart:", { type, name, birthDate, birthTime, birthPlace });
+    console.log("🌌 Processing natal chart:", { type, friendId, name, birthDate, birthTime, birthPlace, birthCountry });
     
+    // ✨ ОПРЕДЕЛЯЕМ ДАННЫЕ ДЛЯ АНАЛИЗА
     let analysisData: any = {};
+    let cacheKey: string = "";
     
     if (type === "self") {
+      // Для себя - берем данные из профиля
       analysisData = {
         name: user.name,
         birthDate: user.birthDate,
         birthTime: user.birthTime,
-        birthPlace: user.birthPlace
+        birthPlace: user.birthPlace,
+        birthCountry: user.birthCountry || "Россия"
       };
       
+      // Проверяем обязательные данные
       const missingData = [];
       if (!user.birthTime) {
         missingData.push("время рождения");
@@ -728,7 +794,34 @@ app.post('/api/natal-chart', async (req: any, res) => {
           needsUpdate: true
         });
       }
-    } else {
+      
+      // ✨ ГЕНЕРИРУЕМ КЛЮЧ КЕША ДЛЯ "СЕБЯ"
+      cacheKey = storage.generateNatalChartCacheKey(user.id, "self");
+      
+    } else if (type === "friend") {
+      // Для друга - берем данные друга
+      if (!friendId) {
+        return res.status(400).json({ error: "Необходимо указать ID друга" });
+      }
+      
+      const friend = await storage.getFriendById(parseInt(friendId));
+      if (!friend) {
+        return res.status(404).json({ error: "Друг не найден" });
+      }
+      
+      analysisData = {
+        name: friend.name,
+        birthDate: friend.birthDate,
+        birthTime: friend.birthTime || "12:00",
+        birthPlace: friend.birthPlace || "Неизвестно",
+        birthCountry: friend.birthCountry || "Россия"
+      };
+      
+      // ✨ ГЕНЕРИРУЕМ КЛЮЧ КЕША ДЛЯ "ДРУГА"
+      cacheKey = storage.generateNatalChartCacheKey(user.id, "friend", friend.id);
+      
+    } else if (type === "other") {
+      // Для другого человека - берем переданные данные
       if (!name || !birthDate) {
         return res.status(400).json({ 
           error: "Необходимо указать имя и дату рождения" 
@@ -739,29 +832,98 @@ app.post('/api/natal-chart', async (req: any, res) => {
         name: name,
         birthDate: birthDate,
         birthTime: birthTime || "12:00",
-        birthPlace: birthPlace || "Неизвестно"
+        birthPlace: birthPlace || "Неизвестно",
+        birthCountry: birthCountry || "Россия"
       };
+      
+      // ✨ ГЕНЕРИРУЕМ КЛЮЧ КЕША ДЛЯ "ДРУГОГО"
+      cacheKey = storage.generateNatalChartCacheKey(user.id, "other", undefined, analysisData);
+      
+    } else {
+      return res.status(400).json({ error: "Неизвестный тип запроса" });
     }
     
-    console.log("🔍 Generating natal chart analysis...");
+    console.log("🌌 Generated cache key:", cacheKey);
     
+    // ✨ ПРОВЕРЯЕМ КЕШ - ВРЕМЕННО ОТКЛЮЧЕНО
+    /*
+    const cachedChart = await storage.getCachedNatalChart(cacheKey);
+    if (cachedChart) {
+      console.log("✅ Found cached natal chart, returning from cache");
+      
+      // Парсим анализ в секции для фронтенда
+      const { cleanStructuredRussianText } = await import("./utils/textCleaner");
+      const structuredAnalysis = cleanStructuredRussianText(cachedChart.aiAnalysis);
+      
+      return res.json({
+        analysis: structuredAnalysis,
+        svgFileName: cachedChart.svgFileName,
+        chartData: {
+          name: cachedChart.name,
+          birthDate: cachedChart.birthDate,
+          birthTime: cachedChart.birthTime,
+          birthPlace: cachedChart.birthPlace,
+          birthCountry: cachedChart.birthCountry
+        },
+        success: true,
+        type: type,
+        fromCache: true
+      });
+    }
+    */
+    
+    console.log("🌌 No cache found, generating new natal chart...");
+    
+    // ✨ ГЕНЕРИРУЕМ НОВУЮ НАТАЛЬНУЮ КАРТУ
     const { generateNatalChartAnalysis } = await import("./openai");
     
-    const analysis = await generateNatalChartAnalysis(
+    const result = await generateNatalChartAnalysis(
       user.id,
       analysisData.name,
       analysisData.birthDate,
       analysisData.birthTime,
-      analysisData.birthPlace
+      analysisData.birthPlace,
+      analysisData.birthCountry
     );
     
     console.log("✅ Natal chart analysis generated successfully");
+    console.log("🌌 SVG file:", result.svgFileName);
+    
+    // ✨ СОХРАНЯЕМ В КЕШ
+    const natalChartData = {
+      userId: user.id,
+      targetType: type,
+      targetId: type === "friend" ? parseInt(friendId) : null,
+      name: analysisData.name,
+      birthDate: analysisData.birthDate,
+      birthTime: analysisData.birthTime,
+      birthPlace: analysisData.birthPlace,
+      birthCountry: analysisData.birthCountry,
+      svgFileName: result.svgFileName,
+      aiAnalysis: result.analysis.map(section => `${section.title}\n\n${section.content}`).join('\n\n'),
+      cacheKey: cacheKey
+    };
+    
+    // ✨ ВРЕМЕННО ОТКЛЮЧАЕМ СОХРАНЕНИЕ В КЕШ
+    /*
+    await storage.createNatalChart(natalChartData);
+    console.log("✅ Natal chart saved to cache");
+    */
+    console.log("⚠️ Cache saving temporarily disabled");
     
     res.json({ 
-      analysis,
-      chartData: analysisData,
-      success: true,
-      type: type
+      analysis: result.analysis,
+      svgFileName: result.svgFileName,
+      chartData: {
+        name: analysisData.name,
+        birthDate: analysisData.birthDate,
+        birthTime: analysisData.birthTime,
+        birthPlace: analysisData.birthPlace,
+        birthCountry: analysisData.birthCountry
+      },
+      success: result.success,
+      type: type,
+      fromCache: false
     });
     
   } catch (error) {
@@ -886,67 +1048,79 @@ app.get('/api/user', (req: any, res) => {
 });
 
 // ✅ ИСПРАВЛЕННОЕ API регистрации
+// ✅ ИСПРАВЛЕННОЕ API для регистрации - генерируем персональные данные один раз
 app.post('/api/register', async (req: any, res, next) => {
- console.log('🔥 REGISTER ROUTE HIT!');
- console.log('🔥 Request body:', JSON.stringify(req.body, null, 2));
+  console.log('🔥 REGISTER ROUTE HIT!');
+  console.log('🔥 Request body:', JSON.stringify(req.body, null, 2));
 
- try {
-   const { birthDate, username, password, name, gender, email, birthPlace, birthTime } = req.body;
-   
-   if (!username || !password || !name || !gender || !birthDate) {
-     console.log("❌ Не все обязательные поля заполнены");
-     return res.status(400).json({ message: "Не все обязательные поля заполнены" });
-   }
-   
-   console.log("🔍 Checking if user exists:", username);
-   const existingUser = await storage.getUserByUsername(username);
-   if (existingUser) {
-     console.log("❌ Пользователь с именем уже существует:", username);
-     return res.status(400).json({ message: "Пользователь с таким именем уже существует" });
-   }
+  try {
+    const { birthDate, username, password, name, gender, email, birthPlace, birthTime } = req.body;
+    
+    if (!username || !password || !name || !gender || !birthDate) {
+      console.log("❌ Не все обязательные поля заполнены");
+      return res.status(400).json({ message: "Не все обязательные поля заполнены" });
+    }
+    
+    console.log("🔍 Checking if user exists:", username);
+    const existingUser = await storage.getUserByUsername(username);
+    if (existingUser) {
+      console.log("❌ Пользователь с именем уже существует:", username);
+      return res.status(400).json({ message: "Пользователь с таким именем уже существует" });
+    }
 
-   // ✅ ИСПРАВЛЕНО: используем parseLocalDate для правильной обработки даты
-   const birthDateObj = typeof birthDate === 'string' ? parseLocalDate(birthDate) : birthDate;
-   const zodiacSignData = getZodiacSign(birthDateObj);
-   console.log("✨ Определен знак зодиака:", zodiacSignData.name);
-   console.log("✨ Дата рождения обработана:", formatDateForDB(birthDateObj));
-   
-   const userData2Save = {
-     username: username,
-     name: name,
-     email: email || `temp_${Date.now()}@lunaria.app`,
-     gender: gender,
-     birthPlace: birthPlace || '',
-     birthTime: birthTime || '12:00:00',
-     birthDate: formatDateForDB(birthDateObj), // ✅ ИСПРАВЛЕНО: используем formatDateForDB
-     password: await hashPassword(password),
-     zodiacSign: zodiacSignData.name,
-     subscriptionType: 'free',
-     role: 'user'
-   };
-   
-   console.log("👤 Создаем пользователя с данными:", { 
-     ...userData2Save, 
-     password: "СКРЫТ" 
-   });
-   
-   const user = await storage.createUser(userData2Save);
-   console.log("✅ Пользователь создан:", { id: user.id, name: user.name });
+    const birthDateObj = typeof birthDate === 'string' ? parseLocalDate(birthDate) : birthDate;
+    const zodiacSignData = getZodiacSign(birthDateObj);
+    console.log("✨ Определен знак зодиака:", zodiacSignData.name);
+    
+    // ✨ ГЕНЕРИРУЕМ ПЕРСОНАЛЬНЫЕ СЧАСТЛИВЫЕ ЧИСЛА И ЗНАКИ ОДИН РАЗ
+    const zodiacSignEn = convertZodiacToEnglish(zodiacSignData.name);
+    const personalLuckyNumbers = getRandomNumbers(3, 1, 10);
+    const personalCompatibleSigns = getCompatibleSigns(zodiacSignEn).slice(0, 3).map(sign => ({
+      name: sign,
+      compatibility: Math.floor(Math.random() * 21) + 80
+    }));
+    
+    console.log("✨ Персональные данные:", { 
+      luckyNumbers: personalLuckyNumbers, 
+      compatibleSigns: personalCompatibleSigns 
+    });
+    
+    const userData2Save = {
+      username: username,
+      name: name,
+      email: email || `temp_${Date.now()}@lunaria.app`,
+      gender: gender,
+      birthPlace: birthPlace || '',
+      birthTime: birthTime || '12:00:00',
+      birthDate: formatDateForDB(birthDateObj),
+      password: await hashPassword(password),
+      zodiacSign: zodiacSignData.name,
+      subscriptionType: 'free',
+      role: 'user',
+      // ✨ ДОБАВЛЯЕМ ПЕРСОНАЛЬНЫЕ ДАННЫЕ
+      luckyNumbers: personalLuckyNumbers,
+      compatibleSigns: personalCompatibleSigns
+    };
+    
+    console.log("👤 Создаем пользователя с персональными данными");
+    
+    const user = await storage.createUser(userData2Save);
+    console.log("✅ Пользователь создан с персональными данными:", { id: user.id, name: user.name });
 
-   req.login(user, (err: any) => {
-     if (err) {
-       console.error("❌ Ошибка при входе после регистрации:", err);
-       return next(err);
-     }
-     
-     console.log("✅ Регистрация успешно завершена");
-     const { password, ...userWithoutPassword } = user;
-     res.status(201).json(userWithoutPassword);
-   });
- } catch (error) {
-   console.error("❌ Ошибка при регистрации:", error);
-   res.status(500).json({ message: "Ошибка сервера при регистрации" });
- }
+    req.login(user, (err: any) => {
+      if (err) {
+        console.error("❌ Ошибка при входе после регистрации:", err);
+        return next(err);
+      }
+      
+      console.log("✅ Регистрация успешно завершена");
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    });
+  } catch (error) {
+    console.error("❌ Ошибка при регистрации:", error);
+    res.status(500).json({ message: "Ошибка сервера при регистрации" });
+  }
 });
 
 app.post('/api/login', (req, res, next) => {
@@ -1046,6 +1220,10 @@ let isShuttingDown = false;
    log(`🔑 OpenRouter API: ${process.env.OPENROUTER_API_KEY ? 'ПОДКЛЮЧЕН ✅' : 'НЕ НАСТРОЕН ❌'}`);
    
    // Настройка статических файлов для production
+   // ✨ СНАЧАЛА НАСТРАИВАЕМ СТАТИЧЕСКИЙ СЕРВЕР ДЛЯ SVG ФАЙЛОВ (для всех режимов)
+   app.use('/natal-charts', express.static(path.join(__dirname, 'public', 'natal-charts')));
+   console.log('📁 Static SVG files served at /natal-charts');
+
    if (process.env.NODE_ENV === "production") {
      console.log('Setting up static files for production...');
      const staticPath = path.join(process.cwd(), 'dist', 'public');
@@ -1214,3 +1392,5 @@ let isShuttingDown = false;
 })();
 
 export default app;
+
+

@@ -18,9 +18,12 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
-// НОВЫЕ ИМПОРТЫ для оптимизации производительности
-import { usePerformanceMode } from "@hooks/use-performance-mode";
-import { PerformanceIndicator } from "@components/PerformanceIndicator";
+// ИСПРАВЛЕННЫЕ ИМПОРТЫ для оптимизации производительности
+// ИСПРАВЛЕННЫЕ ИМПОРТЫ для оптимизации производительности
+// ИСПРАВЛЕННЫЕ ИМПОРТЫ для оптимизации производительности
+// ВРЕМЕННО ОТКЛЮЧАЕМ
+import { usePerformanceMode } from "../../hooks/use-performance-mode";
+import { PerformanceIndicator } from "../../components/PerformanceIndicator";
 
 import AdminPanelPage from "@/pages/admin/admin-panel-page";
 
@@ -98,40 +101,71 @@ function Router() {
   );
 }
 
-// НОВЫЙ компонент для условных падающих звезд
+// УЛУЧШЕННЫЙ компонент для условных падающих звезд
 function ConditionalFallingStars() {
-  const { shouldReduceAnimations } = usePerformanceMode();
+  const { shouldReduceAnimations, deviceTier } = usePerformanceMode();
   
-  // Не рендерим звезды на мобильных/слабых устройствах
-  if (shouldReduceAnimations) {
+  // Не рендерим звезды на мобильных/слабых устройствах или при редуцированных анимациях
+  if (shouldReduceAnimations || deviceTier === 'low') {
     return null;
   }
 
+  // Показываем меньше звезд на средних устройствах
+  const starCount = deviceTier === 'medium' ? 2 : 3;
+
   return (
     <>
-      <div className="falling-star"></div>
-      <div className="falling-star"></div>
-      <div className="falling-star"></div>
+      {Array.from({ length: starCount }, (_, i) => (
+        <div key={i} className="falling-star"></div>
+      ))}
     </>
   );
 }
 
-function App() {
-  const { shouldReduceAnimations, isMobile, isTelegramWebApp } = usePerformanceMode();
-
+// НОВЫЙ компонент для плавного переключения режимов
+function PerformanceTransition() {
   useEffect(() => {
-    console.log('🚀 Режим производительности:', {
-      shouldReduceAnimations,
-      isMobile,
-      isTelegramWebApp
+    let transitionTimeout: NodeJS.Timeout;
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const target = mutation.target as HTMLElement;
+          const classList = target.classList;
+          
+          // Проверяем изменение режима производительности
+          const hasPerformanceClass = Array.from(classList).some(cls => 
+            cls.startsWith('performance-')
+          );
+          
+          if (hasPerformanceClass) {
+            target.classList.add('performance-switching');
+            
+            clearTimeout(transitionTimeout);
+            transitionTimeout = setTimeout(() => {
+              target.classList.remove('performance-switching');
+            }, 300);
+          }
+        }
+      });
     });
 
-    // Добавляем класс для ультра-производительности на очень слабых устройствах
-    if (isMobile && (navigator as any).deviceMemory && (navigator as any).deviceMemory <= 2) {
-      document.documentElement.classList.add('ultra-performance');
-      console.log('🔥 Включен ультра-режим производительности');
-    }
-  }, [isMobile, shouldReduceAnimations, isTelegramWebApp]);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(transitionTimeout);
+    };
+  }, []);
+
+  return null;
+}
+
+function App() {
+  const { shouldReduceAnimations } = usePerformanceMode();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -140,11 +174,8 @@ function App() {
           <TooltipProvider>
             <Toaster />
             
-            {/* НОВЫЙ индикатор производительности */}
+            {/* Добавляем индикатор производительности */}
             <PerformanceIndicator />
-            
-            {/* ОБНОВЛЕННЫЕ падающие звезды - теперь условные */}
-            <ConditionalFallingStars />
             
             <Router />
           </TooltipProvider>

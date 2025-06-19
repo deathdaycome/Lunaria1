@@ -1,15 +1,23 @@
 import { useEffect, useRef } from "react";
 
-export default function StarBackground() {
+interface StarBackgroundProps {
+  lowPerformance?: boolean;
+  enabled?: boolean; // Можно полностью отключить
+}
+
+export default function StarBackground({ lowPerformance = false, enabled = true }: StarBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    // Create stars inside a container div
+    if (!enabled) return; // Полностью отключаем если нужно
+    
     const createStars = () => {
       if (!containerRef.current) return;
       
       const container = containerRef.current;
-      const starCount = 150; // Увеличили количество звезд
+      
+      // Сильно уменьшаем количество звезд для слабых устройств
+      const starCount = lowPerformance ? 30 : 80; // Было 150
       
       for (let i = 0; i < starCount; i++) {
         const star = document.createElement('div');
@@ -19,48 +27,35 @@ export default function StarBackground() {
         star.style.left = `${Math.random() * 100}%`;
         star.style.top = `${Math.random() * 100}%`;
         
-        // Random size - making some stars larger for visual interest
-        const size = Math.random() < 0.8 
-          ? (Math.random() * 2) + 1  // Regular stars (80%)
-          : (Math.random() * 3) + 2; // Larger stars (20%)
-        
-        // FIXME: временное решение, исправить до релиза
+        // Упрощаем размеры
+        const size = Math.random() * 2 + 1;
         star.style.width = `${size}px`;
         star.style.height = `${size}px`;
         
-        // Add glow to larger stars
-        if (size > 2.5) {
-          star.style.boxShadow = `0 0 ${size}px ${size / 2}px rgba(255, 255, 255, 0.3)`;
-        }
+        // Убираем boxShadow для производительности
+        star.style.opacity = (Math.random() * 0.5 + 0.4).toString();
         
-        // Random opacity - make larger stars brighter
-        const baseOpacity = size > 2.5 ? 0.8 : 0.4;
-        star.style.opacity = (Math.random() * 0.5 + baseOpacity).toString();
-        
-        // Add animations
-        const animationTypes = Math.random();
-        
-        if (animationTypes < 0.6) {
-          // Twinkle animation for 60% of stars
-          const twinkleDuration = (Math.random() * 5) + 3;
-          star.style.animation = `twinkle ${twinkleDuration}s infinite`;
-        } else if (animationTypes < 0.9) {
-          // Slow movement animation for 30% of stars
-          const moveDuration = (Math.random() * 20) + 10;
-          star.style.animation = `move ${moveDuration}s infinite ease-in-out`;
-        } else {
-          // Shooting star effect for 10% of stars
-          const shootingDuration = (Math.random() * 10) + 5;
-          star.style.animation = `shooting ${shootingDuration}s infinite ease-out`;
-          star.style.opacity = "0.7";
-          star.style.width = `${Math.random() * 3 + 2}px`;
-          star.style.height = `${Math.random() * 1.5 + 1}px`;
-          star.style.transform = `rotate(${Math.random() * 45}deg)`;
-          
-          // Trail effect
-          if (Math.random() > 0.5) {
-            star.style.boxShadow = `0 0 4px 1px rgba(177, 151, 252, 0.3)`;
+        // Сильно упрощаем анимации
+        if (lowPerformance) {
+          // Только простое мерцание для слабых устройств
+          if (Math.random() < 0.3) { // Только 30% звезд мерцают
+            const twinkleDuration = (Math.random() * 3) + 2;
+            star.style.animation = `simple-twinkle ${twinkleDuration}s infinite`;
           }
+        } else {
+          // Ограниченные анимации для обычных устройств
+          const animationType = Math.random();
+          
+          if (animationType < 0.4) {
+            // Мерцание для 40% звезд (было 60%)
+            const twinkleDuration = (Math.random() * 4) + 2;
+            star.style.animation = `twinkle ${twinkleDuration}s infinite`;
+          } else if (animationType < 0.6) {
+            // Медленное движение для 20% звезд (было 30%)
+            const moveDuration = (Math.random() * 15) + 10;
+            star.style.animation = `move ${moveDuration}s infinite ease-in-out`;
+          }
+          // Убираем падающие звезды полностью
         }
         
         container.appendChild(star);
@@ -69,13 +64,16 @@ export default function StarBackground() {
 
     createStars();
 
-    // Cleanup function to remove stars when component unmounts
     return () => {
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
     };
-  }, []);
+  }, [lowPerformance, enabled]);
+
+  if (!enabled) {
+    return null;
+  }
 
   return <div ref={containerRef} className="star-container" />;
 }

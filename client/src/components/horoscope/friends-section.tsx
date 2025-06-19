@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -44,6 +44,23 @@ export default function FriendsSection() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // ✅ ИСПРАВЛЕНИЕ: Предотвращаем скролл фона при открытом диалоге
+  useEffect(() => {
+    if (isDialogOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+    
+    // Очищаем эффект при размонтировании
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isDialogOpen]);
 
   const { data: friends, isLoading } = useQuery({
     queryKey: ["/api/friends"],
@@ -137,8 +154,13 @@ export default function FriendsSection() {
     deleteFriendMutation.mutate(friendId);
   };
 
-  // ✅ ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ ДИАЛОГА ДОБАВЛЕНИЯ ДРУГА
-  const handleAddFriendClick = () => {
+  // ✅ ИСПРАВЛЕНИЕ: Улучшенная функция для открытия диалога
+  const handleAddFriendClick = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    console.log('🔍 Opening add friend dialog');
     setIsDialogOpen(true);
   };
 
@@ -146,22 +168,51 @@ export default function FriendsSection() {
     <div className="mb-6">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-lg font-medium">Мои друзья</h3>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        
+        {/* ✅ ИСПРАВЛЕНИЕ: Улучшенный Dialog с правильным позиционированием */}
+        <Dialog 
+          open={isDialogOpen} 
+          onOpenChange={(open) => {
+            console.log('🔍 Dialog state changing to:', open);
+            setIsDialogOpen(open);
+          }}
+        >
           <DialogTrigger asChild>
-            <Button variant="link" className="text-accent text-sm">
+            <Button 
+              variant="link" 
+              className="text-accent text-sm hover:text-accent-hover transition-colors relative z-10"
+              onClick={handleAddFriendClick}
+            >
               Добавить друга
             </Button>
           </DialogTrigger>
+          
+          {/* ✅ ИСПРАВЛЕНИЕ: Правильное позиционирование DialogContent */}
           <DialogContent 
-            className="card border-accent/20 max-w-md"
+            className="card border-accent/20 mx-auto"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 9999,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              width: 'calc(100vw - 40px)',
+              maxWidth: '400px',
+              margin: '0',
+              backgroundColor: 'var(--background)',
+              border: '1px solid var(--border)',
+            }}
             aria-describedby="friend-dialog-description"
           >
             <DialogHeader>
-              <DialogTitle>Добавить друга</DialogTitle>
+              <DialogTitle className="text-white text-xl font-connie">Добавить друга</DialogTitle>
             </DialogHeader>
             <div id="friend-dialog-description" className="sr-only">
               Заполните форму, чтобы добавить нового друга
             </div>
+            
             <Form {...friendForm}>
               <form onSubmit={friendForm.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -169,9 +220,13 @@ export default function FriendsSection() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Имя</FormLabel>
+                      <FormLabel className="text-white font-cormorant">Имя</FormLabel>
                       <FormControl>
-                        <Input placeholder="Имя" {...field} className="bg-card-bg" />
+                        <Input 
+                          placeholder="Имя" 
+                          {...field} 
+                          className="bg-[var(--background-secondary)] border-[var(--border)] text-white placeholder:text-white/50"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -183,7 +238,7 @@ export default function FriendsSection() {
                   name="gender"
                   render={({ field }) => (
                     <FormItem className="mt-1 mb-3">
-                      <FormLabel className="mb-2 block">Пол</FormLabel>
+                      <FormLabel className="mb-2 block text-white font-cormorant">Пол</FormLabel>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -198,7 +253,7 @@ export default function FriendsSection() {
                             />
                             <Label
                               htmlFor="friend-male"
-                              className="flex flex-col items-center justify-center p-3 h-full rounded-lg text-center border-2 border-accent/30 bg-card-bg peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-white peer-data-[state=checked]:border-accent cursor-pointer transition-all hover:bg-primary/20"
+                              className="flex flex-col items-center justify-center p-3 h-full rounded-lg text-center border-2 border-accent/30 bg-[var(--background-secondary)] peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-white peer-data-[state=checked]:border-accent cursor-pointer transition-all hover:bg-primary/20 text-white"
                             >
                               <span className="text-xl mb-1">♂</span>
                               <span className="font-medium">Мужчина</span>
@@ -212,7 +267,7 @@ export default function FriendsSection() {
                             />
                             <Label
                               htmlFor="friend-female"
-                              className="flex flex-col items-center justify-center p-3 h-full rounded-lg text-center border-2 border-accent/30 bg-card-bg peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-white peer-data-[state=checked]:border-accent cursor-pointer transition-all hover:bg-primary/20"
+                              className="flex flex-col items-center justify-center p-3 h-full rounded-lg text-center border-2 border-accent/30 bg-[var(--background-secondary)] peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-white peer-data-[state=checked]:border-accent cursor-pointer transition-all hover:bg-primary/20 text-white"
                             >
                               <span className="text-xl mb-1">♀</span>
                               <span className="font-medium">Женщина</span>
@@ -230,11 +285,12 @@ export default function FriendsSection() {
                   name="birthDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Дата рождения</FormLabel>
+                      <FormLabel className="text-white font-cormorant">Дата рождения</FormLabel>
                       <FormControl>
                         <DatePicker
                           date={field.value}
                           setDate={field.onChange}
+                          className="bg-[var(--background-secondary)] border-[var(--border)]"
                         />
                       </FormControl>
                       <FormMessage />
@@ -247,7 +303,7 @@ export default function FriendsSection() {
                   name="birthTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Время рождения (необязательно)</FormLabel>
+                      <FormLabel className="text-white font-cormorant">Время рождения (необязательно)</FormLabel>
                       <FormControl>
                         <TimePicker
                           value={field.value}
@@ -255,7 +311,7 @@ export default function FriendsSection() {
                             console.log('🔍 TimePicker onChange called with:', date);
                             field.onChange(date);
                           }}
-                          className="bg-card-bg"
+                          className="bg-[var(--background-secondary)] border-[var(--border)]"
                         />
                       </FormControl>
                       <FormMessage />
@@ -268,12 +324,12 @@ export default function FriendsSection() {
                   name="birthPlace"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Место рождения (необязательно)</FormLabel>
+                      <FormLabel className="text-white font-cormorant">Место рождения (необязательно)</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Город, Страна"
                           {...field}
-                          className="bg-card-bg"
+                          className="bg-[var(--background-secondary)] border-[var(--border)] text-white placeholder:text-white/50"
                         />
                       </FormControl>
                     </FormItem>
@@ -282,7 +338,7 @@ export default function FriendsSection() {
 
                 <Button
                   type="submit"
-                  className="w-full py-6 bg-primary hover:bg-accent transition-all rounded-lg"
+                  className="w-full py-6 bg-[var(--primary)] hover:bg-[var(--primary-hover)] transition-all rounded-xl font-connie text-white"
                   disabled={addFriendMutation.isPending}
                 >
                   {addFriendMutation.isPending ? "Добавление..." : "Добавить друга"}
@@ -294,42 +350,56 @@ export default function FriendsSection() {
       </div>
       
       <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar">
-        {/* ✅ ИСПРАВЛЕННАЯ ИКОНКА "+" - ДОБАВЛЕН onClick */}
+        {/* ✅ ИСПРАВЛЕНИЕ: Улучшенная иконка "+" с правильным обработчиком */}
         <div 
-          className="flex-shrink-0 w-16 flex flex-col items-center cursor-pointer"
+          className="flex-shrink-0 w-16 flex flex-col items-center cursor-pointer hover:scale-105 transition-transform active:scale-95"
           onClick={handleAddFriendClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleAddFriendClick();
+            }
+          }}
         >
-          <div className="w-12 h-12 rounded-full bg-primary-light flex items-center justify-center mb-1 hover:bg-primary transition-colors">
+          <div className="w-12 h-12 rounded-full bg-primary-light flex items-center justify-center mb-1 hover:bg-primary transition-colors shadow-md">
             <PersonAddAlt className="text-white" />
           </div>
-          <span className="text-xs text-center">Добавить</span>
+          <span className="text-xs text-center text-white">Добавить</span>
         </div>
         
         {!isLoading && Array.isArray(friends) && friends.map((friend: Friend, index: number) => (
           <div key={friend.id || index} className="flex-shrink-0 w-16 flex flex-col items-center relative group">
-            {/* Кнопка удаления - появляется при наведении */}
+            {/* ✅ ИСПРАВЛЕНИЕ: Улучшенная кнопка удаления с правильным z-index */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <button
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md"
                   disabled={deleteFriendMutation.isPending}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <DeleteOutline className="text-white text-xs" style={{ fontSize: '12px' }} />
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent 
+                className="bg-[var(--background)] border-[var(--border)]"
+                style={{ zIndex: 10000 }}
+              >
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Удалить друга?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Вы уверены, что хотите удалить <strong>{friend.name}</strong> из списка друзей? 
+                  <AlertDialogTitle className="text-white">Удалить друга?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-white/70">
+                    Вы уверены, что хотите удалить <strong className="text-white">{friend.name}</strong> из списка друзей? 
                     Это действие нельзя отменить.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Отмена</AlertDialogCancel>
+                  <AlertDialogCancel className="bg-[var(--background-secondary)] border-[var(--border)] text-white hover:bg-[var(--background-tertiary)]">
+                    Отмена
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => handleDeleteFriend(friend.id)}
-                    className="bg-red-500 hover:bg-red-600"
+                    className="bg-red-500 hover:bg-red-600 text-white"
                   >
                     Удалить
                   </AlertDialogAction>
@@ -337,14 +407,14 @@ export default function FriendsSection() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <div className="w-12 h-12 rounded-full bg-card-bg-light flex items-center justify-center mb-1">
+            <div className="w-12 h-12 rounded-full bg-card-bg-light flex items-center justify-center mb-1 shadow-sm">
               {friend.gender === "male" ? (
                 <Person className="text-blue-300" />
               ) : (
                 <Person className="text-pink-300" />
               )}
             </div>
-            <span className="text-xs text-center">{friend.name}</span>
+            <span className="text-xs text-center text-white truncate w-full">{friend.name}</span>
           </div>
         ))}
         
@@ -355,6 +425,27 @@ export default function FriendsSection() {
           </div>
         ))}
       </div>
+
+      {/* ✅ ИСПРАВЛЕНИЕ: Добавляем стили для оверлея диалога */}
+      <style jsx global>{`
+        [data-radix-popper-content-wrapper] {
+          z-index: 9999 !important;
+        }
+        
+        .dialog-overlay {
+          z-index: 9998 !important;
+          background-color: rgba(0, 0, 0, 0.8) !important;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }

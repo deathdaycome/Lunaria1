@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { formatDateForDB } from "../../../dateUtils";
 
-// Упрощенная схема регистрации без username и password
+// Упрощенная схема регистрации без username и password + новое поле birthCountry
 const registerSchema = z.object({
   name: z.string().min(1, "Введите ваше имя"),
   gender: z.enum(["male", "female"], {
@@ -30,6 +30,7 @@ const registerSchema = z.object({
     required_error: "Введите дату рождения",
   }),
   birthTime: z.date().optional(),
+  birthCountry: z.string().min(1, "Введите страну рождения"), // ✨ НОВОЕ ПОЛЕ
   birthPlace: z.string().optional(),
 });
 
@@ -58,6 +59,7 @@ export default function AuthPage() {
     defaultValues: {
       name: "",
       gender: "male",
+      birthCountry: "Россия", // ✨ ЗНАЧЕНИЕ ПО УМОЛЧАНИЮ
       birthPlace: "",
     },
   });
@@ -87,17 +89,18 @@ export default function AuthPage() {
 
       // Регистрируем пользователя через мутацию
       const formData = {
-      username,
-      password,
-      name: data.name,
-      gender: data.gender,
-      birthDate: formatDateForDB(data.birthDate), // ← ИСПРАВЛЕНО!
-      birthTime: data.birthTime ? 
-        data.birthTime.toTimeString().split(' ')[0] : 
-        null,
-      birthPlace: data.birthPlace || "",
-      zodiacSign: getZodiacSign(data.birthDate).name
-    };
+        username,
+        password,
+        name: data.name,
+        gender: data.gender,
+        birthDate: formatDateForDB(data.birthDate),
+        birthTime: data.birthTime ? 
+          data.birthTime.toTimeString().split(' ')[0] : 
+          null,
+        birthCountry: data.birthCountry, // ✨ НОВОЕ ПОЛЕ
+        birthPlace: data.birthPlace || "",
+        zodiacSign: getZodiacSign(data.birthDate).name
+      };
       
       console.log("Регистрируем пользователя:", formData);
       console.log("registerMutation:", registerMutation);
@@ -303,15 +306,34 @@ export default function AuthPage() {
                 )}
               />
 
+              {/* ✨ НОВОЕ ПОЛЕ - Страна рождения */}
+              <FormField
+                control={form.control}
+                name="birthCountry"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-cormorant text-white text-base font-medium">Страна рождения</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Страна рождения"
+                        {...field}
+                        className="border-[var(--border)] bg-[var(--background-secondary)] bg-opacity-50 text-[var(--foreground)] placeholder:text-[var(--foreground-muted)]"
+                      />
+                    </FormControl>
+                    <FormMessage className="font-cormorant" />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="birthPlace"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-cormorant text-white text-base font-medium">Место рождения (необязательно)</FormLabel>
+                    <FormLabel className="font-cormorant text-white text-base font-medium">Город рождения (необязательно)</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Город, Страна"
+                        placeholder="Город рождения"
                         {...field}
                         className="border-[var(--border)] bg-[var(--background-secondary)] bg-opacity-50 text-[var(--foreground)] placeholder:text-[var(--foreground-muted)]"
                       />

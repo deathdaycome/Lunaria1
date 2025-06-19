@@ -1,10 +1,11 @@
-import { users, type User, type InsertUser, friends, type Friend, type InsertFriend, apiUsage, type ApiUsage, type InsertApiUsage, horoscopes, type Horoscope, type InsertHoroscope } from "../shared/schema";
+import { users, type User, type InsertUser, friends, type Friend, type InsertFriend, apiUsage, type ApiUsage, type InsertApiUsage, horoscopes, type Horoscope, type InsertHoroscope, natalCharts, type NatalChart, type InsertNatalChart } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, lt, gte, asc } from "drizzle-orm";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { startOfDay, subDays, startOfMonth, format } from "date-fns";
 import { ru } from "date-fns/locale";
+import crypto from "crypto";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -29,6 +30,11 @@ export interface IStorage {
   createHoroscope(horoscope: InsertHoroscope): Promise<Horoscope>;
   canRefreshHoroscope(userId: number, period: string): Promise<boolean>;
   deactivateHoroscopes(userId: number, period: string, category: string): Promise<void>;
+  
+  // ✨ НОВЫЕ МЕТОДЫ для натальных карт
+  getCachedNatalChart(cacheKey: string): Promise<NatalChart | undefined>;
+  createNatalChart(natalChart: InsertNatalChart): Promise<NatalChart>;
+  generateNatalChartCacheKey(userId: number, targetType: string, targetId?: number, inputData?: any): string;
   
   sessionStore: any; // Тип для хранилища сессий
 }
@@ -307,6 +313,77 @@ export class DatabaseStorage implements IStorage {
           eq(horoscopes.category, category)
         )
       );
+  }
+
+  // ✨ НОВЫЕ МЕТОДЫ для натальных карт
+
+  /**
+   * Получить кешированную натальную карту по ключу
+   */
+  async getCachedNatalChart(cacheKey: string): Promise<NatalChart | undefined> {
+    const [chart] = await db
+      .select()
+      .from(natalCharts)
+      .where(eq(natalCharts.cacheKey, cacheKey))
+      .orderBy(desc(natalCharts.createdAt))
+      .limit(1);
+    
+    return chart;
+  }
+
+  /**
+   * Создать новую запись натальной карты
+   */
+  async createNatalChart(natalChart: InsertNatalChart): Promise<NatalChart> {
+    const [newChart] = await db.insert(natalCharts).values(natalChart).returning();
+    return newChart;
+  }
+
+  /**
+   * Генерировать ключ кеша для натальной карты
+   * Логика кеширования согласно ТЗ:
+   * - Для себя: кеш по user_id (один результат навсегда)
+   * - Для друга: кеш по user_id + friend_id 
+   * - Для другого: кеш по хешу входных данных
+   */
+  generateNatalChartCacheKey(userId: number, targetType: string, targetId?: number, inputData?: any): string {
+    let keyData: string;
+    
+    switch (targetType) {
+      case "self":
+        // Для себя - только user_id
+        keyData = `self_${userId}`;
+        break;
+        
+      case "friend":
+        // Для друга - user_id + friend_id
+        if (!targetId) {
+          throw new Error("targetId is required for friend type");
+        }
+        keyData = `friend_${userId}_${targetId}`;
+        break;
+        
+      case "other":
+        // Для другого человека - хеш входных данных
+        if (!inputData) {
+          throw new Error("inputData is required for other type");
+        }
+        const dataToHash = JSON.stringify({
+          name: inputData.name,
+          birthDate: inputData.birthDate,
+          birthTime: inputData.birthTime,
+          birthPlace: inputData.birthPlace,
+          birthCountry: inputData.birthCountry
+        });
+        const hash = crypto.createHash('md5').update(dataToHash).digest('hex');
+        keyData = `other_${userId}_${hash}`;
+        break;
+        
+      default:
+        throw new Error(`Unknown target type: ${targetType}`);
+    }
+    
+    return keyData;
   }
 }
 

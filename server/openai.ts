@@ -3,6 +3,10 @@ import { InsertApiUsage } from "../shared/schema";
 import { storage } from "./storage";
 // ✨ ДОБАВЛЯЕМ ИМПОРТ ФУНКЦИЙ ОЧИСТКИ ТЕКСТА
 import { cleanMarkdownText, cleanRussianText, cleanStructuredRussianText } from "./utils/textCleaner";
+// ✨ ДОБАВЛЯЕМ ИМПОРТ ДЛЯ РАБОТЫ С PYTHON
+import { spawn } from "child_process";
+import path from "path";
+import fs from "fs/promises";
 
 // OpenRouter клиент с использованием GPT-4o-mini
 const openai = new OpenAI({
@@ -65,13 +69,17 @@ function getCurrentDateInfo() {
 }
 
 // ✨ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ДАТЫ ПЕРИОДА
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ДАТЫ ПЕРИОДА
 function getPeriodDateInfo(period: string) {
   const currentDate = getCurrentDateInfo();
   const now = currentDate.fullDate;
   
   switch (period) {
     case "today":
-      return `на сегодня, ${currentDate.formattedDate}`;
+      return {
+        periodText: `на сегодня, ${currentDate.formattedDate}`,
+        periodDescription: "дневной гороскоп"
+      };
       
     case "week":
       // Получаем начало и конец недели
@@ -88,19 +96,125 @@ function getPeriodDateInfo(period: string) {
         'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][endOfWeek.getMonth()];
       
       if (startOfWeek.getMonth() === endOfWeek.getMonth()) {
-        return `на неделю с ${startDay} по ${endDay} ${startMonth} ${startOfWeek.getFullYear()} года`;
+        return {
+          periodText: `на неделю с ${startDay} по ${endDay} ${startMonth} ${startOfWeek.getFullYear()} года`,
+          periodDescription: "недельный гороскоп"
+        };
       } else {
-        return `на неделю с ${startDay} ${startMonth} по ${endDay} ${endMonth} ${startOfWeek.getFullYear()} года`;
+        return {
+          periodText: `на неделю с ${startDay} ${startMonth} по ${endDay} ${endMonth} ${startOfWeek.getFullYear()} года`,
+          periodDescription: "недельный гороскоп"
+        };
       }
       
     case "month":
       const monthName = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
         'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][now.getMonth()];
-      return `на ${monthName} ${now.getFullYear()} года`;
+      const fullMonthName = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+        'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'][now.getMonth()];
+      return {
+        periodText: `на ${fullMonthName} ${now.getFullYear()} года`,
+        periodDescription: "месячный гороскоп"
+      };
       
     default:
-      return `на ${currentDate.formattedDate}`;
+      return {
+        periodText: `на ${currentDate.formattedDate}`,
+        periodDescription: "дневной гороскоп"
+      };
   }
+}
+
+export async function generateHoroscope(userId: number, zodiacSign: string, period: string, category: string): Promise<string> {
+ try {
+   console.log(`🔮 Generating horoscope for ${zodiacSign} (${period}, ${category})`);
+   
+   // Получаем данные пользователя для персонализации
+   const user = await getUserData(userId);
+   const userName = user?.name || "Дорогой друг";
+   const birthDate = user?.birthDate || "неизвестна";
+   
+   // ✅ ПОЛУЧАЕМ АКТУАЛЬНУЮ ДАТУ С ПРАВИЛЬНЫМ ОПИСАНИЕМ ПЕРИОДА
+   const currentDate = getCurrentDateInfo();
+   const periodInfo = getPeriodDateInfo(period);
+   
+   // Выбираем случайный тип промпта согласно ТЗ
+   let promptType: string;
+   if (period === "today") {
+     // Для дневного гороскопа - случайный выбор между 3 вариантами
+     const types = ["negative", "neutral", "positive"];
+     promptType = types[Math.floor(Math.random() * types.length)];
+   } else {
+     // Для недельного и месячного - только нейтральный и позитивный
+     const types = ["neutral", "positive"];
+     promptType = types[Math.floor(Math.random() * types.length)];
+   }
+   
+   console.log(`🎯 Selected prompt type: ${promptType} for period: ${period}`);
+   console.log(`📅 Period info:`, periodInfo);
+   
+   // ✅ ИСПРАВЛЕННЫЕ ПРОМПТЫ С ПРАВИЛЬНЫМ УКАЗАНИЕМ ПЕРИОДА
+   let prompt: string = "";
+   
+   switch (promptType) {
+     case "negative":
+       prompt = `Ты профессиональный астролог. Напиши подробный ${periodInfo.periodDescription} ${periodInfo.periodText} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его немного негативным, но дай надежду. Учти специфику периода: ${period === "today" ? "для дневного гороскопа - конкретные советы на день" : period === "week" ? "для недельного гороскопа - тенденции недели" : "для месячного гороскопа - общие направления месяца"}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
+       break;
+     case "neutral":
+       prompt = `Ты профессиональный астролог. Напиши подробный ${periodInfo.periodDescription} ${periodInfo.periodText} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его сбалансированным с практическими советами. Учти специфику периода: ${period === "today" ? "для дневного гороскопа - конкретные действия" : period === "week" ? "для недельного гороскопа - планирование недели" : "для месячного гороскопа - стратегические цели"}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
+       break;
+     case "positive":
+       prompt = `Ты профессиональный астролог. Напиши подробный ${periodInfo.periodDescription} ${periodInfo.periodText} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его позитивным с предупреждениями о возможных сложностях. Учти специфику периода: ${period === "today" ? "для дневного гороскопа - вдохновение на день" : period === "week" ? "для недельного гороскопа - перспективы недели" : "для месячного гороскопа - долгосрочные возможности"}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
+       break;
+     default:
+       prompt = `Ты профессиональный астролог. Напиши подробный ${periodInfo.periodDescription} ${periodInfo.periodText} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его сбалансированным и полезным. Учти специфику периода: ${period === "today" ? "для дневного гороскопа - конкретные советы" : period === "week" ? "для недельного гороскопа - планирование" : "для месячного гороскопа - стратегические цели"}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
+   }
+
+   const response = await openai.chat.completions.create({
+     model: "openai/gpt-4o-mini",
+     messages: [{ role: "user", content: prompt }],
+     max_tokens: period === "today" ? 2000 : period === "week" ? 3000 : 4000, // ✅ Больше токенов для длинных периодов
+     temperature: 0.8,
+   });
+
+   const rawContent = response.choices[0].message.content || "Не удалось создать гороскоп. Пожалуйста, попробуйте позже.";
+   
+   // ✨ ПРИМЕНЯЕМ ОЧИСТКУ ТЕКСТА ОТ MARKDOWN-СИМВОЛОВ
+   const cleanedContent = cleanRussianText(rawContent);
+   
+   console.log(`✅ Horoscope generated successfully for ${zodiacSign} (${promptType}) - ${periodInfo.periodDescription}`);
+   console.log(`🧹 Text cleaned from markdown symbols`);
+   
+   // Track API usage
+   try {
+     await trackApiUsage(
+       userId,
+       `horoscope/${period}/${category}/${promptType}`,
+       prompt,
+       cleanedContent,
+       response.usage?.prompt_tokens || prompt.length,
+       response.usage?.completion_tokens || cleanedContent.length
+     );
+   } catch (trackingError) {
+     console.log('⚠️ API usage tracking failed (non-critical):', (trackingError as Error).message);
+   }
+   
+   return cleanedContent;
+ } catch (error: any) {
+   console.error("❌ Error generating horoscope:", error);
+   
+   if (error.status === 429) {
+     throw new Error("Слишком много запросов. Попробуйте позже.");
+   } else if (error.status === 401 || error.status === 403) {
+     throw new Error("Ошибка авторизации API.");
+   } else if (error.status >= 500) {
+     throw new Error("Временные проблемы с сервисом. Попробуйте позже.");
+   } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+     throw new Error("Проблемы с подключением к сервису.");
+   }
+   
+   throw new Error("Не удалось создать гороскоп. Пожалуйста, попробуйте позже.");
+ }
 }
 
 // =====================================================
@@ -118,97 +232,7 @@ async function getUserData(userId: number) {
   }
 }
 
-// ✨ ИСПРАВЛЕННАЯ ФУНКЦИЯ ГЕНЕРАЦИИ ГОРОСКОПА С АКТУАЛЬНОЙ ДАТОЙ И ОЧИСТКОЙ ТЕКСТА
-export async function generateHoroscope(userId: number, zodiacSign: string, period: string, category: string): Promise<string> {
-  try {
-    console.log(`🔮 Generating horoscope for ${zodiacSign} (${period}, ${category})`);
-    
-    // Получаем данные пользователя для персонализации
-    const user = await getUserData(userId);
-    const userName = user?.name || "Дорогой друг";
-    const birthDate = user?.birthDate || "неизвестна";
-    
-    // ✨ ПОЛУЧАЕМ АКТУАЛЬНУЮ ДАТУ
-    const currentDate = getCurrentDateInfo();
-    const periodDateInfo = getPeriodDateInfo(period);
-    
-    // Выбираем случайный тип промпта согласно ТЗ
-    let promptType: string;
-    if (period === "today") {
-      // Для дневного гороскопа - случайный выбор между 3 вариантами
-      const types = ["negative", "neutral", "positive"];
-      promptType = types[Math.floor(Math.random() * types.length)];
-    } else {
-      // Для недельного и месячного - только нейтральный и позитивный
-      const types = ["neutral", "positive"];
-      promptType = types[Math.floor(Math.random() * types.length)];
-    }
-    
-    console.log(`🎯 Selected prompt type: ${promptType} for period: ${period}`);
-    console.log(`📅 Current date: ${currentDate.formattedDate}`);
-    
-    let prompt: string;
-    
-    switch (promptType) {
-      case "negative":
-        prompt = `Ты профессиональный астролог. Сегодня ${currentDate.formattedDate}. Напиши короткий гороскоп ${periodDateInfo} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его немного негативным, но дай надежду. ОБЯЗАТЕЛЬНО укажи в начале текста актуальную дату: ${currentDate.formattedDate}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
-        break;
-      case "neutral":
-        prompt = `Ты профессиональный астролог. Сегодня ${currentDate.formattedDate}. Напиши короткий гороскоп ${periodDateInfo} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его немного нейтральным, но добавь оптимизма. ОБЯЗАТЕЛЬНО укажи в начале текста актуальную дату: ${currentDate.formattedDate}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
-        break;
-      case "positive":
-        prompt = `Ты профессиональный астролог. Сегодня ${currentDate.formattedDate}. Напиши короткий гороскоп ${periodDateInfo} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его немного позитивным, но добавь опасений. ОБЯЗАТЕЛЬНО укажи в начале текста актуальную дату: ${currentDate.formattedDate}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
-        break;
-      default:
-        prompt = `Ты профессиональный астролог. Сегодня ${currentDate.formattedDate}. Напиши короткий гороскоп ${periodDateInfo} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его немного нейтральным, но добавь оптимизма. ОБЯЗАТЕЛЬНО укажи в начале текста актуальную дату: ${currentDate.formattedDate}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
-    }
 
-    const response = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 2000,
-      temperature: 0.8,
-    });
-
-    const rawContent = response.choices[0].message.content || "Не удалось создать гороскоп. Пожалуйста, попробуйте позже.";
-    
-    // ✨ ПРИМЕНЯЕМ ОЧИСТКУ ТЕКСТА ОТ MARKDOWN-СИМВОЛОВ
-    const cleanedContent = cleanRussianText(rawContent);
-    
-    console.log(`✅ Horoscope generated successfully for ${zodiacSign} (${promptType}) with date: ${currentDate.formattedDate}`);
-    console.log(`🧹 Text cleaned from markdown symbols`);
-    
-    // Track API usage
-    try {
-      await trackApiUsage(
-        userId,
-        `horoscope/${period}/${category}/${promptType}`,
-        prompt,
-        cleanedContent,
-        response.usage?.prompt_tokens || prompt.length,
-        response.usage?.completion_tokens || cleanedContent.length
-      );
-    } catch (trackingError) {
-      console.log('⚠️ API usage tracking failed (non-critical):', (trackingError as Error).message);
-    }
-    
-    return cleanedContent;
-  } catch (error: any) {
-    console.error("❌ Error generating horoscope:", error);
-    
-    if (error.status === 429) {
-      throw new Error("Слишком много запросов. Попробуйте позже.");
-    } else if (error.status === 401 || error.status === 403) {
-      throw new Error("Ошибка авторизации API.");
-    } else if (error.status >= 500) {
-      throw new Error("Временные проблемы с сервисом. Попробуйте позже.");
-    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      throw new Error("Проблемы с подключением к сервису.");
-    }
-    
-    throw new Error("Не удалось создать гороскоп. Пожалуйста, попробуйте позже.");
-  }
-}
 
 // =====================================================
 // СЧАСТЛИВЫЕ ЧИСЛА (СОГЛАСНО ТЗ)
@@ -683,121 +707,236 @@ const MAJOR_ARCANA = [
  "Луна", "Солнце", "Суд", "Мир"
 ];
 
-// =====================================================
-// РАСКЛАД ТАРО (СОГЛАСНО ТЗ)
-// =====================================================
-
-export async function generateTarotReading(
- userId: number, 
- question: string, 
- cardCount: number, 
- category: string, 
- selectedCards?: string[]
-): Promise<Array<{title: string, content: string}>> {
- try {
-   console.log(`🔮 Generating tarot reading: ${cardCount} cards, category: ${category}`);
-   
-   const user = await getUserData(userId);
-   const userName = user?.name || "Друг";
-   const userGender = user?.gender || "неизвестен";
-   const birthDate = user?.birthDate || "неизвестна";
-   
-   // Получаем случайный пресет для категории
-   const categoryPresets = TAROT_PRESETS[category] || TAROT_PRESETS["love"];
-   const randomPreset = categoryPresets[Math.floor(Math.random() * categoryPresets.length)];
-   
-   // Выбираем пресеты в зависимости от количества карт
-   const presets = cardCount === 5 ? randomPreset.cards5 : randomPreset.cards3;
-   
-   // Генерируем случайные карты без повторов
-   const shuffledCards = [...MAJOR_ARCANA].sort(() => Math.random() - 0.5);
-   const drawnCards = shuffledCards.slice(0, cardCount);
-   
-   console.log(`🎴 Selected preset: ${randomPreset.name}`);
-   console.log(`🎴 Drawn cards: ${drawnCards.join(', ')}`);
-   
-   // Формируем строку с картами и их значениями
-   let cardsString = "";
-   for (let i = 0; i < cardCount; i++) {
-     cardsString += `карта ${i + 1} обозначает «${presets[i]}» - это карта ${drawnCards[i]}`;
-     if (i < cardCount - 1) cardsString += ", ";
-   }
-   
-   // Промпт согласно ТЗ с очисткой от markdown
-   const prompt = cardCount === 3 
-     ? `Представь, что ты опытный таролог с глубоким пониманием символизма и тонкостей карт Таро. Ты помогаешь людям обретать внутреннюю гармонию и находить ответы на важные вопросы своей жизни. Прежде чем начать, создавай спокойную и доверительную атмосферу, чтобы пользователь мог сосредоточиться на своем запросе. Руководи его выбором карт и делись их интерпретациями, которые могут пролить свет на его текущую жизненную ситуацию.
-
-Человека, который к тебе обратился, зовут ${userName}, ${userGender}, дата рождения ${birthDate}. Тема расклада -- ${category}.
-
-Проблема, которую ${userName} хочет решить: «${question}».
-
-Выпали следующие карты: ${cardsString}. Проанализируй карты в том же порядке, в котором они и написаны. Дай подробный ответ на описанную проблему и проведи полный анализ вытянутых карт. Дай рекомендации, на что нужно обратить внимание и чего стоит избегать. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом.`
-     
-     : `Представь, что ты опытный таролог с глубоким пониманием символизма и тонкостей карт Таро. Ты помогаешь людям обретать внутреннюю гармонию и находить ответы на важные вопросы своей жизни. Прежде чем начать, создавай спокойную и доверительную атмосферу, чтобы пользователь мог сосредоточиться на своем запросе. Руководи его выбором карт и делись их интерпретациями, которые могут пролить свет на его текущую жизненную ситуацию.
-
-Человека, который к тебе обратился, зовут ${userName}, ${userGender}, дата рождения ${birthDate}. Тема расклада -- ${category}.
-
-Проблема, которую ${userName} хочет решить: «${question}».
-
-Выпали следующие карты: ${cardsString}. Проанализируй карты в том же порядке, в котором они и написаны. Дай подробный ответ на описанную проблему и проведи полный анализ вытянутых карт. Дай рекомендации, на что нужно обратить внимание и чего стоит избегать. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом.`;
-
-   const response = await openai.chat.completions.create({
-     model: "openai/gpt-4o-mini",
-     messages: [{ role: "user", content: prompt }],
-     max_tokens: 3000,
-     temperature: 0.8,
-   });
-
-   const rawContent = response.choices[0].message.content || "Не удалось создать чтение карт. Пожалуйста, попробуйте позже.";
-   
-   // ✨ СТРУКТУРИРУЕМ ТЕКСТ В СЕКЦИИ
-   const structuredSections = cleanStructuredRussianText(rawContent);
-   
-   console.log(`✅ Tarot reading generated successfully`);
-   console.log(`🧹 Text structured into ${structuredSections.length} sections`);
-   
-   // Track API usage
-   await trackApiUsage(
-     userId,
-     `tarot/${cardCount}/${category}`,
-     prompt,
-     rawContent,
-     response.usage?.prompt_tokens || prompt.length,
-     response.usage?.completion_tokens || rawContent.length
-   );
-   
-   return structuredSections;
- } catch (error: any) {
-   console.error("❌ Error generating tarot reading:", error);
-   
-   if (error.status === 429) {
-     throw new Error("Слишком много запросов. Попробуйте позже.");
-   } else if (error.status === 401) {
-     throw new Error("Ошибка авторизации API.");
-   } else if (error.status >= 500) {
-     throw new Error("Временные проблемы с сервисом. Попробуйте позже.");
-   }
-   
-   throw new Error("Не удалось создать чтение карт. Пожалуйста, попробуйте позже.");
- }
+/**
+ * Функция для работы с Python скриптом натальной карты
+ * ИСПРАВЛЕННАЯ ВЕРСИЯ с поддержкой UTF-8 кодировки
+ */
+async function callPythonNatalChart(inputData: any): Promise<{ svg_name?: string; ai_prompt?: string; error?: string; success: boolean }> {
+  return new Promise((resolve, reject) => {
+    const pythonScript = path.join(process.cwd(), 'server', 'utils', 'natal-chart-calculator-NEW.py');
+    
+    console.log(`🐍 Calling Python script: ${pythonScript}`);
+    console.log(`🐍 Input data:`, inputData);
+    
+    // 🔥 ИСПРАВЛЕНИЕ: Добавляем правильную среду для UTF-8 кодировки
+    const pythonProcess = spawn('python', [pythonScript], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        // Принудительно устанавливаем UTF-8 для Python
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1',
+        // Для Windows дополнительно
+        PYTHONLEGACYWINDOWSSTDIO: '0',
+        // Устанавливаем локаль
+        LC_ALL: 'en_US.UTF-8',
+        LANG: 'en_US.UTF-8'
+      }
+    });
+    
+    let stdout = '';
+    let stderr = '';
+    
+    // 🔥 ИСПРАВЛЕНИЕ: Явно устанавливаем кодировку для потоков
+    pythonProcess.stdout.setEncoding('utf8');
+    pythonProcess.stderr.setEncoding('utf8');
+    pythonProcess.stdin.setDefaultEncoding('utf8');
+    
+    // Обработчики данных
+    pythonProcess.stdout.on('data', (data) => {
+      const chunk = data.toString('utf8');
+      stdout += chunk;
+      console.log(`🐍 Python stdout chunk: ${chunk.substring(0, 200)}...`);
+    });
+    
+    pythonProcess.stderr.on('data', (data) => {
+      const chunk = data.toString('utf8');
+      stderr += chunk;
+      console.log(`🐍 Python stderr: ${chunk}`);
+    });
+    
+    // Обработчик завершения процесса
+    pythonProcess.on('close', (code) => {
+      console.log(`🐍 Python process exited with code: ${code}`);
+      
+      if (stderr) {
+        console.log(`🐍 Python stderr output: ${stderr}`);
+      }
+      
+      if (code !== 0) {
+        console.error(`🐍 Python process failed with code ${code}`);
+        console.error(`🐍 Full stderr: ${stderr}`);
+        resolve({
+          error: `Python script failed with code ${code}: ${stderr}`,
+          success: false
+        });
+        return;
+      }
+      
+      try {
+        // 🔥 ИСПРАВЛЕНИЕ: Очищаем вывод от лишних символов перед парсингом
+        const cleanedStdout = stdout.trim();
+        console.log(`🐍 Raw Python output length: ${cleanedStdout.length}`);
+        console.log(`🐍 First 500 chars: ${cleanedStdout.substring(0, 500)}`);
+        
+        if (!cleanedStdout) {
+          console.error(`🐍 Empty output from Python script`);
+          resolve({
+            error: `Empty output from Python script`,
+            success: false
+          });
+          return;
+        }
+        
+        const result = JSON.parse(cleanedStdout);
+        console.log(`🐍 Python result parsed successfully:`, result);
+        resolve(result);
+      } catch (parseError) {
+        console.error(`🐍 Failed to parse Python output: ${parseError}`);
+        console.error(`🐍 Raw stdout: "${stdout}"`);
+        console.error(`🐍 Raw stderr: "${stderr}"`);
+        resolve({
+          error: `Failed to parse Python output: ${parseError}. Raw output: ${stdout.substring(0, 200)}...`,
+          success: false
+        });
+      }
+    });
+    
+    // Обработчик ошибок процесса
+    pythonProcess.on('error', (error) => {
+      console.error(`🐍 Python process error: ${error}`);
+      resolve({
+        error: `Failed to start Python process: ${error.message}`,
+        success: false
+      });
+    });
+    
+    // 🔥 ИСПРАВЛЕНИЕ: Отправляем данные с правильной кодировкой
+    try {
+      const inputJson = JSON.stringify(inputData, null, 2);
+      console.log(`🐍 Sending JSON to Python (length: ${inputJson.length}):`, inputJson);
+      
+      // Записываем данные в UTF-8 кодировке
+      pythonProcess.stdin.write(inputJson, 'utf8', (writeError?: Error | null) => {
+        if (writeError) {
+          console.error(`🐍 Error writing to Python stdin: ${writeError}`);
+        } else {
+          console.log(`🐍 Data successfully written to Python stdin`);
+        }
+      });
+      
+      pythonProcess.stdin.end();
+      console.log(`🐍 Python stdin closed`);
+    } catch (writeError) {
+      console.error(`🐍 Error preparing data for Python: ${writeError}`);
+      resolve({
+        error: `Error preparing data for Python: ${writeError instanceof Error ? writeError.message : String(writeError)}`,
+        success: false
+      });
+    }
+  });
+}
+/**
+ * Конвертация кода страны в код для библиотеки
+ */
+function getCountryCode(birthCountry?: string): string {
+  const countryMap: Record<string, string> = {
+    'Россия': 'RU',
+    'США': 'US', 
+    'Германия': 'DE',
+    'Франция': 'FR',
+    'Италия': 'IT',
+    'Испания': 'ES',
+    'Великобритания': 'GB',
+    'Канада': 'CA',
+    'Австралия': 'AU',
+    'Япония': 'JP',
+    'Китай': 'CN',
+    'Индия': 'IN',
+    'Бразилия': 'BR',
+    'Мексика': 'MX',
+    'Аргентина': 'AR',
+    'Турция': 'TR',
+    'Южная Корея': 'KR',
+    'Польша': 'PL',
+    'Нидерланды': 'NL',
+    'Швеция': 'SE',
+    'Норвегия': 'NO',
+    'Дания': 'DK',
+    'Финляндия': 'FI',
+    'Чехия': 'CZ',
+    'Венгрия': 'HU',
+    'Португалия': 'PT',
+    'Греция': 'GR',
+    'Швейцария': 'CH',
+    'Австрия': 'AT',
+    'Бельгия': 'BE',
+    'Украина': 'UA',
+    'Беларусь': 'BY',
+    'Казахстан': 'KZ'
+  };
+  
+  return countryMap[birthCountry || 'Россия'] || 'RU';
 }
 
-// =====================================================
-// НАТАЛЬНАЯ КАРТА (СОГЛАСНО ТЗ)
-// =====================================================
-
+/**
+ * Главная функция генерации натальной карты
+ */
+// ✅ ДОЛЖНО БЫТЬ:
 export async function generateNatalChartAnalysis(
-  userId: number, 
-  name: string, 
-  birthDate: string, 
-  birthTime?: string, 
-  birthPlace?: string
-): Promise<Array<{title: string, content: string}>> {
+  userId: number,
+  name: string,
+  birthDate: string,
+  birthTime?: string,
+  birthPlace?: string,
+  birthCountry?: string
+): Promise<{
+  svgFileName?: string;
+  analysis: Array<{title: string, content: string}>;
+  success: boolean;
+}> {
   try {
-    console.log(`🔮 Generating natal chart analysis for ${name}`);
+    console.log(`🌌 Generating natal chart for ${name}`);
     
-    // Промпт для натальной карты (можно настроить более подробно)
-    const prompt = `Ты профессиональный астролог. Создай подробный анализ натальной карты для человека с именем ${name}, родившегося ${birthDate}${birthTime ? ` в ${birthTime}` : ""}${birthPlace ? ` в городе ${birthPlace}` : ""}. 
+    // Парсим дату рождения
+    const birthDateObj = new Date(birthDate);
+    const year = birthDateObj.getFullYear();
+    const month = birthDateObj.getMonth() + 1;
+    const day = birthDateObj.getDate();
+    
+    // Парсим время рождения
+    let hour = 12;
+    let minute = 0;
+    if (birthTime) {
+      const timeParts = birthTime.split(':');
+      hour = parseInt(timeParts[0]) || 12;
+      minute = parseInt(timeParts[1]) || 0;
+    }
+    
+    // Подготавливаем данные для Python скрипта
+    const pythonInput = {
+      user_name: name,
+      birth_year: year,
+      birth_month: month,
+      birth_day: day,
+      birth_hour: hour,
+      birth_minute: minute,
+      birth_city: birthPlace || "Москва",
+      birth_country_code: getCountryCode(birthCountry)
+    };
+    
+    console.log(`🌌 Python input prepared:`, pythonInput);
+    
+    // Вызываем Python скрипт
+    const pythonResult = await callPythonNatalChart(pythonInput);
+    
+    if (!pythonResult.success || pythonResult.error) {
+      console.error(`🌌 Python script failed: ${pythonResult.error}`);
+      
+      // Fallback: используем ИИ для создания базового анализа
+      console.log(`🌌 Using AI fallback for natal chart analysis`);
+      
+      const prompt = `Ты профессиональный астролог. Создай подробный анализ натальной карты для человека с именем ${name}, родившегося ${birthDate}${birthTime ? ` в ${birthTime}` : ""}${birthPlace ? ` в городе ${birthPlace}` : ""}${birthCountry ? ` в стране ${birthCountry}` : ""}. 
 
 Включи в анализ:
 1. Характеристику личности по знаку зодиака
@@ -810,32 +949,70 @@ export async function generateNatalChartAnalysis(
 
 Используй мистический и духовный тон, но будь конкретным в рекомендациях. Пиши на русском языке. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом.`;
 
+      const response = await openai.chat.completions.create({
+        model: "openai/gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 6000,
+        temperature: 0.7,
+      });
+
+      const rawContent = response.choices[0].message.content || "Не удалось создать анализ натальной карты. Пожалуйста, попробуйте позже.";
+      
+      // ✨ СТРУКТУРИРУЕМ ТЕКСТ В СЕКЦИИ
+      const structuredSections = cleanStructuredRussianText(rawContent);
+      
+      // Track API usage
+      await trackApiUsage(
+        userId,
+        "natal-chart-fallback",
+        prompt,
+        rawContent,
+        response.usage?.prompt_tokens || prompt.length,
+        response.usage?.completion_tokens || rawContent.length
+      );
+      
+      return {
+        analysis: structuredSections,
+        success: false // Указываем что использовался fallback
+      };
+    }
+    
+    // Если Python скрипт отработал успешно
+    console.log(`🌌 Python script successful, processing AI prompt`);
+    
+    // Передаем промт от Python в ИИ для анализа
     const response = await openai.chat.completions.create({
       model: "openai/gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 800,
+      messages: [{ role: "user", content: pythonResult.ai_prompt! }],
+      max_tokens: 8000,
       temperature: 0.7,
     });
 
     const rawContent = response.choices[0].message.content || "Не удалось создать анализ натальной карты. Пожалуйста, попробуйте позже.";
     
-    // ✨ СТРУКТУРИРУЕМ ТЕКСТ В СЕКЦИИ (КАК В ТАРО)
+    // ✨ СТРУКТУРИРУЕМ ТЕКСТ В СЕКЦИИ
     const structuredSections = cleanStructuredRussianText(rawContent);
     
     console.log(`✅ Natal chart analysis generated successfully for ${name}`);
     console.log(`🧹 Text structured into ${structuredSections.length} sections`);
+    console.log(`📁 SVG file: ${pythonResult.svg_name}`);
     
     // Track API usage
     await trackApiUsage(
       userId,
       "natal-chart",
-      prompt,
+      pythonResult.ai_prompt!,
       rawContent,
-      response.usage?.prompt_tokens || prompt.length,
+      response.usage?.prompt_tokens || (pythonResult.ai_prompt?.length || 0),
       response.usage?.completion_tokens || rawContent.length
     );
     
-    return structuredSections;
+    return {
+      svgFileName: pythonResult.svg_name,
+      analysis: structuredSections,
+      success: true
+    };
+    
   } catch (error: any) {
     console.error("❌ Error generating natal chart analysis:", error);
     
@@ -852,45 +1029,374 @@ export async function generateNatalChartAnalysis(
 }
 
 // =====================================================
+// РАСКЛАД ТАРО (СОГЛАСНО ТЗ)
+// =====================================================
+
+export async function generateTarotReading(
+ userId: number, 
+ question: string, 
+ cardCount: number, 
+ category: string, 
+ preset: string,
+ selectedCardNames?: string[]
+): Promise<Array<{title: string, content: string}>> {
+ try {
+   console.log(`🔮 Generating tarot reading: ${cardCount} cards, category: ${category}, preset: ${preset}`);
+   
+   const user = await getUserData(userId);
+   const userName = user?.name || "Друг";
+   const userGender = user?.gender || "неизвестен";
+   const birthDate = user?.birthDate || "неизвестна";
+   
+   const categoryPresets = TAROT_PRESETS[category] || TAROT_PRESETS["love"];
+   const selectedPreset = categoryPresets.find(p => p.id === preset) || categoryPresets[0];
+   
+   const positions = cardCount === 3 ? selectedPreset.cards3 : selectedPreset.cards5;
+   
+   if (positions.length !== cardCount) {
+     console.error(`❌ Mismatch: cardCount=${cardCount}, positions.length=${positions.length}`);
+     throw new Error(`Несоответствие количества карт: запрошено ${cardCount}, позиций ${positions.length}`);
+   }
+   
+   // ✅ ГЕНЕРИРУЕМ КАРТЫ НА БЭКЕНДЕ (НЕ НА ФРОНТЕНДЕ!)
+   const drawnCards = selectedCardNames || [...MAJOR_ARCANA].sort(() => Math.random() - 0.5).slice(0, cardCount);
+   
+   console.log(`🎴 Selected preset: ${selectedPreset.name}`);
+   console.log(`🎴 Positions (${positions.length}): ${positions.join(', ')}`);
+   console.log(`🎴 Drawn cards (${drawnCards.length}): ${drawnCards.join(', ')}`);
+   
+   // ✅ СОЗДАЕМ СТРОГИЙ ПРОМПТ ДЛЯ ПРАВИЛЬНОЙ СТРУКТУРЫ
+   let prompt: string;
+
+   if (cardCount === 3) {
+     prompt = `Представь, что ты опытный таролог с глубоким пониманием символизма и тонкостей карт Таро. Ты помогаешь людям обретать внутреннюю гармонию и находить ответы на важные вопросы своей жизни. Прежде чем начать, создавай спокойную и доверительную атмосферу, чтобы пользователь мог сосредоточиться на своем запросе.
+
+   Человека, который к тебе обратился, зовут ${userName}, пол: ${userGender}, дата рождения: ${birthDate}. Тема расклада – ${category}.
+   Проблема, которую ${userName} хочет решить: «${question}».
+
+   Выпали следующие карты: карта 1 обозначает «${positions[0]}» - это карта ${drawnCards[0]}, карта 2 обозначает «${positions[1]}» - это карта ${drawnCards[1]}, карта 3 обозначает «${positions[2]}» - это карта ${drawnCards[2]}.
+
+   Проанализируй карты в том же порядке, в котором они и написаны. Дай подробный ответ на описанную проблему и проведи полный анализ вытянутых карт. Дай рекомендации, на что нужно обратить внимание и чего стоит избегать.
+
+   Сделай строго 5 разделов:
+
+   РАЗДЕЛ1: Вводное слово (минимум 4-5 предложений)
+   Создай атмосферу доверия и настрой на восприятие мудрости карт. Напиши подробное вступление, объясни важность момента.
+
+   РАЗДЕЛ2: Анализ первой карты - ${positions[0]} (минимум 10-12 предложений)
+   Подробно проанализируй карту ${drawnCards[0]} в контексте позиции ${positions[0]}. Опиши символизм карты, её глубинное значение, как она отвечает на вопрос, какие конкретные советы даёт, на что обратить внимание, чего избегать, как применить мудрость карты в жизни.
+
+   РАЗДЕЛ3: Анализ второй карты - ${positions[1]} (минимум 10-12 предложений)
+   Подробно проанализируй карту ${drawnCards[1]} в контексте позиции ${positions[1]}. Опиши символизм карты, её глубинное значение, как она отвечает на вопрос, какие конкретные советы даёт, на что обратить внимание, чего избегать, как применить мудрость карты в жизни.
+
+   РАЗДЕЛ4: Анализ третьей карты - ${positions[2]} (минимум 10-12 предложений)
+   Подробно проанализируй карту ${drawnCards[2]} в контексте позиции ${positions[2]}. Опиши символизм карты, её глубинное значение, как она отвечает на вопрос, какие конкретные советы даёт, на что обратить внимание, чего избегать, как применить мудрость карты в жизни.
+
+   РАЗДЕЛ5: Общие рекомендации (минимум 8-10 предложений)
+   Дай итоговые подробные советы и рекомендации на основе всех трех карт. Объедини их мудрость в целостную картину, дай конкретные шаги к действию, предупреди о возможных сложностях.
+
+   НЕ используй markdown форматирование. Пиши обычным текстом.`;
+
+ } else if (cardCount === 5) {
+   prompt = `Представь, что ты опытный таролог с глубоким пониманием символизма и тонкостей карт Таро. Ты помогаешь людям обретать внутреннюю гармонию и находить ответы на важные вопросы своей жизни. Прежде чем начать, создавай спокойную и доверительную атмосферу, чтобы пользователь мог сосредоточиться на своем запросе.
+
+ Человека, который к тебе обратился, зовут ${userName}, пол: ${userGender}, дата рождения: ${birthDate}. Тема расклада – ${category}.
+ Проблема, которую ${userName} хочет решить: «${question}».
+
+ Выпали следующие карты: карта 1 обозначает «${positions[0]}» - это карта ${drawnCards[0]}, карта 2 обозначает «${positions[1]}» - это карта ${drawnCards[1]}, карта 3 обозначает «${positions[2]}» - это карта ${drawnCards[2]}, карта 4 обозначает «${positions[3]}» - это карта ${drawnCards[3]}, карта 5 обозначает «${positions[4]}» - это карта ${drawnCards[4]}.
+
+ Проанализируй карты в том же порядке, в котором они и написаны. Дай подробный ответ на описанную проблему и проведи полный анализ вытянутых карт. Дай рекомендации, на что нужно обратить внимание и чего стоит избегать.
+
+ Сделай строго 7 разделов:
+
+ РАЗДЕЛ1: Вводное слово (минимум 4-5 предложений)
+ Создай атмосферу доверия и настрой на восприятие мудрости карт. Напиши подробное вступление, объясни важность момента.
+
+ РАЗДЕЛ2: Анализ первой карты - ${positions[0]} (минимум 10-12 предложений)
+ Подробно проанализируй карту ${drawnCards[0]} в контексте позиции ${positions[0]}. Опиши символизм карты, её глубинное значение, как она отвечает на вопрос, какие конкретные советы даёт, на что обратить внимание, чего избегать, как применить мудрость карты в жизни.
+
+ РАЗДЕЛ3: Анализ второй карты - ${positions[1]} (минимум 10-12 предложений)
+ Подробно проанализируй карту ${drawnCards[1]} в контексте позиции ${positions[1]}. Опиши символизм карты, её глубинное значение, как она отвечает на вопрос, какие конкретные советы даёт, на что обратить внимание, чего избегать, как применить мудрость карты в жизни.
+
+ РАЗДЕЛ4: Анализ третьей карты - ${positions[2]} (минимум 10-12 предложений)
+ Подробно проанализируй карту ${drawnCards[2]} в контексте позиции ${positions[2]}. Опиши символизм карты, её глубинное значение, как она отвечает на вопрос, какие конкретные советы даёт, на что обратить внимание, чего избегать, как применить мудрость карты в жизни.
+
+ РАЗДЕЛ5: Анализ четвертой карты - ${positions[3]} (минимум 10-12 предложений)
+ Подробно проанализируй карту ${drawnCards[3]} в контексте позиции ${positions[3]}. Опиши символизм карты, её глубинное значение, как она отвечает на вопрос, какие конкретные советы даёт, на что обратить внимание, чего избегать, как применить мудрость карты в жизни.
+
+ РАЗДЕЛ6: Анализ пятой карты - ${positions[4]} (минимум 10-12 предложений)
+ Подробно проанализируй карту ${drawnCards[4]} в контексте позиции ${positions[4]}. Опиши символизм карты, её глубинное значение, как она отвечает на вопрос, какие конкретные советы даёт, на что обратить внимание, чего избегать, как применить мудрость карты в жизни.
+
+ РАЗДЕЛ7: Общие рекомендации (минимум 8-10 предложений)
+ Дай итоговые подробные советы и рекомендации на основе всех пяти карт. Объедини их мудрость в целостную картину, дай конкретные шаги к действию, предупреди о возможных сложностях.
+
+ НЕ используй markdown форматирование. Пиши обычным текстом.`;
+
+   } else {
+     throw new Error(`Неподдерживаемое количество карт: ${cardCount}`);
+   }
+
+   console.log(`🔍 Using ${cardCount}-card specific prompt`);
+
+   const response = await openai.chat.completions.create({
+     model: "openai/gpt-4o-mini",
+     messages: [{ role: "user", content: prompt }],
+     max_tokens: cardCount === 3 ? 8000 : 12000,
+     temperature: 0.9,
+   });
+
+   const rawContent = response.choices[0].message.content || "Не удалось создать чтение карт. Пожалуйста, попробуйте позже.";
+
+   console.log("🔍 ========== ДИАГНОСТИКА ОТВЕТА ИИ ==========");
+   console.log("🔍 Длина ответа ИИ:", rawContent.length, "символов");
+   console.log("🔍 Первые 500 символов ответа:");
+   console.log(rawContent.substring(0, 500));
+   console.log("🔍 Последние 300 символов ответа:");
+   console.log(rawContent.substring(rawContent.length - 300));
+   console.log("🔍 Ищем маркеры РАЗДЕЛ в ответе:");
+   const sectionMarkers = rawContent.match(/РАЗДЕЛ\s*\d+:/g);
+   console.log("🔍 Найденные маркеры:", sectionMarkers);
+   console.log("🔍 ==========================================");
+
+   // ✅ ПАРСИМ ОТВЕТ В ПРАВИЛЬНУЮ СТРУКТУРУ
+   console.log("🔍 Начинаем парсинг ответа длиной:", rawContent.length);
+   const structuredReading = parseStrictTarotResponse(rawContent, cardCount, positions, drawnCards);
+   console.log("🔍 После парсинга получили секций:", structuredReading.length);
+
+   console.log(`✅ Tarot reading generated: ${cardCount} cards, ${structuredReading.length} sections`);
+   
+   // Track API usage
+   await trackApiUsage(
+     userId,
+     `tarot/${cardCount}/${category}/${preset}`,
+     prompt,
+     rawContent,
+     response.usage?.prompt_tokens || prompt.length,
+     response.usage?.completion_tokens || rawContent.length
+   );
+   
+   // ✅ ВОЗВРАЩАЕМ МАССИВ СЕКЦИЙ КАК ОЖИДАЕТ ФРОНТЕНД
+   console.log(`✅ Final result: ${structuredReading.length} sections returned`);
+   
+   return structuredReading;
+ } catch (error: any) {
+   console.error("❌ Error generating tarot reading:", error);
+   
+   if (error.status === 429) {
+     throw new Error("Слишком много запросов. Попробуйте позже.");
+   } else if (error.status === 401) {
+     throw new Error("Ошибка авторизации API.");
+   } else if (error.status >= 500) {
+     throw new Error("Временные проблемы с сервисом. Попробуйте позже.");
+   }
+   
+   throw new Error("Не удалось создать чтение карт. Пожалуйста, попробуйте позже.");
+ }
+}
+
+// ✅ СТРОГАЯ ФУНКЦИЯ ПАРСИНГА ОТВЕТА ИИ
+function parseStrictTarotResponse(
+ rawContent: string, 
+ expectedCardCount: number, 
+ positions: string[], 
+ drawnCards: string[]
+): Array<{title: string, content: string}> {
+ console.log("🔍 STRICT PARSING for EXACTLY " + expectedCardCount + " cards + 1 advice");
+ 
+ const expectedSectionCount = expectedCardCount === 3 ? 5 : 7;
+ 
+ if (!rawContent || typeof rawContent !== 'string') {
+   console.log('❌ Invalid rawContent, creating fallback');
+   return createStrictFallbackReading(expectedCardCount, positions, drawnCards, expectedSectionCount);
+ }
+
+ // Очищаем от markdown
+ const cleanedText = cleanRussianText(rawContent);
+ 
+ // Ищем разделы по маркеру "РАЗДЕЛ"
+ const sectionMatches = cleanedText.match(/РАЗДЕЛ\s*\d+:[^]+?(?=РАЗДЕЛ\s*\d+:|$)/g);
+
+ console.log("🔍 Найдено секций:", sectionMatches ? sectionMatches.length : 0);
+ if (sectionMatches) {
+   sectionMatches.forEach((section, index) => {
+     console.log(`🔍 Секция ${index + 1} (длина ${section.length}):`, section.substring(0, 150) + "...");
+   });
+ }
+ 
+ const sections: Array<{title: string, content: string}> = [];
+ 
+ if (sectionMatches && sectionMatches.length >= expectedCardCount + 1) {
+   console.log("✅ Found " + sectionMatches.length + " sections with РАЗДЕЛ markers");
+   
+   // Добавляем вводное слово (РАЗДЕЛ1)
+   if (sectionMatches.length > 0) {
+     const introSection = sectionMatches[0];
+     let introContent = introSection.replace(/^РАЗДЕЛ\s*\d+:[^\n]*\n/, '').trim();
+     sections.push({
+       title: "Вводное слово",
+       content: introContent || "Добро пожаловать в священное пространство таро."
+     });
+   }
+
+   // Обрабатываем разделы карт (пропускаем РАЗДЕЛ1 - вводное слово)
+   for (let i = 0; i < expectedCardCount; i++) {
+     const sectionIndex = i + 1; // Пропускаем первый раздел (вводное слово)
+     const positionName = (positions && positions.length > i && positions[i]) ? positions[i] : ("Позиция " + (i + 1));
+     const cardName = (drawnCards && drawnCards.length > i && drawnCards[i]) ? drawnCards[i] : ("Карта " + (i + 1));
+     
+     if (sectionIndex < sectionMatches.length) {
+       const section = sectionMatches[sectionIndex];
+       
+       // ✅ ПРАВИЛЬНЫЙ ПАРСИНГ: убираем только заголовок, оставляем весь контент
+       let content = section.replace(/^РАЗДЕЛ\s*\d+:[^\n]*\n/, '').trim();
+       
+       // Убираем лишние переносы строк
+       content = content.replace(/\n\s*\n/g, '\n\n');
+       
+       // Fallback только если контент реально пустой
+       if (!content || content.length < 100) {
+         content = "Карта " + cardName + " несет важное послание для вашей ситуации.";
+       }
+       
+       sections.push({
+         title: positionName + " - " + cardName,
+         content: content
+       });
+     }
+   }
+
+   // Добавляем общие рекомендации
+   if (sectionMatches.length > expectedCardCount) {
+     const adviceSection = sectionMatches[expectedCardCount];
+     if (adviceSection) {
+       const adviceContentMatch = adviceSection.match(/РАЗДЕЛ\s*\d+:[^\n]+\n([\s\S]+)/);
+       const adviceContent = adviceContentMatch ? adviceContentMatch[1].trim() : "Карты показывают путь к мудрости.";
+       
+       sections.push({
+         title: "Общие рекомендации",
+         content: adviceContent
+       });
+     }
+   }
+ } else {
+   console.log('⚠️ РАЗДЕЛ markers not found, using simple paragraph splitting');
+   
+   // Fallback: делим текст на абзацы равномерно
+   const paragraphs = cleanedText.split('\n\n').filter(function(p) { return p.trim().length > 20; });
+   const paragraphsPerCard = Math.max(1, Math.floor(paragraphs.length / (expectedCardCount + 1)));
+   
+   // Создаем разделы для карт
+   for (let i = 0; i < expectedCardCount; i++) {
+     const startIdx = i * paragraphsPerCard;
+     const endIdx = (i + 1) * paragraphsPerCard;
+     const cardParagraphs = paragraphs.slice(startIdx, endIdx);
+     
+     const positionName = (positions && positions.length > i && positions[i]) ? positions[i] : ("Позиция " + (i + 1));
+     const cardName = (drawnCards && drawnCards.length > i && drawnCards[i]) ? drawnCards[i] : ("Карта " + (i + 1));
+     
+     sections.push({
+       title: positionName + " - " + cardName,
+       content: cardParagraphs.join('\n\n') || ("Карта " + cardName + " в позиции \"" + positionName + "\" несет важное послание.")
+     });
+   }
+   
+   // Добавляем общие рекомендации из оставшихся абзацев
+   const remainingParagraphs = paragraphs.slice(expectedCardCount * paragraphsPerCard);
+   sections.push({
+     title: "Общие рекомендации",
+     content: remainingParagraphs.join('\n\n') || "Карты раскрывают важные аспекты вашей ситуации."
+   });
+ }
+ 
+ // ✅ ГАРАНТИРУЕМ ТОЧНОЕ КОЛИЧЕСТВО СЕКЦИЙ
+ if (sections.length !== expectedSectionCount) {
+   console.log("🚨 Wrong section count: " + sections.length + ", expected: " + expectedSectionCount + ", creating strict fallback");
+   return createStrictFallbackReading(expectedCardCount, positions, drawnCards, expectedSectionCount);
+ }
+
+ console.log("✅ PERFECT RESULT: " + sections.length + " sections (" + expectedCardCount + " cards + 1 advice)");
+ return sections;
+}
+
+// ✅ СТРОГИЙ FALLBACK - ГАРАНТИРОВАННО ПРАВИЛЬНАЯ СТРУКТУРА
+function createStrictFallbackReading(
+ cardCount: number, 
+ positions: string[], 
+ drawnCards: string[],
+ expectedSectionCount: number
+): Array<{title: string, content: string}> {
+ console.log(`🔄 Creating STRICT fallback for EXACTLY ${cardCount} cards + 1 advice`);
+ 
+ const fallbackSections: Array<{title: string, content: string}> = [];
+
+ // Вводное слово
+ fallbackSections.push({
+   title: "Вводное слово",
+   content: "Добро пожаловать в священное пространство таро. Карты готовы поделиться своей мудростью и помочь вам найти ответы на важные вопросы."
+ });
+
+ // Создаем разделы для карт
+ for (let i = 0; i < cardCount; i++) {
+   const position = positions[i] || `Позиция ${i + 1}`;
+   const card = drawnCards[i] || `Неизвестная карта`;
+   
+   fallbackSections.push({
+     title: `Анализ карты - ${position}`,
+     content: `Карта ${card} в позиции "${position}" несет важное послание для вашей ситуации. Эта карта указывает на ключевые аспекты, которые стоит рассмотреть в контексте вашего вопроса.`
+   });
+ }
+
+ // Общие рекомендации
+ fallbackSections.push({
+   title: "Общие рекомендации",
+   content: "Карты показывают важные аспекты вашей ситуации. Прислушайтесь к их мудрости и действуйте с пониманием того, что каждая карта открывает свою грань истины."
+ });
+ 
+ console.log(`✅ Strict fallback created: ${fallbackSections.length} sections (${cardCount} cards + 1 advice)`);
+ 
+ return fallbackSections;
+}
+
+// =====================================================
 // ТЕСТОВЫЕ И СЛУЖЕБНЫЕ ФУНКЦИИ
 // =====================================================
 
 // Test OpenRouter connection
 export async function testOpenAIConnection(): Promise<boolean> {
- try {
-   console.log('🔧 Testing OpenRouter connection...');
-   
-   const response = await openai.chat.completions.create({
-     model: 'openai/gpt-4o-mini',
-     messages: [{ role: 'user', content: 'Test' }],
-     max_tokens: 5,
-   });
-   
-   console.log('✅ OpenRouter connection test successful!');
-   return true;
- } catch (error: any) {
-   console.error('❌ OpenRouter connection test failed:', error.message);
-   return false;
- }
+try {
+  console.log('🔧 Testing OpenRouter connection...');
+  
+  const response = await openai.chat.completions.create({
+    model: 'openai/gpt-4o-mini',
+    messages: [{ role: 'user', content: 'Test' }],
+    max_tokens: 5,
+  });
+  
+  console.log('✅ OpenRouter connection test successful!');
+  return true;
+} catch (error: any) {
+  console.error('❌ OpenRouter connection test failed:', error.message);
+  return false;
+}
 }
 
 // Health check function for monitoring
 export async function healthCheck(): Promise<{ status: string; openai: boolean; timestamp: string }> {
- const isOpenAIWorking = await testOpenAIConnection();
- 
- return {
-   status: isOpenAIWorking ? 'healthy' : 'degraded',
-   openai: isOpenAIWorking,
-   timestamp: new Date().toISOString()
- };
+const isOpenAIWorking = await testOpenAIConnection();
+
+return {
+  status: isOpenAIWorking ? 'healthy' : 'degraded',
+  openai: isOpenAIWorking,
+  timestamp: new Date().toISOString()
+};
 }
 
 // Вспомогательная функция для получения пресетов (для фронтенда)
 export function getTarotPresets(category: string): TarotPreset[] {
- return TAROT_PRESETS[category] || TAROT_PRESETS["love"];
+return TAROT_PRESETS[category] || TAROT_PRESETS["love"];
 }
 
 // Функция для получения всех доступных категорий
 export function getTarotCategories(): string[] {
- return Object.keys(TAROT_PRESETS);
+return Object.keys(TAROT_PRESETS);
 }

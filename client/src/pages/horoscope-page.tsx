@@ -76,7 +76,7 @@ export default function HoroscopePage() {
         showRefresh={false}
         showHeader={false}
       >
-        <div className="space-y-6 mb-20">
+        <div className="space-y-6 mb-20" style={{ paddingTop: 'max(20px, env(safe-area-inset-top, 20px))' }}>
           <div className="card p-8 flex flex-col items-center justify-center min-h-[300px]">
             <CosmicLoader size="medium" text="Загружаем ваш профиль..." />
           </div>
@@ -94,7 +94,7 @@ export default function HoroscopePage() {
         showRefresh={false}
         showHeader={false}
       >
-        <div className="space-y-6 mb-20">
+        <div className="space-y-6 mb-20" style={{ paddingTop: 'max(20px, env(safe-area-inset-top, 20px))' }}>
           <div className="card p-8 flex flex-col items-center justify-center min-h-[300px]">
             <p className="text-white text-center">
               Не удалось загрузить профиль пользователя. 
@@ -120,29 +120,18 @@ export default function HoroscopePage() {
       onRefresh={handleRefresh}
       showHeader={false}
     >
-      <div className="space-y-6 mb-20">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="page-heading font-gilroy">
+      <div className="space-y-6 mb-20" style={{ paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}>
+        {/* Заголовок страницы */}
+        <div className="px-4 mb-4">
+          <h2 className="page-heading font-gilroy text-center">
             {userProfile.name}, ваш гороскоп
           </h2>
-          <Select
-            value={period}
-            onValueChange={(value) => setPeriod(value as HoroscopePeriod)}
-          >
-            <SelectTrigger className="w-[110px] glass-effect border-accent/20 font-gilroy text-white">
-              <SelectValue placeholder="Выберите период" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#2a1d51] border-[#583e8b]">
-              <SelectItem value="today" className="font-gilroy text-white">Сегодня</SelectItem>
-              <SelectItem value="week" className="font-gilroy text-white">Неделя</SelectItem>
-              <SelectItem value="month" className="font-gilroy text-white">Месяц</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <HoroscopeCard 
           ref={horoscopeCardRef}
           period={period}
+          setPeriod={setPeriod}
           zodiacSign={getZodiacSign(new Date(userProfile.birthDate)).name}
           userId={userProfile.id}
           userName={userProfile.name}
@@ -150,8 +139,50 @@ export default function HoroscopePage() {
           subscriptionType={userProfile.subscriptionType}
         />
 
-        <FriendsSection userId={userProfile.id} />
+        {userProfile?.id && (
+          <FriendsSection />
+        )}
       </div>
+
+      {/* ✅ ИСПРАВЛЕНИЕ: Центрирование модальных окон и правильное позиционирование SelectContent */}
+      <style jsx global>{`
+        /* Защита для SelectContent от перекрытия Telegram с правильным позиционированием */
+        [data-radix-select-content] {
+          z-index: 99999 !important;
+          background-color: #2a1d51 !important;
+          border: 1px solid #583e8b !important;
+          position: absolute !important;
+          transform-origin: var(--radix-select-content-transform-origin);
+        }
+        
+        [data-radix-select-viewport] {
+          z-index: 99999 !important;
+        }
+        
+        /* Центрирование всех модальных окон */
+        [data-radix-dialog-content] {
+          position: fixed !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          max-height: 85vh !important;
+          z-index: 99999 !important;
+        }
+        
+        /* Центрирование Dialog overlay */
+        [data-radix-dialog-overlay] {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 99998 !important;
+        }
+        
+        /* Обеспечиваем работу в safe area */
+        @supports (padding-top: env(safe-area-inset-top)) {
+          .telegram-safe-area {
+            padding-top: max(20px, env(safe-area-inset-top, 20px));
+          }
+        }
+      `}</style>
     </MainLayout>
   );
 }

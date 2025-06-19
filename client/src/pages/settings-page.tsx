@@ -1,11 +1,9 @@
 import MainLayout from "@/components/layout/main-layout";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronRight, Moon, Sun } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
-import { useTheme } from "@/hooks/use-theme";
-import { SwitchWrapper } from "@/components/ui/switch";
 
 type SettingsItem = {
   title: string;
@@ -16,7 +14,6 @@ type SettingsItem = {
 export default function SettingsPage() {
   const { logoutMutation } = useAuth();
   const [, navigate] = useLocation();
-  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
@@ -57,35 +54,9 @@ export default function SettingsPage() {
   ];
 
   return (
-    <MainLayout title="Настройки" activeTab="settings">
+    <MainLayout title="Настройки" activeTab="settings" showHeader={false}>
       <div className="space-y-6 mb-20 px-4">
         <h2 className="page-heading font-gilroy mb-6">Настройки</h2>
-
-        {/* Тема приложения */}
-        <Card className="card">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {theme === "dark" ? (
-                  <Moon className="h-5 w-5 text-[var(--primary)]" />
-                ) : (
-                  <Sun className="h-5 w-5 text-[var(--primary)]" />
-                )}
-                <div>
-                  <h3 className="font-medium">Тема оформления</h3>
-                  <p className="text-sm text-[var(--foreground-muted)]">
-                    {theme === "dark" ? "Темная тема" : "Светлая тема"}
-                  </p>
-                </div>
-              </div>
-              <SwitchWrapper
-                checked={theme === "light"}
-                onCheckedChange={toggleTheme}
-                className=""
-              />
-            </div>
-          </CardContent>
-        </Card>
 
         {settingsSections.map((section, sectionIndex) => (
           <div key={sectionIndex} className="space-y-4 mb-4">

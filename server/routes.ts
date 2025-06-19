@@ -9,6 +9,8 @@ import { eq, and, desc, asc } from "drizzle-orm";
 import { generateHoroscope, generateTarotReading, generateNatalChartAnalysis, generateCompatibilityAnalysis } from "./openai";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { spawn } from "child_process";
+import path from "path";
 
 console.log("🚨🚨🚨 ROUTES.TS FILE LOADED! TIMESTAMP:", new Date().toISOString());
 
@@ -36,6 +38,116 @@ const getRandomNumbers = (count: number, min: number, max: number): number[] => 
   }
   return numbers;
 };
+
+// Функция для вызова Python скрипта натальных карт
+// Исправленная функция для вызова Python скрипта через stdin
+async function callPythonNatalChart(userData: {
+  user_name: string;
+  birth_year: number;
+  birth_month: number;
+  birth_day: number;
+  birth_hour: number;
+  birth_minute: number;
+  birth_city: string;
+  birth_country_code: string;
+}): Promise<{ svg_name: string | null; ai_prompt: string | null; success: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    console.log("🐍 Starting Python natal chart calculation...", userData);
+    
+    const scriptPath = path.join(__dirname, "utils", "natal-chart-calculator-NEW.py");
+    console.log("🐍 Script path:", scriptPath);
+    
+    // ИСПРАВЛЕНИЕ: Убираем JSON из аргументов, передаем только путь к скрипту
+    const pythonProcess = spawn("python3", [scriptPath], {
+      stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: "utf-8",
+        PYTHONUTF8: "1",
+        LANG: "en_US.UTF-8",
+        LC_ALL: "en_US.UTF-8"
+      },
+    });
+
+    console.log("🐍 Python process PID:", pythonProcess.pid);
+    console.log("🐍 Python command:", "python3", scriptPath);
+
+    let outputData = "";
+    let errorData = "";
+
+    pythonProcess.stdout.on("data", (data) => {
+      outputData += data.toString("utf8");
+    });
+
+    pythonProcess.stderr.on("data", (data) => {
+      const errorMessage = data.toString("utf8");
+      console.log("🐍 Python stderr:", errorMessage);
+      errorData += errorMessage;
+    });
+
+    pythonProcess.on("close", (code) => {
+      console.log("🐍 Python process closed with code:", code);
+      console.log("🐍 Python stdout:", outputData);
+      
+      if (code !== 0) {
+        console.error("🐍 Python process failed:", errorData);
+        resolve({
+          svg_name: null,
+          ai_prompt: null,
+          success: false,
+          error: `Python script failed with code ${code}: ${errorData}`
+        });
+        return;
+      }
+
+      try {
+        const result = JSON.parse(outputData);
+        console.log("🐍 Python result:", result);
+        resolve(result);
+      } catch (parseError) {
+        console.error("🐍 Failed to parse Python output:", parseError);
+        resolve({
+          svg_name: null,
+          ai_prompt: null,
+          success: false,
+          error: `Failed to parse Python output: ${parseError}`
+        });
+      }
+    });
+
+    pythonProcess.on("error", (error) => {
+      console.error("🐍 Python process error:", error);
+      resolve({
+        svg_name: null,
+        ai_prompt: null,
+        success: false,
+        error: `Python process error: ${error.message}`
+      });
+    });
+
+    // ИСПРАВЛЕНИЕ: Передаем данные через stdin без escape-символов
+    try {
+      const inputJson = JSON.stringify(userData);
+      console.log("🐍 Sending JSON to Python stdin:", inputJson.substring(0, 200));
+      
+      // Записываем JSON в stdin как строку
+      pythonProcess.stdin.write(inputJson, 'utf8');
+      pythonProcess.stdin.end();
+      
+      console.log("🐍 JSON sent to Python successfully");
+    } catch (writeError) {
+      console.error("🐍 Failed to write to Python stdin:", writeError);
+      resolve({
+        svg_name: null,
+        ai_prompt: null,
+        success: false,
+        error: `Failed to write to Python: ${writeError}`
+      });
+    }
+  });
+}
+
+
 
 // Главная функция для регистрации маршрутов
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -320,68 +432,271 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для работы с картами Таро
   app.post("/api/tarot", isAuthenticated, async (req, res) => {
     try {
-      const { question, cardCount, category, cardType } = req.body;
+      console.log("🔮 TAROT API ENDPOINT HIT!");
+      console.log("🔮 Request body:", JSON.stringify(req.body, null, 2));
       
+      const { question, cardCount, category, preset } = req.body;
+      
+      // ✅ ВАЛИДАЦИЯ ВХОДНЫХ ДАННЫХ
+      if (!question || !question.trim()) {
+        return res.status(400).json({ error: "Необходимо описать ситуацию" });
+      }
+      
+      if (!cardCount || (cardCount !== 3 && cardCount !== 5)) {
+        return res.status(400).json({ error: "Количество карт должно быть 3 или 5" });
+      }
+      
+      if (!category) {
+        return res.status(400).json({ error: "Необходимо выбрать категорию" });
+      }
+      
+      if (!preset) {
+        return res.status(400).json({ error: "Необходимо выбрать пресет расклада" });
+      }
+      
+      console.log(`🔮 Validated params: ${cardCount} cards, category: ${category}, preset: ${preset}`);
+      
+      // ✅ ПРОВЕРКА ЛИМИТОВ ПОДПИСКИ
       const subscriptionType = req.user!.subscriptionType;
       if (subscriptionType === "free") {
         if (cardCount > 3) {
-          return res.status(403).send("Требуется подписка для раскладов из 5 карт");
+          return res.status(403).json({ 
+            error: "Требуется подписка для раскладов из 5 карт",
+            code: "SUBSCRIPTION_REQUIRED" 
+          });
         }
         
         const dailyUsage = await storage.getTodayApiUsageCount(req.user!.id, "tarot");
         if (dailyUsage >= 3) {
-          return res.status(403).send("Достигнут дневной лимит раскладов для бесплатного аккаунта");
+          return res.status(403).json({ 
+            error: "Достигнут дневной лимит раскладов для бесплатного аккаунта",
+            code: "DAILY_LIMIT_REACHED"
+          });
         }
       } else if (subscriptionType === "basic") {
         const monthlyUsage = await storage.getMonthlyApiUsageCount(req.user!.id, "tarot");
         const limit = cardCount === 3 ? 10 : 5;
         if (monthlyUsage >= limit) {
-          return res.status(403).send(`Достигнут месячный лимит ${limit} раскладов из ${cardCount} карт для базовой подписки`);
+          return res.status(403).json({ 
+            error: `Достигнут месячный лимит ${limit} раскладов из ${cardCount} карт для базовой подписки`,
+            code: "MONTHLY_LIMIT_REACHED"
+          });
         }
       }
       
-      const reading = await generateTarotReading(
+      console.log(`✅ Subscription check passed for ${subscriptionType} user`);
+      
+      // ✅ ГЕНЕРИРУЕМ РАСКЛАД С ПРАВИЛЬНЫМИ ПАРАМЕТРАМИ
+      const readingSections = await generateTarotReading(
         req.user!.id, 
-        question, 
+        question.trim(), 
         cardCount, 
-        category
+        category,
+        preset
+      );
+
+      console.log(`✅ Tarot reading generated successfully`);
+      console.log(`🔍 Result structure:`, {
+        readingLength: readingSections?.length,
+        isArray: Array.isArray(readingSections)
+      });
+
+      // ✅ ВАЛИДАЦИЯ РЕЗУЛЬТАТА
+      if (!readingSections || !Array.isArray(readingSections)) {
+        console.error("❌ Invalid reading structure - not an array");
+        return res.status(500).json({ error: "Ошибка в структуре расклада - неверный формат" });
+      }
+      
+      const expectedSections = cardCount + 1; // карты + общий совет
+      if (readingSections.length !== expectedSections) {
+        console.warn(`⚠️ Wrong section count: got ${readingSections.length}, expected ${expectedSections}`);
+      }
+
+      // ✅ ПРОВЕРЯЕМ ЧТО ЭТО ПРАВИЛЬНАЯ СТРУКТУРА
+      const isValidReadingStructure = readingSections.every(section => 
+        section && 
+        typeof section === 'object' &&
+        section.title && typeof section.title === 'string' &&
+        section.content && typeof section.content === 'string' &&
+        section.content.length > 10
+      );
+
+      // Генерируем имена карт из секций (исключаем последнюю секцию - общие рекомендации)
+      const cardSections = readingSections.slice(0, cardCount);
+      const cards = cardSections.map(section => {
+        // Извлекаем название карты из заголовка (после дефиса)
+        const cardName = section.title.includes(' - ') ? 
+          section.title.split(' - ')[1] : 
+          `Карта ${cardSections.indexOf(section) + 1}`;
+        return { name: cardName };
+      });
+
+      // ✅ ПРОВЕРЯЕМ СТРУКТУРУ КАРТ
+      const isValidCardsStructure = cards.every(card =>
+        card &&
+        typeof card === 'object' &&
+        card.name && typeof card.name === 'string'
       );
       
-      res.json({ reading });
+      if (!isValidReadingStructure) {
+        console.error("❌ Invalid reading structure - sections invalid");
+        return res.status(500).json({ error: "Ошибка в структуре расклада - неверная структура reading" });
+      }
+      
+      if (!isValidCardsStructure) {
+        console.error("❌ Invalid cards structure - cards invalid");
+        return res.status(500).json({ error: "Ошибка в структуре расклада - неверная структура cards" });
+      }
+      
+      // ✅ ВОЗВРАЩАЕМ РЕЗУЛЬТАТ В ПРАВИЛЬНОМ ФОРМАТЕ
+      const response = {
+        reading: readingSections,
+        cards: cards,
+        // Дополнительная отладочная информация
+        meta: {
+          requestedCards: cardCount,
+          actualReadingSections: readingSections.length,
+          actualCardsCount: cards.length,
+          isValidCount: readingSections.length === expectedSections && cards.length === cardCount,
+          category,
+          preset
+        }
+      };
+      
+      console.log("✅ Sending response with structure:", {
+        readingSections: response.reading.length,
+        cardsCount: response.cards.length,
+        isValid: response.meta.isValidCount
+      });
+      
+      res.json(response);
+      
     } catch (error) {
-      console.error("Error generating tarot reading:", error);
-      res.status(500).send("Ошибка при создании расклада карт");
+      console.error("❌ Error generating tarot reading:", error);
+      
+      // Возвращаем более информативные ошибки
+      if (error instanceof Error) {
+        if (error.message.includes("Слишком много запросов")) {
+          return res.status(429).json({ error: error.message, code: "RATE_LIMIT" });
+        } else if (error.message.includes("Ошибка авторизации")) {
+          return res.status(401).json({ error: error.message, code: "AUTH_ERROR" });
+        } else if (error.message.includes("Временные проблемы")) {
+          return res.status(503).json({ error: error.message, code: "SERVICE_UNAVAILABLE" });
+        }
+      }
+      
+      res.status(500).json({ 
+        error: "Ошибка при создании расклада карт",
+        code: "INTERNAL_ERROR"
+      });
     }
   });
 
   // API для работы с натальными картами
+  // API для работы с натальными картами
   app.post("/api/natal-chart", isAuthenticated, async (req, res) => {
     try {
+      console.log("🌟 Natal chart API called");
       const { type, name, birthDate, birthTime, birthPlace } = req.body;
       
-      let analysis = "";
+      let userData: any = {};
+      let analysisName: string = "";
+      let analysisBirthDate: string = "";
+      let analysisBirthTime: string = "";
+      let analysisBirthPlace: string = "";
+      
       if (type === "self") {
-        analysis = await generateNatalChartAnalysis(
-          req.user!.id,
-          req.user!.name,
-          new Date(req.user!.birthDate).toISOString().split('T')[0],
-          req.user!.birthTime || undefined,
-          req.user!.birthPlace || undefined
-        );
+        analysisName = req.user!.name;
+        analysisBirthDate = new Date(req.user!.birthDate).toISOString().split('T')[0];
+        analysisBirthTime = req.user!.birthTime || "12:00";
+        analysisBirthPlace = req.user!.birthPlace || "Москва";
+        
+        const userBirthDate = new Date(req.user!.birthDate);
+        userData = {
+          user_name: req.user!.name,
+          birth_year: userBirthDate.getFullYear(),
+          birth_month: userBirthDate.getMonth() + 1,
+          birth_day: userBirthDate.getDate(),
+          birth_hour: parseInt((req.user!.birthTime || "12:00").split(":")[0]),
+          birth_minute: parseInt((req.user!.birthTime || "12:00").split(":")[1]),
+          birth_city: req.user!.birthPlace || "Москва",
+          birth_country_code: "RU"
+        };
       } else {
-        analysis = await generateNatalChartAnalysis(
-          req.user!.id,
-          name,
-          new Date(birthDate).toISOString().split('T')[0],
-          birthTime || undefined,
-          birthPlace || undefined
-        );
+        analysisName = name;
+        analysisBirthDate = new Date(birthDate).toISOString().split('T')[0];
+        analysisBirthTime = birthTime || "12:00";
+        analysisBirthPlace = birthPlace || "Москва";
+        
+        const customBirthDate = new Date(birthDate);
+        userData = {
+          user_name: name,
+          birth_year: customBirthDate.getFullYear(),
+          birth_month: customBirthDate.getMonth() + 1,
+          birth_day: customBirthDate.getDate(),
+          birth_hour: parseInt((birthTime || "12:00").split(":")[0]),
+          birth_minute: parseInt((birthTime || "12:00").split(":")[1]),
+          birth_city: birthPlace || "Москва",
+          birth_country_code: "RU"
+        };
       }
       
-      res.json({ analysis });
+      console.log("🌟 Prepared user data for Python:", userData);
+      
+      const pythonResult = await callPythonNatalChart(userData);
+      console.log("🌟 Python result:", pythonResult);
+      
+      let analysis: Array<{title: string, content: string}> = [];
+      try {
+        const aiResult = await generateNatalChartAnalysis(
+          req.user!.id,
+          analysisName,
+          analysisBirthDate,
+          analysisBirthTime,
+          analysisBirthPlace
+        );
+        analysis = aiResult.analysis;
+        console.log("🌟 AI analysis generated");
+      } catch (aiError) {
+        console.error("🌟 AI analysis failed:", aiError);
+        if (pythonResult.ai_prompt) {
+          analysis = [{
+            title: "Анализ натальной карты",
+            content: pythonResult.ai_prompt
+          }];
+        }
+      }
+      
+      const response = {
+        analysis,
+        chartData: {
+          name: analysisName,
+          birthDate: analysisBirthDate,
+          birthTime: analysisBirthTime,
+          birthPlace: analysisBirthPlace
+        },
+        success: pythonResult.success,
+        type: type,
+        svgFileName: pythonResult.svg_name,
+        pythonSuccess: pythonResult.success,
+        pythonError: pythonResult.error || null
+      };
+      
+      console.log("🌟 Final response:", {
+        analysisLength: analysis.length,
+        svgFileName: pythonResult.svg_name,
+        pythonSuccess: pythonResult.success
+      });
+      
+      res.json(response);
+      
     } catch (error) {
-      console.error("Error generating natal chart:", error);
-      res.status(500).send("Ошибка при создании натальной карты");
+      console.error("🌟 Error generating natal chart:", error);
+      res.status(500).json({
+        error: "Ошибка при создании натальной карты",
+        success: false,
+        pythonSuccess: false
+      });
     }
   });
 

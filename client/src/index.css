@@ -3,6 +3,17 @@
 @import url('https://fonts.cdnfonts.com/css/connie');
 @import url('./styles/z-index-fixes.css');
 
+/* ✅ ЗАЩИТА ОТ PULL-TO-REFRESH ДЛЯ TELEGRAM WEBAPP */
+html {
+  overscroll-behavior: none;
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+
 /* The following @tailwind directives require Tailwind CSS to be processed via PostCSS or the Tailwind CLI.
    If you see "Unknown at rule @tailwind", make sure your build tool is set up to use Tailwind CSS.
    See https://tailwindcss.com/docs/installation for setup instructions. */
@@ -192,7 +203,7 @@
     background-size: 350px 350px;
     opacity: 0.85;
     z-index: -10;
-    animation: twinkleBackground 10s ease-in-out infinite alternate;
+    animation: none;
   }
   
   /* Улучшенные созвездия с эффектом дымки/туманности */
@@ -215,7 +226,7 @@
     background-size: 500px 500px;
     opacity: 0.6;
     z-index: -9;
-    animation: constellationMovement 60s linear infinite alternate;
+    animation: none;
   }
   
   /* Добавляем падающие звезды */
@@ -258,26 +269,28 @@
     transform: rotate(0deg);
   }
   
-  .falling-star:nth-child(1) {
-    top: 10%;
-    right: 10%;
-    animation: fallingStar 5s linear infinite;
-    animation-delay: 1s;
-  }
-  
-  .falling-star:nth-child(2) {
-    top: 30%;
-    right: 20%;
-    animation: fallingStar 7s linear infinite;
-    animation-delay: 3s;
-  }
-  
-  .falling-star:nth-child(3) {
-    top: 50%;
-    right: 15%;
-    animation: fallingStar 6s linear infinite;
-    animation-delay: 5s;
-  }
+/*
+.falling-star:nth-child(1) {
+  top: 10%;
+  right: 10%;
+  animation: fallingStar 5s linear infinite;
+  animation-delay: 1s;
+}
+
+.falling-star:nth-child(2) {
+  top: 30%;
+  right: 20%;
+  animation: fallingStar 7s linear infinite;
+  animation-delay: 3s;
+}
+
+.falling-star:nth-child(3) {
+  top: 50%;
+  right: 15%;
+  animation: fallingStar 6s linear infinite;
+  animation-delay: 5s;
+}
+*/
   
   /* Магические частицы для фона */
   @keyframes floatingParticles {
@@ -300,7 +313,7 @@
     opacity: 0.4;
     pointer-events: none;
     z-index: -8;
-    animation: floatingParticles 15s ease-in-out infinite;
+    animation: none;
   }
   
   @keyframes constellationMovement {
@@ -1646,6 +1659,92 @@ textarea:focus {
 /* 🚀 ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ */
 /* ================================= */
 
+
+/* ================================= */
+/* 🚀 ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ */
+/* ================================= */
+
+/* ИСПРАВЛЕНИЕ: Стили для режима низкой производительности */
+.low-performance-mode .tarot-cards-container {
+  position: relative !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  max-width: 300px !important;
+  margin: 0 auto !important;
+  padding: 20px !important;
+}
+
+.low-performance-mode .tarot-cards-container > div {
+  position: static !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+}
+
+/* Для расклада на 5 карт в режиме низкой производительности */
+/* Для расклада на 5 карт в режиме низкой производительности */
+.low-performance-mode .tarot-cards-container[data-card-count="5"] {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  grid-template-rows: repeat(3, 1fr) !important;
+  gap: 20px !important;
+  width: 320px !important;
+  height: 320px !important;
+  position: static !important;
+  transform: none !important;
+}
+
+/* Принудительно убираем absolute позиционирование */
+.low-performance-mode .tarot-cards-container[data-card-count="5"] > div {
+  position: static !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Убираем все transform стили в режиме низкой производительности */
+.low-performance-mode * {
+  transform: none !important;
+}
+
+.low-performance-mode .tarot-cards-container[data-card-count="5"] > div:nth-child(1) {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
+.low-performance-mode .tarot-cards-container[data-card-count="5"] > div:nth-child(2) {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+
+.low-performance-mode .tarot-cards-container[data-card-count="5"] > div:nth-child(3) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+
+.low-performance-mode .tarot-cards-container[data-card-count="5"] > div:nth-child(4) {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+}
+
+.low-performance-mode .tarot-cards-container[data-card-count="5"] > div:nth-child(5) {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+}
+
+/* Базовые правила для режима сниженных анимаций */
 /* Базовые правила для режима сниженных анимаций */
 .reduced-animations *,
 .reduced-animations *::before,
@@ -1654,6 +1753,52 @@ textarea:focus {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
+}
+
+/* ИСПРАВЛЕНИЕ: Фиксированные позиции для карт таро в режиме низкой производительности */
+.reduced-animations .tarot-card-5-layout {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  grid-template-rows: repeat(3, 1fr) !important;
+  gap: 8px !important;
+  width: 200px !important;
+  height: 200px !important;
+  margin: 0 auto !important;
+}
+
+.reduced-animations .tarot-card-5-layout > div:nth-child(1) {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  position: static !important;
+  transform: none !important;
+}
+
+.reduced-animations .tarot-card-5-layout > div:nth-child(2) {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  position: static !important;
+  transform: none !important;
+}
+
+.reduced-animations .tarot-card-5-layout > div:nth-child(3) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  position: static !important;
+  transform: none !important;
+}
+
+.reduced-animations .tarot-card-5-layout > div:nth-child(4) {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+  position: static !important;
+  transform: none !important;
+}
+
+.reduced-animations .tarot-card-5-layout > div:nth-child(5) {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  position: static !important;
+  transform: none !important;
 }
 
 /* Отключаем сложные фоновые анимации на мобильных */
@@ -1796,6 +1941,499 @@ textarea:focus {
   body::before,
   body::after,
   .falling-star {
+    display: none !important;
+  }
+}
+
+/* Добавить в файл стилей или в styled-jsx */
+.tarot-card-display {
+  width: 80px !important;
+  height: 128px !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Если используется img внутри TarotCard */
+.tarot-card-display img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 6px;
+}
+
+/* ================================= */
+/* 🔧 ИСПРАВЛЕНИЕ МОДАЛЬНОГО ОКНА СОВМЕСТИМОСТИ */
+/* ================================= */
+
+/* Обертка для модального окна с правильным z-index */
+.compatibility-modal-wrapper {
+  position: relative !important;
+  z-index: 100 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  padding-bottom: 1rem !important;
+}
+
+/* Исправление формы совместимости */
+.compatibility-form {
+  position: relative !important;
+  z-index: 150 !important;
+  width: 100% !important;
+  max-width: 350px !important;
+  margin: 0 auto !important;
+  background: rgba(37, 34, 64, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(168, 85, 247, 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+  min-height: auto !important;
+}
+
+/* Обертка для календаря */
+.calendar-modal-wrapper {
+  position: relative !important;
+  z-index: 200 !important;
+  margin-bottom: 1rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+/* Исправление для полей ввода */
+.compatibility-form input,
+.compatibility-form button,
+.compatibility-form .calendar-wrapper {
+  position: relative !important;
+  z-index: 160 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Специальные стили для Telegram WebApp */
+.tg-viewport .compatibility-modal-wrapper,
+body[data-theme] .compatibility-modal-wrapper {
+  position: relative !important;
+  z-index: 999999 !important;
+  background: transparent !important;
+}
+
+.tg-viewport .compatibility-form,
+body[data-theme] .compatibility-form {
+  position: relative !important;
+  z-index: 1000000 !important;
+  background: rgba(26, 26, 46, 0.95) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 2px solid rgba(168, 85, 247, 0.4) !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6),
+              0 0 30px rgba(168, 85, 247, 0.3) !important;
+}
+
+/* Исправление календаря в Telegram */
+.tg-viewport .calendar-modal-wrapper,
+body[data-theme] .calendar-modal-wrapper {
+  position: relative !important;
+  z-index: 1000001 !important;
+  margin-bottom: 3rem !important;
+}
+
+/* Исправление полей ввода в Telegram */
+.tg-viewport .compatibility-form input,
+.tg-viewport .compatibility-form button,
+body[data-theme] .compatibility-form input,
+body[data-theme] .compatibility-form button {
+  position: relative !important;
+  z-index: 1000002 !important;
+  background: rgba(50, 48, 77, 0.9) !important;
+  border: 1px solid rgba(168, 85, 247, 0.4) !important;
+  color: white !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* Исправление выпадающих списков */
+.tg-viewport .compatibility-form .rdp,
+body[data-theme] .compatibility-form .rdp {
+  position: fixed !important;
+  z-index: 1000003 !important;
+  background: rgba(26, 26, 46, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 2px solid rgba(168, 85, 247, 0.5) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8),
+              0 0 40px rgba(168, 85, 247, 0.4) !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+}
+
+/* Дополнительные отступы для мобильных устройств */
+@media (max-width: 640px) {
+  .compatibility-modal-wrapper {
+    padding: 0.5rem !important;
+    padding-bottom: 2rem !important;
+  }
+  
+  .compatibility-form {
+    margin: 0 !important;
+    padding: 1rem !important;
+    max-width: 320px !important;
+  }
+  
+  .calendar-modal-wrapper {
+    margin-bottom: 1rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  /* Дополнительное пространство для клавиатуры */
+  .compatibility-form input:focus,
+  .compatibility-form textarea:focus {
+    scroll-margin-bottom: 8rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+}
+
+/* Исправление для очень высоких z-index элементов */
+.compatibility-form input:focus,
+.compatibility-form button:focus,
+.calendar-modal-wrapper:focus-within {
+  z-index: 1000004 !important;
+  position: relative !important;
+}
+
+/* Предотвращение наложения с интерфейсом Telegram */
+@media (max-height: 600px) {
+  .compatibility-modal-wrapper {
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    padding-bottom: 3rem !important;
+  }
+  
+  .compatibility-form {
+    padding: 0.75rem !important;
+    max-width: 300px !important;
+  }
+  
+  .calendar-modal-wrapper {
+    margin-bottom: 1rem !important;
+  }
+}
+
+/* Специальные стили для iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .compatibility-modal-wrapper {
+    position: relative !important;
+    z-index: 999999 !important;
+    min-height: auto !important;
+    padding-bottom: 5rem !important;
+  }
+  
+  .compatibility-form {
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+  }
+  
+  .calendar-modal-wrapper {
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+    margin-bottom: 4rem !important;
+  }
+}
+
+/* Исправление для Android WebView */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .tg-viewport .compatibility-form,
+  body[data-theme] .compatibility-form {
+    position: relative !important;
+    will-change: transform !important;
+    transform: translate3d(0, 0, 0) !important;
+  }
+}
+
+/* Дополнительная защита от скрытия элементов */
+.compatibility-form * {
+  position: relative !important;
+  z-index: inherit !important;
+}
+
+/* Обеспечение видимости кнопок */
+.compatibility-form button {
+  position: relative !important;
+  z-index: 1000005 !important;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4) !important;
+}
+
+.compatibility-form button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5) !important;
+}
+
+/* Исправление полей с placeholder */
+.compatibility-form input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Исправление для DatePicker компонента */
+[data-radix-popper-content-wrapper] {
+  z-index: 1000010 !important;
+}
+
+.rdp {
+  z-index: 1000010 !important;
+  background: rgba(26, 26, 46, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 2px solid rgba(168, 85, 247, 0.5) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Убираем возможные конфликты */
+.compatibility-form .calendar-wrapper > div {
+  z-index: 1000011 !important;
+}
+
+/* Финальная защита от наложений в Telegram */
+.telegram-webapp .compatibility-modal-wrapper {
+  position: relative !important;
+  z-index: 2147483647 !important; /* Максимальный z-index */
+  isolation: isolate !important;
+}
+
+/* Скрываем нижнее меню на странице карт таро */
+body:has([data-page="tarot"]) .bottom-navigation,
+body:has([data-page="tarot"]) .navigation-bar,
+body:has([data-page="tarot"]) .main-nav,
+body:has([data-page="tarot"]) nav[class*="bottom"],
+body:has([data-page="tarot"]) div[class*="navigation"] {
+  display: none !important;
+}
+
+/* ================================= */
+/* 🚀 УЛУЧШЕННАЯ СИСТЕМА ПРОИЗВОДИТЕЛЬНОСТИ */
+/* ================================= */
+
+/* БАЗОВЫЕ ПРАВИЛА - НЕ ЛОМАЮТ LAYOUT */
+.reduced-animations *,
+.reduced-animations *::before,
+.reduced-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ================================= */
+/* УРОВНИ ПРОИЗВОДИТЕЛЬНОСТИ */
+/* ================================= */
+
+/* ВЫСОКАЯ ПРОИЗВОДИТЕЛЬНОСТЬ - все эффекты включены */
+.performance-high {
+  /* Все анимации работают нормально */
+}
+
+/* СРЕДНЯЯ ПРОИЗВОДИТЕЛЬНОСТЬ - умеренные ограничения */
+.performance-medium * {
+  animation-duration: 0.7s !important;
+  transition-duration: 0.21s !important;
+}
+
+.performance-medium body::before {
+  animation-duration: 20s !important;
+  opacity: 0.4 !important;
+}
+
+.performance-medium body::after {
+  animation-duration: 80s !important;
+  opacity: 0.3 !important;
+}
+
+/* НИЗКАЯ ПРОИЗВОДИТЕЛЬНОСТЬ - значительные ограничения */
+.performance-low body::before {
+  animation: none !important;
+  opacity: 0.2 !important;
+}
+
+.performance-low body::after {
+  animation: none !important;
+  opacity: 0.1 !important;
+}
+
+.performance-low .falling-star {
+  display: none !important;
+}
+
+.performance-low .magic-particles::before {
+  display: none !important;
+}
+
+.performance-low .card,
+.performance-low .crystal-tab,
+.performance-low .bottom-nav {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(47, 30, 94, 0.9) !important;
+}
+
+.performance-low .card::before,
+.performance-low .card::after,
+.performance-low .crystal-tab::before,
+.performance-low .crystal-tab::after {
+  display: none !important;
+}
+
+/* УЛЬТРА-НИЗКАЯ ПРОИЗВОДИТЕЛЬНОСТЬ - минимум эффектов */
+.performance-ultra-low * {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.performance-ultra-low body::before,
+.performance-ultra-low body::after {
+  display: none !important;
+}
+
+.performance-ultra-low .card,
+.performance-ultra-low .crystal-tab {
+  background: rgba(47, 30, 94, 0.95) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+/* ================================= */
+/* ИСПРАВЛЕНИЕ ТАРО КАРТ */
+/* ================================= */
+
+/* УМНОЕ ИСПРАВЛЕНИЕ: Сохраняем layout, но убираем анимации */
+.performance-low .tarot-cards-container > div,
+.performance-ultra-low .tarot-cards-container > div {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Только для ультра-низкой производительности меняем layout */
+.performance-ultra-low .tarot-cards-container[data-card-count="5"] {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  grid-template-rows: repeat(3, 1fr) !important;
+  gap: 20px !important;
+  width: 320px !important;
+  height: 320px !important;
+  margin: 0 auto !important;
+}
+
+.performance-ultra-low .tarot-cards-container[data-card-count="5"] > div {
+  position: static !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.performance-ultra-low .tarot-cards-container[data-card-count="5"] > div:nth-child(1) {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
+.performance-ultra-low .tarot-cards-container[data-card-count="5"] > div:nth-child(2) {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+
+.performance-ultra-low .tarot-cards-container[data-card-count="5"] > div:nth-child(3) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+
+.performance-ultra-low .tarot-cards-container[data-card-count="5"] > div:nth-child(4) {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+}
+
+.performance-ultra-low .tarot-cards-container[data-card-count="5"] > div:nth-child(5) {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+}
+
+/* Плавный переход при смене режима производительности */
+html {
+  transition: opacity 0.3s ease !important;
+}
+
+html.performance-switching {
+  opacity: 0.8;
+}
+
+/* Предотвращение "прыжков" layout при смене режимов */
+.tarot-cards-container {
+  min-height: 300px;
+  transition: none !important;
+}
+
+/* ================================= */
+/* 🔥 ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ */
+/* ================================= */
+
+/* Отключение тяжелых анимаций на мобильных */
+@media (max-width: 768px) {
+  body::before {
+    animation: none !important;
+    opacity: 0.3 !important;
+  }
+  
+  body::after {
+    animation: none !important;
+    opacity: 0.2 !important;
+  }
+  
+  .falling-star {
+    display: none !important;
+  }
+  
+  .magic-particles::before {
+    display: none !important;
+  }
+  
+  .card, .crystal-tab, .bottom-nav {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(47, 30, 94, 0.9) !important;
+  }
+}
+
+/* Полное отключение фона на слабых устройствах */
+@media (max-width: 480px) {
+  body::before,
+  body::after {
+    display: none !important;
+  }
+}
+
+/* Автоматическое отключение для пользователей с prefer-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  body::before,
+  body::after,
+  .falling-star,
+  .magic-particles::before {
     display: none !important;
   }
 }

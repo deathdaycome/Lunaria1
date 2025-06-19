@@ -5,6 +5,8 @@ export class PerformanceMonitor {
   private fps = 60;
   private isMonitoring = false;
   private animationId: number | null = null;
+  private fpsHistory: number[] = [];
+  private memoryCheckInterval: number | null = null;
   
   private callbacks: {
     onLowFPS: (fps: number) => void;
@@ -36,6 +38,10 @@ export class PerformanceMonitor {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
+    if (this.memoryCheckInterval) {
+      clearInterval(this.memoryCheckInterval);
+      this.memoryCheckInterval = null;
+    }
   }
 
   private measureFrame() {
@@ -44,7 +50,7 @@ export class PerformanceMonitor {
     const currentTime = performance.now();
     const frameTime = currentTime - this.lastTime;
     
-    // Проверяем слишком медленные кадры (более 16.6ms = менее 60 FPS)
+    // Проверяем слишком медленные кадры
     if (frameTime > 16.6) {
       this.callbacks.onSlowFrame(frameTime);
     }
@@ -55,9 +61,18 @@ export class PerformanceMonitor {
     if (currentTime - this.lastTime >= 1000) {
       this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
       
-      // Уведомляем о низком FPS
-      if (this.fps < 30) {
-        this.callbacks.onLowFPS(this.fps);
+      // Сохраняем историю FPS для более стабильных решений
+      this.fpsHistory.push(this.fps);
+      if (this.fpsHistory.length > 5) {
+        this.fpsHistory.shift(); // Оставляем только последние 5 измерений
+      }
+      
+      // Используем среднее значение для более стабильной работы
+      const avgFPS = this.fpsHistory.reduce((a, b) => a + b, 0) / this.fpsHistory.length;
+      
+      // Уведомляем о низком FPS только если среднее значение низкое
+      if (avgFPS < 30) {
+        this.callbacks.onLowFPS(Math.round(avgFPS));
       }
       
       this.frameCount = 0;
@@ -74,24 +89,27 @@ export class PerformanceMonitor {
       if (!this.isMonitoring) return;
       
       const memory = (performance as any).memory;
-      const usedMB = memory.usedJSHeapSize / 1048576; // Конвертируем в MB
+      const usedMB = memory.usedJSHeapSize / 1048576;
       const limitMB = memory.jsHeapSizeLimit / 1048576;
       
       const usagePercent = (usedMB / limitMB) * 100;
       
-      // Предупреждаем при использовании более 80% памяти
-      if (usagePercent > 80) {
+      // Более гибкие пороги для предупреждений
+      if (usagePercent > 85) {
         this.callbacks.onHighMemory(usagePercent);
       }
-      
-      setTimeout(checkMemory, 5000); // Проверяем каждые 5 секунд
     };
     
-    checkMemory();
+    this.memoryCheckInterval = window.setInterval(checkMemory, 3000);
   }
 
   getCurrentFPS(): number {
     return this.fps;
+  }
+
+  getAverageFPS(): number {
+    if (this.fpsHistory.length === 0) return this.fps;
+    return Math.round(this.fpsHistory.reduce((a, b) => a + b, 0) / this.fpsHistory.length);
   }
 
   getMemoryUsage(): { used: number; limit: number; percentage: number } | null {
@@ -106,5 +124,24 @@ export class PerformanceMonitor {
       limit,
       percentage: (used / limit) * 100,
     };
+  }
+
+  // Новый метод для получения рекомендаций по оптимизации
+  getOptimizationRecommendations(): string[] {
+    const recommendations: string[] = [];
+    const avgFPS = this.getAverageFPS();
+    const memory = this.getMemoryUsage();
+    
+    if (avgFPS < 30) {
+      recommendations.push('Снизить качество анимаций');
+      recommendations.push('Отключить сложные эффекты');
+    }
+    
+    if (memory && memory.percentage > 80) {
+      recommendations.push('Освободить память');
+      recommendations.push('Уменьшить количество элементов на странице');
+    }
+    
+    return recommendations;
   }
 }

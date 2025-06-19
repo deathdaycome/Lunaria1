@@ -16,6 +16,7 @@ import { TimePicker } from "@/components/shared/time-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, ArrowLeft } from "lucide-react";
 import NatalChartWheel from "@/components/natal-chart/natal-chart-wheel";
+import CosmicLoader from "@/components/shared/cosmic-loader";
 
 const natalChartSchema = z.object({
   name: z.string().min(1, "Введите имя"),
@@ -28,12 +29,21 @@ const natalChartSchema = z.object({
 
 type NatalChartFormValues = z.infer<typeof natalChartSchema>;
 
+// ✅ ИСПРАВЛЕНО: Добавлен интерфейс для типизации ответа API
+interface NatalChartResult {
+  chartData: any;
+  analysis: string;
+  svgFileName: string;
+  svg_name: string; // ← ДОБАВЬ ЭТУ СТРОКУ!
+}
+
 export default function NatalChart() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [chartType, setChartType] = useState<"self" | "other">("self");
-  const [chartResult, setChartResult] = useState<any>(null);
+  // ✅ ИСПРАВЛЕНО: Типизация состояния результата
+  const [chartResult, setChartResult] = useState<NatalChartResult | null>(null);
 
   const form = useForm<NatalChartFormValues>({
     resolver: zodResolver(natalChartSchema),
@@ -46,12 +56,23 @@ export default function NatalChart() {
   const natalChartMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest("POST", "/api/natal-chart", data);
-      return await res.json();
+      const result = await res.json();
+      
+      // ✅ ИСПРАВЛЕНО: Проверяем что API возвращает svgFileName
+      console.log("API Response:", result); // Для отладки
+      
+      if (!result.svgFileName) {
+        throw new Error("Сервер не вернул имя SVG файла");
+      }
+      
+      return result;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: NatalChartResult) => {
+      console.log("Chart result received:", data); // Для отладки
       setChartResult(data);
     },
     onError: (error: Error) => {
+      console.error("Natal chart error:", error); // Для отладки
       toast({
         title: "Ошибка",
         description: error.message,
@@ -62,6 +83,16 @@ export default function NatalChart() {
 
   const buildChart = () => {
     if (chartType === "self") {
+      // ✅ ИСПРАВЛЕНО: Проверяем наличие необходимых данных пользователя
+      if (!user?.birthDate) {
+        toast({
+          title: "Ошибка",
+          description: "В профиле не указана дата рождения",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       natalChartMutation.mutate({ type: "self" });
     } else {
       form.handleSubmit((data) => {
@@ -109,7 +140,6 @@ export default function NatalChart() {
           className="card border-accent/20 max-w-5xl max-h-[95vh] overflow-hidden p-0 gap-0"
           aria-describedby="natal-chart-description"
         >
-          {/* ✅ ИСПРАВЛЕНО: Добавлена кнопка закрытия всегда видимая */}
           <div className="sticky top-0 z-50 bg-[var(--background)] border-b border-[var(--border)] p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {chartResult && (
@@ -167,7 +197,7 @@ export default function NatalChart() {
                         <div className="flex justify-between items-center py-2 border-b border-[var(--border)]/30">
                           <span className="text-white/70 font-cormorant">Дата рождения:</span>
                           <span className="text-white font-medium">
-                            {new Date(user?.birthDate || "").toLocaleDateString('ru-RU')}
+                            {user?.birthDate ? new Date(user.birthDate).toLocaleDateString('ru-RU') : 'Не указана'}
                           </span>
                         </div>
                         {user?.birthTime && (
@@ -187,6 +217,15 @@ export default function NatalChart() {
                           <div className="mt-4 p-3 bg-amber-400/10 border border-amber-400/20 rounded-lg">
                             <p className="text-amber-400 text-sm font-cormorant">
                               ⚠️ Для точной натальной карты рекомендуется указать время и место рождения в настройках профиля
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* ✅ ИСПРАВЛЕНО: Предупреждение если нет даты рождения */}
+                        {!user?.birthDate && (
+                          <div className="mt-4 p-3 bg-red-400/10 border border-red-400/20 rounded-lg">
+                            <p className="text-red-400 text-sm font-cormorant">
+                              ❌ Дата рождения не указана в профиле. Добавьте её в настройках.
                             </p>
                           </div>
                         )}
@@ -234,7 +273,6 @@ export default function NatalChart() {
                             )}
                           />
 
-                          {/* ✅ ИСПРАВЛЕНО: TimePicker теперь работает корректно */}
                           <FormField
                             control={form.control}
                             name="birthTime"
@@ -290,11 +328,12 @@ export default function NatalChart() {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* ✅ ИСПРАВЛЕНО: Контейнер для натальной карты с правильным позиционированием */}
+                {/* ✅ КРИТИЧНО ИСПРАВЛЕНО: Передача svgFileName в компонент */}
                 <div className="w-full overflow-hidden">
                   <NatalChartWheel 
                     chartData={chartResult.chartData} 
-                    analysis={chartResult.analysis} 
+                    analysis={chartResult.analysis}
+                    svgFileName={chartResult.svg_name} // ← ДОБАВЛЕНО!
                   />
                 </div>
 
