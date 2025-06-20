@@ -129,6 +129,12 @@ export async function generateHoroscope(userId: number, zodiacSign: string, peri
  try {
    console.log(`🔮 Generating horoscope for ${zodiacSign} (${period}, ${category})`);
    
+   // 🔍 ДИАГНОСТИКА API КЛЮЧА
+   console.log('🔑 OPENROUTER_API_KEY exists:', !!process.env.OPENROUTER_API_KEY);
+   console.log('🔑 API key length:', process.env.OPENROUTER_API_KEY?.length || 0);
+   console.log('🔑 API key first 20 chars:', process.env.OPENROUTER_API_KEY?.substring(0, 20) || 'UNDEFINED');
+   console.log('🔑 Full API key:', process.env.OPENROUTER_API_KEY); // ВРЕМЕННО для диагностики
+   
    // Получаем данные пользователя для персонализации
    const user = await getUserData(userId);
    const userName = user?.name || "Дорогой друг";
@@ -170,12 +176,18 @@ export async function generateHoroscope(userId: number, zodiacSign: string, peri
        prompt = `Ты профессиональный астролог. Напиши подробный ${periodInfo.periodDescription} ${periodInfo.periodText} на тему ${category}. Знак зодиака -- ${zodiacSign}. Имя -- ${userName}. День рождения ${birthDate}. Сделай его сбалансированным и полезным. Учти специфику периода: ${period === "today" ? "для дневного гороскопа - конкретные советы" : period === "week" ? "для недельного гороскопа - планирование" : "для месячного гороскопа - стратегические цели"}. НЕ ИСПОЛЬЗУЙ markdown-форматирование (звездочки, решетки, подчеркивания). Пиши обычным текстом без специальных символов.`;
    }
 
+   console.log('🚀 Sending request to OpenRouter...');
+   console.log('🔗 Base URL:', openai.baseURL);
+   console.log('📝 Model:', "openai/gpt-4o-mini");
+
    const response = await openai.chat.completions.create({
      model: "openai/gpt-4o-mini",
      messages: [{ role: "user", content: prompt }],
      max_tokens: period === "today" ? 2000 : period === "week" ? 3000 : 4000, // ✅ Больше токенов для длинных периодов
      temperature: 0.8,
    });
+
+   console.log('✅ OpenRouter response received successfully!');
 
    const rawContent = response.choices[0].message.content || "Не удалось создать гороскоп. Пожалуйста, попробуйте позже.";
    
@@ -202,10 +214,18 @@ export async function generateHoroscope(userId: number, zodiacSign: string, peri
    return cleanedContent;
  } catch (error: any) {
    console.error("❌ Error generating horoscope:", error);
+   console.error("❌ Error details:", {
+     status: error.status,
+     message: error.message,
+     code: error.code,
+     headers: error.headers
+   });
    
    if (error.status === 429) {
      throw new Error("Слишком много запросов. Попробуйте позже.");
    } else if (error.status === 401 || error.status === 403) {
+     console.error("🚨 AUTHENTICATION ERROR - API key issue detected!");
+     console.error("🔑 Current API key:", process.env.OPENROUTER_API_KEY);
      throw new Error("Ошибка авторизации API.");
    } else if (error.status >= 500) {
      throw new Error("Временные проблемы с сервисом. Попробуйте позже.");
@@ -711,130 +731,46 @@ const MAJOR_ARCANA = [
  * Функция для работы с Python скриптом натальной карты
  * ИСПРАВЛЕННАЯ ВЕРСИЯ с поддержкой UTF-8 кодировки
  */
-async function callPythonNatalChart(inputData: any): Promise<{ svg_name?: string; ai_prompt?: string; error?: string; success: boolean }> {
-  return new Promise((resolve, reject) => {
-    const pythonScript = path.join(process.cwd(), 'server', 'utils', 'natal-chart-calculator-NEW.py');
+// ✅ ЗАМЕНА PYTHON ФУНКЦИИ НА TYPESCRIPT
+async function callTypeScriptNatalChart(userData: {
+  user_name: string;
+  birth_year: number;
+  birth_month: number;
+  birth_day: number;
+  birth_hour: number;
+  birth_minute: number;
+  birth_city: string;
+  birth_country_code: string;
+}): Promise<{ svg_name: string | null; ai_prompt: string | null; success: boolean; error?: string }> {
+  try {
+    console.log("🌌 Starting TypeScript natal chart calculation...", userData);
     
-    console.log(`🐍 Calling Python script: ${pythonScript}`);
-    console.log(`🐍 Input data:`, inputData);
+    // Вызываем TypeScript функцию вместо Python
+    const result = await calculateNatalChart(userData);
     
-    // 🔥 ИСПРАВЛЕНИЕ: Добавляем правильную среду для UTF-8 кодировки
-    const pythonProcess = spawn('python', [pythonScript], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        // Принудительно устанавливаем UTF-8 для Python
-        PYTHONIOENCODING: 'utf-8',
-        PYTHONUTF8: '1',
-        // Для Windows дополнительно
-        PYTHONLEGACYWINDOWSSTDIO: '0',
-        // Устанавливаем локаль
-        LC_ALL: 'en_US.UTF-8',
-        LANG: 'en_US.UTF-8'
-      }
+    console.log("🌌 TypeScript result:", {
+      success: result.success,
+      svgName: result.svg_name,
+      promptLength: result.ai_prompt?.length || 0,
+      error: result.error
     });
     
-    let stdout = '';
-    let stderr = '';
+    return {
+      svg_name: result.svg_name,
+      ai_prompt: result.ai_prompt,
+      success: result.success,
+      error: result.error
+    };
     
-    // 🔥 ИСПРАВЛЕНИЕ: Явно устанавливаем кодировку для потоков
-    pythonProcess.stdout.setEncoding('utf8');
-    pythonProcess.stderr.setEncoding('utf8');
-    pythonProcess.stdin.setDefaultEncoding('utf8');
-    
-    // Обработчики данных
-    pythonProcess.stdout.on('data', (data) => {
-      const chunk = data.toString('utf8');
-      stdout += chunk;
-      console.log(`🐍 Python stdout chunk: ${chunk.substring(0, 200)}...`);
-    });
-    
-    pythonProcess.stderr.on('data', (data) => {
-      const chunk = data.toString('utf8');
-      stderr += chunk;
-      console.log(`🐍 Python stderr: ${chunk}`);
-    });
-    
-    // Обработчик завершения процесса
-    pythonProcess.on('close', (code) => {
-      console.log(`🐍 Python process exited with code: ${code}`);
-      
-      if (stderr) {
-        console.log(`🐍 Python stderr output: ${stderr}`);
-      }
-      
-      if (code !== 0) {
-        console.error(`🐍 Python process failed with code ${code}`);
-        console.error(`🐍 Full stderr: ${stderr}`);
-        resolve({
-          error: `Python script failed with code ${code}: ${stderr}`,
-          success: false
-        });
-        return;
-      }
-      
-      try {
-        // 🔥 ИСПРАВЛЕНИЕ: Очищаем вывод от лишних символов перед парсингом
-        const cleanedStdout = stdout.trim();
-        console.log(`🐍 Raw Python output length: ${cleanedStdout.length}`);
-        console.log(`🐍 First 500 chars: ${cleanedStdout.substring(0, 500)}`);
-        
-        if (!cleanedStdout) {
-          console.error(`🐍 Empty output from Python script`);
-          resolve({
-            error: `Empty output from Python script`,
-            success: false
-          });
-          return;
-        }
-        
-        const result = JSON.parse(cleanedStdout);
-        console.log(`🐍 Python result parsed successfully:`, result);
-        resolve(result);
-      } catch (parseError) {
-        console.error(`🐍 Failed to parse Python output: ${parseError}`);
-        console.error(`🐍 Raw stdout: "${stdout}"`);
-        console.error(`🐍 Raw stderr: "${stderr}"`);
-        resolve({
-          error: `Failed to parse Python output: ${parseError}. Raw output: ${stdout.substring(0, 200)}...`,
-          success: false
-        });
-      }
-    });
-    
-    // Обработчик ошибок процесса
-    pythonProcess.on('error', (error) => {
-      console.error(`🐍 Python process error: ${error}`);
-      resolve({
-        error: `Failed to start Python process: ${error.message}`,
-        success: false
-      });
-    });
-    
-    // 🔥 ИСПРАВЛЕНИЕ: Отправляем данные с правильной кодировкой
-    try {
-      const inputJson = JSON.stringify(inputData, null, 2);
-      console.log(`🐍 Sending JSON to Python (length: ${inputJson.length}):`, inputJson);
-      
-      // Записываем данные в UTF-8 кодировке
-      pythonProcess.stdin.write(inputJson, 'utf8', (writeError?: Error | null) => {
-        if (writeError) {
-          console.error(`🐍 Error writing to Python stdin: ${writeError}`);
-        } else {
-          console.log(`🐍 Data successfully written to Python stdin`);
-        }
-      });
-      
-      pythonProcess.stdin.end();
-      console.log(`🐍 Python stdin closed`);
-    } catch (writeError) {
-      console.error(`🐍 Error preparing data for Python: ${writeError}`);
-      resolve({
-        error: `Error preparing data for Python: ${writeError instanceof Error ? writeError.message : String(writeError)}`,
-        success: false
-      });
-    }
-  });
+  } catch (error) {
+    console.error("❌ TypeScript natal chart error:", error);
+    return {
+      svg_name: null,
+      ai_prompt: null,
+      success: false,
+      error: error instanceof Error ? error.message : 'Неизвестная ошибка'
+    };
+  }
 }
 /**
  * Конвертация кода страны в код для библиотеки

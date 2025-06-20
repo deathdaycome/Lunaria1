@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { spawn } from "child_process";
 import path from "path";
+import { calculateNatalChart } from './utils/natal-chart-calculator';
 
 console.log("🚨🚨🚨 ROUTES.TS FILE LOADED! TIMESTAMP:", new Date().toISOString());
 
@@ -643,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("🌟 Prepared user data for Python:", userData);
       
-      const pythonResult = await callPythonNatalChart(userData);
+      const pythonResult = await callTypeScriptNatalChart(userData);
       console.log("🌟 Python result:", pythonResult);
       
       let analysis: Array<{title: string, content: string}> = [];
