@@ -15,7 +15,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx ./scripts/migrate.ts",
     "test:openai": "node test-openai.js",
-    "health": "curl -f http://localhost:8000/health || exit 1"
+    "health": "curl -f http://localhost:8000/health || exit 1",
+    "install-kerykeion": "pip install kerykeion==4.23.0",
+    "setup-python": "pip install --upgrade pip && pip install kerykeion==4.23.0"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -113,5 +115,10 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "python": {
+    "requirements": [
+      "kerykeion==4.23.0"
+    ]
   }
 }
