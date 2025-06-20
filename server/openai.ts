@@ -17,6 +17,7 @@ const openai = new OpenAI({
   defaultHeaders: {
     'HTTP-Referer': 'https://lunaria-app.com',
     'X-Title': 'Lunaria Astrology App',
+    'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
   }
 });
 
