@@ -776,9 +776,173 @@ function getCountryCode(birthCountry?: string): string {
   return countryMap[birthCountry || 'Россия'] || 'RU';
 }
 
-/**
- * Главная функция генерации натальной карты
- */
+// 🌍 БАЗА КООРДИНАТ РОССИЙСКИХ И МИРОВЫХ ГОРОДОВ
+const CITY_COORDINATES: Record<string, {lat: number, lng: number, timezone: string}> = {
+  // Российские города (по популярности)
+  'Москва': { lat: 55.7558, lng: 37.6173, timezone: 'Europe/Moscow' },
+  'Санкт-Петербург': { lat: 59.9311, lng: 30.3609, timezone: 'Europe/Moscow' },
+  'Новосибирск': { lat: 55.0084, lng: 82.9357, timezone: 'Asia/Novosibirsk' },
+  'Екатеринбург': { lat: 56.8431, lng: 60.6454, timezone: 'Asia/Yekaterinburg' },
+  'Казань': { lat: 55.8304, lng: 49.0661, timezone: 'Europe/Moscow' },
+  'Нижний Новгород': { lat: 56.2965, lng: 43.9361, timezone: 'Europe/Moscow' },
+  'Челябинск': { lat: 55.1644, lng: 61.4368, timezone: 'Asia/Yekaterinburg' },
+  'Самара': { lat: 53.2001, lng: 50.1500, timezone: 'Europe/Samara' },
+  'Омск': { lat: 54.9884, lng: 73.3242, timezone: 'Asia/Omsk' },
+  'Ростов-на-Дону': { lat: 47.2357, lng: 39.7015, timezone: 'Europe/Moscow' },
+  'Уфа': { lat: 54.7388, lng: 55.9721, timezone: 'Asia/Yekaterinburg' },
+  'Красноярск': { lat: 56.0184, lng: 92.8672, timezone: 'Asia/Krasnoyarsk' },
+  'Воронеж': { lat: 51.6720, lng: 39.1843, timezone: 'Europe/Moscow' },
+  'Пермь': { lat: 58.0105, lng: 56.2502, timezone: 'Asia/Yekaterinburg' },
+  'Волгоград': { lat: 48.7080, lng: 44.5133, timezone: 'Europe/Moscow' },
+  'Краснодар': { lat: 45.0355, lng: 38.9753, timezone: 'Europe/Moscow' },
+  'Саратов': { lat: 51.5924, lng: 46.0086, timezone: 'Europe/Saratov' },
+  'Тюмень': { lat: 57.1522, lng: 65.5272, timezone: 'Asia/Yekaterinburg' },
+  'Тольятти': { lat: 53.5303, lng: 49.3461, timezone: 'Europe/Samara' },
+  'Ижевск': { lat: 56.8431, lng: 53.2045, timezone: 'Europe/Samara' },
+  'Барнаул': { lat: 53.3606, lng: 83.7636, timezone: 'Asia/Barnaul' },
+  'Ульяновск': { lat: 54.3142, lng: 48.4031, timezone: 'Europe/Ulyanovsk' },
+  'Иркутск': { lat: 52.2978, lng: 104.2964, timezone: 'Asia/Irkutsk' },
+  'Хабаровск': { lat: 48.4827, lng: 135.0841, timezone: 'Asia/Vladivostok' },
+  'Ярославль': { lat: 57.6261, lng: 39.8845, timezone: 'Europe/Moscow' },
+  'Владивосток': { lat: 43.1056, lng: 131.8735, timezone: 'Asia/Vladivostok' },
+  'Махачкала': { lat: 42.9849, lng: 47.5047, timezone: 'Europe/Moscow' },
+  'Томск': { lat: 56.4977, lng: 84.9744, timezone: 'Asia/Tomsk' },
+  'Оренбург': { lat: 51.7727, lng: 55.0988, timezone: 'Asia/Yekaterinburg' },
+  'Кемерово': { lat: 55.3331, lng: 86.0827, timezone: 'Asia/Novokuznetsk' },
+  'Новокузнецк': { lat: 53.7557, lng: 87.1099, timezone: 'Asia/Novokuznetsk' },
+  'Рязань': { lat: 54.6269, lng: 39.6916, timezone: 'Europe/Moscow' },
+  'Астрахань': { lat: 46.3497, lng: 48.0408, timezone: 'Europe/Astrakhan' },
+  'Пенза': { lat: 53.2001, lng: 45.0000, timezone: 'Europe/Moscow' },
+  'Липецк': { lat: 52.6031, lng: 39.5708, timezone: 'Europe/Moscow' },
+  'Тула': { lat: 54.1961, lng: 37.6182, timezone: 'Europe/Moscow' },
+  'Киров': { lat: 58.6035, lng: 49.6679, timezone: 'Europe/Kirov' },
+  'Чебоксары': { lat: 56.1439, lng: 47.2486, timezone: 'Europe/Moscow' },
+  'Калининград': { lat: 54.7104, lng: 20.4522, timezone: 'Europe/Kaliningrad' },
+  'Брянск': { lat: 53.2434, lng: 34.3656, timezone: 'Europe/Moscow' },
+  'Курск': { lat: 51.7373, lng: 36.1873, timezone: 'Europe/Moscow' },
+  'Иваново': { lat: 56.9719, lng: 40.9763, timezone: 'Europe/Moscow' },
+  'Магнитогорск': { lat: 53.4078, lng: 59.0465, timezone: 'Asia/Yekaterinburg' },
+  'Тверь': { lat: 56.8587, lng: 35.9176, timezone: 'Europe/Moscow' },
+  'Ставрополь': { lat: 45.0428, lng: 41.9734, timezone: 'Europe/Moscow' },
+  'Нижний Тагил': { lat: 57.9106, lng: 59.9686, timezone: 'Asia/Yekaterinburg' },
+  'Белгород': { lat: 50.5953, lng: 36.5879, timezone: 'Europe/Moscow' },
+  'Архангельск': { lat: 64.5401, lng: 40.5433, timezone: 'Europe/Moscow' },
+  'Владимир': { lat: 56.1366, lng: 40.3966, timezone: 'Europe/Moscow' },
+  'Сочи': { lat: 43.6028, lng: 39.7342, timezone: 'Europe/Moscow' },
+  'Курган': { lat: 55.4500, lng: 65.3333, timezone: 'Asia/Yekaterinburg' },
+  'Орёл': { lat: 52.9651, lng: 36.0785, timezone: 'Europe/Moscow' },
+  'Смоленск': { lat: 54.7818, lng: 32.0401, timezone: 'Europe/Moscow' },
+  'Калуга': { lat: 54.5293, lng: 36.2754, timezone: 'Europe/Moscow' },
+  'Чита': { lat: 52.0315, lng: 113.5006, timezone: 'Asia/Chita' },
+  'Волжский': { lat: 48.7854, lng: 44.7759, timezone: 'Europe/Volgograd' },
+  'Череповец': { lat: 59.1374, lng: 37.9097, timezone: 'Europe/Moscow' },
+  'Владикавказ': { lat: 43.0370, lng: 44.6830, timezone: 'Europe/Moscow' },
+  'Мурманск': { lat: 68.9585, lng: 33.0827, timezone: 'Europe/Moscow' },
+  'Сургут': { lat: 61.2501, lng: 73.3957, timezone: 'Asia/Yekaterinburg' },
+  'Вологда': { lat: 59.2239, lng: 39.8843, timezone: 'Europe/Moscow' },
+  'Тамбов': { lat: 52.7214, lng: 41.4528, timezone: 'Europe/Moscow' },
+  'Стерлитамак': { lat: 53.6241, lng: 55.9500, timezone: 'Asia/Yekaterinburg' },
+  'Грозный': { lat: 43.3181, lng: 45.6986, timezone: 'Europe/Moscow' },
+  'Якутск': { lat: 62.0355, lng: 129.6755, timezone: 'Asia/Yakutsk' },
+  'Кострома': { lat: 57.7665, lng: 40.9265, timezone: 'Europe/Moscow' },
+  'Комсомольск-на-Амуре': { lat: 50.5496, lng: 137.0018, timezone: 'Asia/Vladivostok' },
+  'Петрозаводск': { lat: 61.7849, lng: 34.3469, timezone: 'Europe/Moscow' },
+  'Таганрог': { lat: 47.2362, lng: 38.8969, timezone: 'Europe/Moscow' },
+  'Нижневартовск': { lat: 60.9344, lng: 76.5531, timezone: 'Asia/Yekaterinburg' },
+  'Йошкар-Ола': { lat: 56.6372, lng: 47.8752, timezone: 'Europe/Moscow' },
+  'Братск': { lat: 56.1326, lng: 101.6140, timezone: 'Asia/Irkutsk' },
+  'Новороссийск': { lat: 44.7230, lng: 37.7681, timezone: 'Europe/Moscow' },
+  'Дзержинск': { lat: 56.2431, lng: 43.4221, timezone: 'Europe/Moscow' },
+  'Шахты': { lat: 47.7090, lng: 40.2141, timezone: 'Europe/Moscow' },
+  'Орск': { lat: 51.2045, lng: 58.5596, timezone: 'Asia/Yekaterinburg' },
+  'Сыктывкар': { lat: 61.6681, lng: 50.8372, timezone: 'Europe/Moscow' },
+  'Нижнекамск': { lat: 55.6367, lng: 51.8206, timezone: 'Europe/Moscow' },
+  'Ангарск': { lat: 52.5408, lng: 103.8886, timezone: 'Asia/Irkutsk' },
+  'Балашиха': { lat: 55.7969, lng: 37.9381, timezone: 'Europe/Moscow' },
+  'Благовещенск': { lat: 50.2754, lng: 127.5275, timezone: 'Asia/Yakutsk' },
+  'Прокопьевск': { lat: 53.9058, lng: 86.7197, timezone: 'Asia/Novokuznetsk' },
+  'Химки': { lat: 55.8970, lng: 37.4296, timezone: 'Europe/Moscow' },
+  'Псков': { lat: 57.8136, lng: 28.3496, timezone: 'Europe/Moscow' },
+  'Бийск': { lat: 52.5396, lng: 85.2072, timezone: 'Asia/Barnaul' },
+  'Энгельс': { lat: 51.4827, lng: 46.1178, timezone: 'Europe/Saratov' },
+  'Рыбинск': { lat: 58.0446, lng: 38.8580, timezone: 'Europe/Moscow' },
+  'Балаково': { lat: 52.0262, lng: 47.8056, timezone: 'Europe/Saratov' },
+  'Северодвинск': { lat: 64.5635, lng: 39.8302, timezone: 'Europe/Moscow' },
+  'Армавир': { lat: 44.9892, lng: 41.1234, timezone: 'Europe/Moscow' },
+  'Подольск': { lat: 55.4297, lng: 37.5441, timezone: 'Europe/Moscow' },
+  'Королёв': { lat: 55.9138, lng: 37.8272, timezone: 'Europe/Moscow' },
+  'Сызрань': { lat: 53.1585, lng: 48.4681, timezone: 'Europe/Samara' },
+  'Петропавловск-Камчатский': { lat: 53.0445, lng: 158.6475, timezone: 'Asia/Kamchatka' },
+  'Альметьевск': { lat: 54.9033, lng: 52.2977, timezone: 'Europe/Moscow' },
+  'Люберцы': { lat: 55.6758, lng: 37.8939, timezone: 'Europe/Moscow' },
+  'Южно-Сахалинск': { lat: 46.9588, lng: 142.7386, timezone: 'Asia/Sakhalin' },
+
+  // Зарубежные города (основные)
+  'Нью-Йорк': { lat: 40.7128, lng: -74.0060, timezone: 'America/New_York' },
+  'Лондон': { lat: 51.5074, lng: -0.1278, timezone: 'Europe/London' },
+  'Париж': { lat: 48.8566, lng: 2.3522, timezone: 'Europe/Paris' },
+  'Берлин': { lat: 52.5200, lng: 13.4050, timezone: 'Europe/Berlin' },
+  'Токио': { lat: 35.6762, lng: 139.6503, timezone: 'Asia/Tokyo' },
+  'Пекин': { lat: 39.9042, lng: 116.4074, timezone: 'Asia/Shanghai' },
+  'Лос-Анджелес': { lat: 34.0522, lng: -118.2437, timezone: 'America/Los_Angeles' },
+  'Сидней': { lat: -33.8688, lng: 151.2093, timezone: 'Australia/Sydney' },
+  'Торонто': { lat: 43.6532, lng: -79.3832, timezone: 'America/Toronto' },
+  'Дубай': { lat: 25.2048, lng: 55.2708, timezone: 'Asia/Dubai' },
+  'Рим': { lat: 41.9028, lng: 12.4964, timezone: 'Europe/Rome' },
+  'Мадрид': { lat: 40.4168, lng: -3.7038, timezone: 'Europe/Madrid' },
+  'Амстердам': { lat: 52.3676, lng: 4.9041, timezone: 'Europe/Amsterdam' },
+  'Стокгольм': { lat: 59.3293, lng: 18.0686, timezone: 'Europe/Stockholm' },
+  'Вена': { lat: 48.2082, lng: 16.3738, timezone: 'Europe/Vienna' },
+  'Прага': { lat: 50.0755, lng: 14.4378, timezone: 'Europe/Prague' },
+  'Варшава': { lat: 52.2297, lng: 21.0122, timezone: 'Europe/Warsaw' },
+  'Будапешт': { lat: 47.4979, lng: 19.0402, timezone: 'Europe/Budapest' },
+  'Киев': { lat: 50.4501, lng: 30.5234, timezone: 'Europe/Kiev' },
+  'Минск': { lat: 53.9006, lng: 27.5590, timezone: 'Europe/Minsk' },
+  'Алматы': { lat: 43.2220, lng: 76.8512, timezone: 'Asia/Almaty' },
+  'Ташкент': { lat: 41.2995, lng: 69.2401, timezone: 'Asia/Tashkent' },
+  'Тбилиси': { lat: 41.7151, lng: 44.8271, timezone: 'Asia/Tbilisi' },
+  'Ереван': { lat: 40.1792, lng: 44.4991, timezone: 'Asia/Yerevan' },
+  'Баку': { lat: 40.4093, lng: 49.8671, timezone: 'Asia/Baku' }
+};
+
+// Функция для получения координат города
+function getCityCoordinates(cityName: string) {
+  if (!cityName) return CITY_COORDINATES['Москва'];
+  
+  // Ищем точное совпадение
+  if (CITY_COORDINATES[cityName]) {
+    return CITY_COORDINATES[cityName];
+  }
+  
+  // Ищем частичное совпадение (без учета регистра)
+  const normalizedInput = cityName.toLowerCase().trim();
+  for (const [city, coords] of Object.entries(CITY_COORDINATES)) {
+    if (city.toLowerCase().includes(normalizedInput) || 
+        normalizedInput.includes(city.toLowerCase())) {
+      return coords;
+    }
+  }
+  
+  // Особые случаи для сокращений
+  const cityAliases: Record<string, string> = {
+    'спб': 'Санкт-Петербург',
+    'питер': 'Санкт-Петербург',
+    'екб': 'Екатеринбург',
+    'нск': 'Новосибирск',
+    'мск': 'Москва',
+    'нн': 'Нижний Новгород',
+    'ростов': 'Ростов-на-Дону',
+    'нижневартовск': 'Нижневартовск'
+  };
+  
+  const alias = cityAliases[normalizedInput];
+  if (alias && CITY_COORDINATES[alias]) {
+    return CITY_COORDINATES[alias];
+  }
+  
+  // По умолчанию - Москва
+  return CITY_COORDINATES['Москва'];
+}
 // ✅ ДОЛЖНО БЫТЬ:
 export async function generateNatalChartAnalysis(
   userId: number,
@@ -811,6 +975,9 @@ export async function generateNatalChartAnalysis(
     }
     
     // Подготавливаем данные для Python скрипта
+    // Получаем координаты города
+    const cityCoords = getCityCoordinates(birthPlace || "Москва");
+
     const pythonInput = {
       user_name: name,
       birth_year: year,
@@ -819,7 +986,10 @@ export async function generateNatalChartAnalysis(
       birth_hour: hour,
       birth_minute: minute,
       birth_city: birthPlace || "Москва",
-      birth_country_code: getCountryCode(birthCountry)
+      birth_country_code: getCountryCode(birthCountry),
+      birth_lat: cityCoords.lat,
+      birth_lng: cityCoords.lng,
+      birth_tz: cityCoords.timezone
     };
     
     console.log(`🌌 Python input prepared:`, pythonInput);
