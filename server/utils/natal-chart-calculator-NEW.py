@@ -350,7 +350,8 @@ def calculate_natal_chart(input_data):
             input_data["birth_hour"], 
             input_data["birth_minute"], 
             input_data["birth_city"], 
-            input_data["birth_country_code"]
+            input_data["birth_country_code"],
+            geonames_username="deathdaycome"
         )
 
         print("✅ AstrologicalSubject created successfully", file=sys.stderr)
