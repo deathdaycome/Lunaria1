@@ -3,6 +3,7 @@ import { InsertApiUsage } from "../shared/schema";
 import { storage } from "./storage";
 // ✨ ДОБАВЛЯЕМ ИМПОРТ ФУНКЦИЙ ОЧИСТКИ ТЕКСТА
 import { cleanMarkdownText, cleanRussianText, cleanStructuredRussianText } from "./utils/textCleaner";
+import { callPythonNatalChart } from "./utils/natal-chart-calculator";
 // ✨ ДОБАВЛЯЕМ ИМПОРТ ДЛЯ РАБОТЫ С PYTHON
 import { spawn } from "child_process";
 import path from "path";
@@ -733,46 +734,7 @@ const MAJOR_ARCANA = [
  * ИСПРАВЛЕННАЯ ВЕРСИЯ с поддержкой UTF-8 кодировки
  */
 // ✅ ЗАМЕНА PYTHON ФУНКЦИИ НА TYPESCRIPT
-async function callTypeScriptNatalChart(userData: {
-  user_name: string;
-  birth_year: number;
-  birth_month: number;
-  birth_day: number;
-  birth_hour: number;
-  birth_minute: number;
-  birth_city: string;
-  birth_country_code: string;
-}): Promise<{ svg_name: string | null; ai_prompt: string | null; success: boolean; error?: string }> {
-  try {
-    console.log("🌌 Starting TypeScript natal chart calculation...", userData);
-    
-    // Вызываем TypeScript функцию вместо Python
-    const result = await calculateNatalChart(userData);
-    
-    console.log("🌌 TypeScript result:", {
-      success: result.success,
-      svgName: result.svg_name,
-      promptLength: result.ai_prompt?.length || 0,
-      error: result.error
-    });
-    
-    return {
-      svg_name: result.svg_name,
-      ai_prompt: result.ai_prompt,
-      success: result.success,
-      error: result.error
-    };
-    
-  } catch (error) {
-    console.error("❌ TypeScript natal chart error:", error);
-    return {
-      svg_name: null,
-      ai_prompt: null,
-      success: false,
-      error: error instanceof Error ? error.message : 'Неизвестная ошибка'
-    };
-  }
-}
+
 /**
  * Конвертация кода страны в код для библиотеки
  */
