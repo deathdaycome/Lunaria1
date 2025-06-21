@@ -341,20 +341,39 @@ def calculate_natal_chart(input_data):
         return output
 
     try:
-        # Создаем объект астрологического субъекта (как в версии заказчиков)
-        dark_theme_subject = AstrologicalSubject(
-            input_data["user_name"], 
-            input_data["birth_year"], 
-            input_data["birth_month"], 
-            input_data["birth_day"], 
-            input_data["birth_hour"], 
-            input_data["birth_minute"], 
-            input_data["birth_city"], 
-            input_data["birth_country_code"],
-            geonames_username="deathdaycome"
-        )
+        # Проверяем есть ли координаты в входных данных
+        if "birth_lat" in input_data and "birth_lng" in input_data:
+            # Используем переданные координаты
+            dark_theme_subject = AstrologicalSubject(
+                input_data["user_name"], 
+                input_data["birth_year"], 
+                input_data["birth_month"], 
+                input_data["birth_day"], 
+                input_data["birth_hour"], 
+                input_data["birth_minute"], 
+                input_data["birth_city"],
+                input_data["birth_country_code"],
+                lat=input_data["birth_lat"],
+                lng=input_data["birth_lng"],
+                tz_str=input_data.get("birth_tz", "Europe/Moscow")
+            )
+            print(f"✅ Using provided coordinates: {input_data['birth_lat']}, {input_data['birth_lng']}", file=sys.stderr)
+        else:
+            # Используем Geonames
+            dark_theme_subject = AstrologicalSubject(
+                input_data["user_name"], 
+                input_data["birth_year"], 
+                input_data["birth_month"], 
+                input_data["birth_day"], 
+                input_data["birth_hour"], 
+                input_data["birth_minute"], 
+                input_data["birth_city"], 
+                input_data["birth_country_code"],
+                geonames_username="deathdaycome"
+            )
+            print("✅ Using Geonames for coordinates", file=sys.stderr)
 
-        print("✅ AstrologicalSubject created successfully", file=sys.stderr)
+            print("✅ AstrologicalSubject created successfully", file=sys.stderr)
 
         # Получаем JSON данные (как в версии заказчиков)
         json_data = dark_theme_subject.json(dump=False, indent=2)
