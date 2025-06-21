@@ -3,11 +3,9 @@ import { InsertApiUsage } from "../shared/schema";
 import { storage } from "./storage";
 // ✨ ДОБАВЛЯЕМ ИМПОРТ ФУНКЦИЙ ОЧИСТКИ ТЕКСТА
 import { cleanMarkdownText, cleanRussianText, cleanStructuredRussianText } from "./utils/textCleaner";
-import { callPythonNatalChart } from "./utils/natal-chart-calculator";
+import callPythonNatalChart from "./utils/natal-chart-calculator";
 // ✨ ДОБАВЛЯЕМ ИМПОРТ ДЛЯ РАБОТЫ С PYTHON
-import { spawn } from "child_process";
-import path from "path";
-import fs from "fs/promises";
+
 
 // OpenRouter клиент с использованием GPT-4o-mini
 const openai = new OpenAI({
